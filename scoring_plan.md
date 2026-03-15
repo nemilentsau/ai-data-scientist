@@ -1,137 +1,391 @@
-# Plan: Replace Generic Rubric with Per-Dataset Checkpoint Scoring
+# Plan: Replace Arbitrary Scores with Decision-First Evaluation
 
 ## Context
 
-The current scoring system uses 7 generic dimensions (data_loading, EDA, pattern_identification, etc.) each scored 0-5, summed to 35. This is broken: an agent scored 33/35 on Simpson's Paradox while completely missing the trend reversal — the entire point of the dataset. The 7-dimension system rewards technical polish over actual insight.
+The current `0-35` rubric is not meaningful. The planned `0-100` checkpoint rewrite is better structured, but it still has the same core problem: it collapses different kinds of performance into one made-up number.
 
-We control the datasets. We know exactly what each one tests, what the correct findings are, and what the right metrics should be. The scoring must be concrete, per-dataset, and pattern-centric.
+For this benchmark, the first question is not "did the model get 45 or 42?" It is:
 
-## Design
+1. Did it solve the dataset correctly?
+2. If yes, how complete and well-supported was the solution?
+3. If modeling quality matters, how close did it get to the best achievable answer?
+4. How much time / cost did it take?
+5. Only after correctness is fixed: was the solution elegant?
 
-### Core concept: Checkpoints
+That means the benchmark should return a **scorecard**, not a single scalar.
 
-Each dataset gets 5-8 concrete, verifiable checkpoints. Each checkpoint is scored as **HIT** (full points), **PARTIAL** (partial points), or **MISS** (0 points). Every dataset's checkpoints sum to exactly **100 points**.
+## Design Principles
 
-### Checkpoint categories and weights
+1. **Primary metric must be binary or near-binary.**
+   The benchmark exists to tell whether the agent solved the statistical problem, not whether it looked polished.
 
-| Category | Weight | Purpose |
-|----------|--------|---------|
-| `core_insight` | 40-50 pts | The central pattern. Missing this = missing the point |
-| `analysis_step` | 30-40 pts | Specific analytical steps needed to find the pattern |
-| `technical` | 10-20 pts | Correct viz, proper tests, no overcomplicated models |
+2. **Only use interpretable scales.**
+   Use solve rate, evidence coverage, oracle attainment, time, cost, false-positive rate. Avoid arbitrary totals.
 
-No more generic "EDA quality" or "code quality" dimensions. If a specific visualization matters for a dataset, it's a checkpoint. If it doesn't matter, it's not scored.
+3. **Do not force one metric across all dataset types.**
+   Some datasets are about detecting a paradox. Some are about fitting the right model. Some are about avoiding a false conclusion. These should not all be reduced to the same point scale.
 
-### Data structures
+4. **Keep subjective judgment out of the primary leaderboard.**
+   Aesthetics can matter, but only as a separate tiebreaker or side metric.
+
+5. **Use the LLM reviewer only for structured extraction, not free-form scoring.**
+   The model can judge whether a criterion was satisfied and cite evidence. Deterministic code should map that into the final result.
+
+## Proposed Output Per Dataset
+
+Each dataset should produce this structured result:
 
 ```python
-# In datasets/registry.py
 @dataclass(frozen=True)
-class Checkpoint:
-    id: str                     # "simpsons_reversal_identified"
-    description: str            # human-readable, shown to reviewer
-    points: int                 # full-hit points
-    partial_points: int         # partial-hit points (0 for binary checks)
-    category: str               # "core_insight" | "analysis_step" | "technical"
-    verification_hint: str = "" # how the reviewer should verify this
-
-# DatasetMeta gets a new field:
-checkpoints: list[Checkpoint]   # must sum to 100 points
-```
-
-```python
-# In reviewer/scorer.py
-@dataclass
-class CheckpointResult:
-    checkpoint_id: str
-    verdict: str            # "hit" | "partial" | "miss"
-    points_earned: int
-    points_possible: int
-    justification: str
-
-@dataclass
-class ScoreResult:
+class DatasetOutcome:
     dataset_name: str
     agent: str
-    checkpoint_results: list[CheckpointResult]
-    score: int              # 0-100
-    max_score: int          # 100
+    verdict: str                  # "solved" | "partial" | "failed" | "wrong"
+    core_insight_pass: bool
+    required_coverage: float      # 0.0 - 1.0
+    supporting_coverage: float    # 0.0 - 1.0
+    oracle_attainment: float | None   # 0.0 - 1.0 when a quantitative optimum exists
+    fatal_errors: list[str]
+    efficiency: dict[str, float]      # wall_time_s, tokens, tool_calls, etc.
     summary: str
     raw_response: str
 ```
 
-### Example checkpoints (3 datasets)
+These fields are interpretable:
 
-**Simpson's Paradox (100 pts)**
-| Checkpoint | Category | Pts | Partial |
-|-----------|----------|-----|---------|
-| Computed aggregate treatment effect | analysis_step | 10 | 5 |
-| Computed within-group treatment effects | analysis_step | 15 | 7 |
-| Identified direction REVERSES aggregate vs within-group | core_insight | 35 | 15 |
-| Named Simpson's Paradox or explained mechanism | core_insight | 15 | 7 |
-| Identified confounder variable | analysis_step | 10 | 5 |
-| Visualization showing reversal | technical | 10 | 5 |
-| Correct practical conclusion | technical | 5 | 0 |
+- `verdict`: was the problem solved?
+- `required_coverage`: how much of the necessary work was done?
+- `supporting_coverage`: how complete / well-supported was the solution?
+- `oracle_attainment`: how close the result was to the best possible answer
+- `efficiency`: how expensive the solve was
 
-**Pure Noise (100 pts)**
-| Checkpoint | Category | Pts | Partial |
-|-----------|----------|-----|---------|
-| Concluded no meaningful relationships | core_insight | 40 | 15 |
-| Performed significance tests | analysis_step | 15 | 7 |
-| Reported low R² / no predictive power | analysis_step | 10 | 5 |
-| Did NOT report spurious pattern as real | core_insight | 20 | 0 |
-| Tested multiple variable pairs | analysis_step | 10 | 5 |
-| Produced viz showing no structure | technical | 5 | 0 |
+## Dataset Spec: Replace "Checkpoints with Weights" with "Evaluation Contract"
 
-**Deterministic Linear (100 pts)**
-| Checkpoint | Category | Pts | Partial |
-|-----------|----------|-----|---------|
-| Reported slope ≈ 2.0 | core_insight | 20 | 10 |
-| Reported intercept ≈ 3.0 | core_insight | 20 | 10 |
-| Reported R² = 1.0 | analysis_step | 15 | 7 |
-| Stated relationship is exact/deterministic | core_insight | 15 | 5 |
-| Wrote equation y = 2x + 3 | analysis_step | 10 | 5 |
-| Did NOT overcomplicate with nonlinear models | technical | 10 | 0 |
-| Identified noise columns as irrelevant | analysis_step | 10 | 5 |
+Each dataset should define an explicit contract:
 
-### Reviewer prompt change
+```python
+@dataclass(frozen=True)
+class Criterion:
+    id: str
+    description: str
+    verification_hint: str = ""
 
-The reviewer LLM gets a dataset-specific rubric listing each checkpoint with verification hints. It returns:
+@dataclass(frozen=True)
+class OracleMetric:
+    name: str                     # "r2", "f1", "ari", "changepoint_error"
+    direction: str                # "higher_is_better" | "lower_is_better"
+    baseline_value: float
+    oracle_value: float
+    tolerance: float | None = None
+
+@dataclass(frozen=True)
+class EvaluationSpec:
+    task_family: str              # "discovery" | "predictive" | "clustering" | "specialized"
+    must_have: list[Criterion]    # all needed for SOLVED
+    supporting: list[Criterion]   # quality / completeness only
+    forbidden: list[Criterion]    # if triggered, result becomes WRONG or FAILED
+    oracle_metric: OracleMetric | None = None
+```
+
+This keeps the useful part of the checkpoint idea, but removes the fake precision of point totals.
+
+## Verdict Logic
+
+Scoring should be rule-based:
+
+1. If the agent makes a confident forbidden claim, the verdict is `wrong`.
+2. If all `must_have` criteria are satisfied and no fatal error is present, the verdict is `solved`.
+3. If some but not all `must_have` criteria are satisfied, the verdict is `partial`.
+4. Otherwise, the verdict is `failed`.
+
+Important distinction:
+
+- `failed`: did not reach the answer
+- `wrong`: reached a materially incorrect conclusion or fell into the trap the dataset was built to expose
+
+That distinction matters more than a `26/100` versus `34/100`.
+
+## Family-Specific Metrics
+
+Do not use the same secondary metric for every dataset family.
+
+### 1. Discovery / Diagnostic tasks
+
+Examples: `simpsons_paradox`, `pure_noise`, `mnar`, `heteroscedasticity`, `spurious_correlation`, `concept_drift`
+
+Use:
+
+- `verdict`
+- `required_coverage`
+- `supporting_coverage`
+- `false_positive` / `fatal_errors`
+
+Do **not** invent an oracle model metric when the real question is pattern recognition.
+
+### 2. Predictive / Modeling tasks
+
+Examples: `deterministic_linear`, `quadratic`, `high_dim_sparse`, `interaction_effects`, `lognormal_skew`
+
+Use:
+
+- `verdict`
+- `required_coverage`
+- `oracle_attainment`
+
+`oracle_attainment` should be normalized against a baseline:
+
+- For higher-is-better metrics:
+  - `(agent_metric - baseline) / (oracle - baseline)`
+- For lower-is-better metrics:
+  - `(baseline - agent_metric) / (baseline - oracle)`
+
+Clip to `[0, 1]`.
+
+This makes the scale interpretable:
+
+- `0.0`: no better than baseline
+- `1.0`: matched oracle
+- `0.8`: achieved 80% of the possible gain over baseline
+
+### 3. Clustering / Segmentation tasks
+
+Examples: `well_separated_clusters`, `overlapping_clusters`, `concept_drift`
+
+Use ground-truth-aware metrics:
+
+- ARI / NMI for clustering
+- change-point localization error for drift
+- cluster-count correctness if that is the central target
+
+Again, report these as separate interpretable metrics, not folded into a universal point score.
+
+### 4. Specialized Method tasks
+
+Examples: `survival_censored`, `time_series_seasonality`
+
+These need:
+
+- correct method choice as a `must_have`
+- method-specific quantitative quality only if it is truly meaningful
+
+Example: using Kaplan-Meier or Cox is a correctness requirement; a c-index or decomposition quality metric can be secondary.
+
+## Example Contracts
+
+### Simpson's Paradox
+
+Must-have:
+
+- compare aggregate treatment effect
+- compare within-group treatment effect
+- explicitly state that direction reverses
+- identify the grouping variable as confounder
+- give the correct practical conclusion
+
+Supporting:
+
+- quantify effect sizes
+- visualize the reversal
+- explain mechanism cleanly
+
+Forbidden:
+
+- final conclusion based only on aggregate trend
+- claim no confounding
+
+Result:
+
+- `solved` if all must-haves are present
+- `wrong` if the agent confidently recommends the aggregate-only conclusion
+
+### Pure Noise
+
+Must-have:
+
+- conclude there is no meaningful signal
+- show evidence for weak predictive power / non-significance
+- avoid reporting a specific relationship as real
+
+Supporting:
+
+- test multiple candidate relationships
+- use a visualization that shows lack of structure
+
+Forbidden:
+
+- claim a strong relationship from noise
+
+### Deterministic Linear
+
+Must-have:
+
+- identify the relationship as linear
+- recover slope within tolerance
+- recover intercept within tolerance
+- report near-perfect fit
+
+Supporting:
+
+- write the equation explicitly
+- identify irrelevant noise columns
+- avoid overcomplicated models
+
+Oracle metric:
+
+- `r2` or parameter error against the known generating process
+
+## Comparison Between Models
+
+The leaderboard should not be a single "total score".
+
+Use this order:
+
+1. **Primary**: solve rate
+2. **Guardrail**: wrong-answer rate
+3. **Secondary**: mean required coverage on solved or partial tasks
+4. **Secondary**: mean oracle attainment on tasks where it exists
+5. **Efficiency**: median wall time / tokens / tool calls per solved dataset
+6. **Style**: pairwise preference win rate, reported separately
+
+If a single ordering is needed, use a lexicographic tuple:
+
+```python
+(
+    solve_rate,
+    -wrong_rate,
+    mean_oracle_attainment,
+    mean_supporting_coverage,
+    -median_cost_per_solve,
+)
+```
+
+That is still much more meaningful than a weighted point total because every component has a clear interpretation.
+
+## Aesthetics / Elegance
+
+This should be explicitly separated from correctness.
+
+Recommended approach:
+
+- only compare aesthetics on outputs that already count as `solved`
+- use pairwise preference judgments instead of absolute `1-5` ratings
+- ask a narrow question such as:
+  - "Which solved analysis is clearer, more concise, and more methodologically elegant?"
+
+Report this as:
+
+- style win rate
+- or percentage of pairwise preferences
+
+Do not mix it into the primary benchmark score.
+
+## Statistical Rigor for Benchmark Comparisons
+
+If this benchmark will guide prompt and agent design, do not compare models on one run per dataset and eyeball totals.
+
+Use a paired evaluation design:
+
+1. Same dataset instance for all agents in a comparison
+2. Multiple generated seeds per dataset family where useful
+3. Multiple agent runs if agent behavior is stochastic
+4. Paired bootstrap or sign-test style reporting for solve-rate differences
+
+Minimum useful reporting:
+
+- solve rate with confidence interval
+- wrong-answer rate with confidence interval
+- paired win / loss / tie counts by dataset
+
+Without this, differences from prompt tweaks can easily be noise.
+
+## Reviewer Role
+
+The LLM reviewer should return structured judgments plus evidence, for example:
 
 ```json
 {
-  "checkpoints": {
-    "simpsons_reversal_identified": {
-      "verdict": "hit",
-      "justification": "Agent explicitly states treatment A appears worse overall but better within each department"
+  "must_have": {
+    "reversal_stated": {
+      "status": "hit",
+      "evidence": "The analysis states that treatment A appears worse overall but better in every subgroup."
     }
   },
-  "summary": "Overall assessment paragraph"
+  "supporting": {
+    "visualized_reversal": {
+      "status": "miss",
+      "evidence": ""
+    }
+  },
+  "forbidden": {
+    "aggregate_only_conclusion": {
+      "status": "miss",
+      "evidence": ""
+    }
+  },
+  "summary": "Correctly identifies Simpson's paradox, but the evidence presentation is incomplete."
 }
 ```
 
-Scoring is mechanical: map verdicts to points, sum.
+Then deterministic Python code computes:
 
-### Report change
+- `verdict`
+- coverage metrics
+- oracle attainment
+- final report fields
 
-- Summary table uses 0-100 scale
-- Per-dataset sections show checkpoint table with verdict/points
-- New aggregate metric: **Core Insight Hit Rate** (fraction of core_insight checkpoints scored as HIT across all datasets)
+This sharply reduces judge variance.
 
-## Files to modify
+## Files to Modify
 
-1. **`datasets/registry.py`** — Add `Checkpoint` dataclass, add `checkpoints` field to `DatasetMeta`, define checkpoints for all 20 datasets (~7 checkpoints each, ~140 total)
-2. **`reviewer/rubric.py`** — Complete rewrite: replace 7 generic dimensions with `format_checkpoint_rubric_for_prompt(dataset_meta)`
-3. **`reviewer/scorer.py`** — New `CheckpointResult`/`ScoreResult`, new prompt builder, new scoring logic
-4. **`reviewer/report.py`** — Checkpoint breakdown tables, core insight hit rate, 0-100 scale
-5. **`run_benchmark.py`** — Update score.json serialization to use new structure
-6. **`tests/test_rubric.py`** — Rewrite for checkpoint-based rubric
-7. **`tests/test_scorer.py`** — Rewrite for checkpoint-based scoring
-8. **`tests/test_report.py`** — Update for 0-100 scale and checkpoint tables
-9. **`tests/test_registry.py`** — Add: all datasets have checkpoints, totals = 100, unique IDs, every dataset has core_insight checkpoint
+1. `datasets/registry.py`
+   Add `Criterion`, `OracleMetric`, `EvaluationSpec`, and one evaluation contract per dataset.
+
+2. `reviewer/scorer.py`
+   Replace total-score logic with verdict + coverage + oracle-attainment computation.
+
+3. `reviewer/rubric.py`
+   Replace generic rubric formatting with dataset-contract prompt formatting.
+
+4. `reviewer/report.py`
+   Report solve rate, wrong-answer rate, coverage, oracle attainment, and efficiency.
+
+5. `run_benchmark.py`
+   Update `score.json` serialization to store structured outcomes instead of a point total.
+
+6. `tests/test_registry.py`
+   Validate every dataset has must-have criteria, unique IDs, and coherent oracle specs where present.
+
+7. `tests/test_scorer.py`
+   Test verdict computation, forbidden-claim handling, coverage calculation, and oracle normalization.
+
+8. `tests/test_report.py`
+   Update report expectations for the new scorecard format.
+
+## Implementation Order
+
+1. Define the new evaluation data model in `datasets/registry.py`.
+2. Write evaluation contracts for 3 representative datasets first:
+   `simpsons_paradox`, `pure_noise`, `deterministic_linear`.
+3. Rewrite scorer logic around `verdict`, coverage, and oracle attainment.
+4. Update the report to show scorecards instead of totals.
+5. Extend the contract format to the remaining datasets.
+6. Add paired-comparison summary metrics and confidence intervals later, after the core scorer is stable.
 
 ## Verification
 
-1. `uv run pytest tests/ -v` — all tests pass
-2. Spot-check: re-score the existing Simpson's Paradox result — should now score ~26/100 (only analysis_step and technical hits, core_insight misses) instead of 33/35
-3. Check that all 20 datasets have checkpoints summing to exactly 100
+1. For Simpson's paradox, an analysis that misses the reversal must never be `solved`, no matter how polished it is.
+2. For pure noise, confidently claiming a strong pattern must produce `wrong`.
+3. For deterministic linear, recovering the true equation should yield `solved` and near-1.0 oracle attainment.
+4. `uv run pytest tests/ -v`
+
+## Bottom Line
+
+Keep per-dataset evaluation contracts. Drop arbitrary totals. Make the benchmark answer:
+
+- Did the agent solve it?
+- How complete was the solution?
+- How close was the model to the best achievable answer?
+- How expensive was the solve?
+- Which solved output was more elegant?
+
+Those are metrics you can actually reason about when comparing prompts, models, and agent designs.

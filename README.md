@@ -100,9 +100,14 @@ ai-data-scientist/
 │   └── report.py             # Markdown comparison report generator
 ├── tests/                    # pytest suite
 ├── frontend/
-│   ├── index.html            # Trace viewer UI
-│   ├── styles.css
-│   └── app.js
+│   ├── src/                  # Svelte 5 trace viewer
+│   │   ├── App.svelte
+│   │   ├── main.js
+│   │   ├── global.css
+│   │   └── lib/              # Components + parsing logic
+│   ├── serve.py              # Production server (serves dist/)
+│   ├── package.json
+│   └── vite.config.js
 ├── results/                  # Agent outputs + scores (git-ignored)
 └── run_benchmark.py          # Orchestrator
 ```
@@ -125,20 +130,29 @@ Bonus/penalty modifiers (up to +/-3) for proactive exploration, catching seconda
 
 ## Trace viewer
 
+Built with Svelte 5 + Vite.
+
 ```bash
+# Production (serves built assets)
+cd frontend && npm install && npm run build
 uv run python frontend/serve.py
+
+# Development (hot reload)
+cd frontend && npm run dev
 ```
 
-Opens `http://localhost:8080` in your browser. Pass a custom port with `uv run python frontend/serve.py 3000`.
+Opens `http://localhost:8080` (production) or `http://localhost:5173` (dev). Drop `trace.jsonl` and `analysis_report.md` files to load.
 
-Drag and drop a `trace.jsonl` file or click "Load trace.jsonl". The viewer shows:
+Features:
 - Timeline of every tool call with timestamps and deltas between steps
 - Color-coded icons per tool type (Bash, Read, Write, Edit, Grep, Glob)
+- Expandable code blocks with line numbers, diff highlighting, language detection
+- Rendered analysis report with tables, code blocks, markdown
+- Plot gallery with file paths extracted from trace
 - Error highlighting with inline error messages
-- Expandable inputs/outputs per event
 - Click any event for the full raw JSON
 - Filter by tool type, toggle responses, or show errors only
-- Summary bar with total events, errors, duration, and cost
+- Summary bar with events, errors, duration, cost, and turns
 
 ## Tests
 

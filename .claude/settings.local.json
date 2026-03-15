@@ -9,7 +9,10 @@
       "Bash(uv run:*)",
       "WebSearch",
       "WebFetch(domain:github.com)",
-      "WebFetch(domain:developers.openai.com)"
+      "WebFetch(domain:developers.openai.com)",
+      "Bash(find:*)",
+      "Bash(cd:*)",
+      "Bash(npm run:*)"
     ]
   }
 }
