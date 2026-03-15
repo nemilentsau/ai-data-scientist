@@ -78,9 +78,17 @@ PENALTY_MODIFIERS = [
     Modifier("Agent's code crashes or produces wrong output", -1),
 ]
 
+# Critical miss: if the agent fails to identify the core pattern the dataset was
+# designed to test (pattern_identification <= 3), apply a heavy penalty and zero
+# out any bonuses.  Without this, an agent that does excellent technical work but
+# misses the entire point can still score 33/35.
+CRITICAL_MISS_THRESHOLD = 3      # pattern_identification score at or below this
+CRITICAL_MISS_PENALTY = -5        # flat penalty applied on critical miss
+CRITICAL_MISS_ZEROES_BONUSES = True  # bonuses are wiped when core pattern missed
+
 MAX_DIMENSION_SCORE = 5 * len(RUBRIC_DIMENSIONS)  # 35
 MAX_MODIFIER = 3
-MIN_MODIFIER = -3
+MIN_MODIFIER = -8  # allow room for critical miss penalty
 
 def format_rubric_for_prompt() -> str:
     """Format the rubric as text for inclusion in the reviewer LLM prompt."""
@@ -97,4 +105,14 @@ def format_rubric_for_prompt() -> str:
     lines.append("\n## Penalty Modifiers (-1 each, max -3)")
     for m in PENALTY_MODIFIERS:
         lines.append(f"- -1: {m.description}")
+    lines.append("\n## Critical Miss Rule")
+    lines.append(
+        "Each dataset is designed to test ONE core statistical pattern (listed in "
+        "the Ground Truth section). If the agent fails to explicitly identify and "
+        "discuss this pattern — even if the rest of the analysis is technically "
+        "excellent — **pattern_identification must score ≤ 3** and "
+        "**conclusions must score ≤ 3**. Thorough execution that misses the point "
+        "is NOT a high-scoring analysis. When pattern_identification ≤ 3, all "
+        "bonus modifiers are forfeited and a -5 critical miss penalty is applied."
+    )
     return "\n".join(lines)

@@ -2,7 +2,15 @@ import json
 import subprocess
 from dataclasses import dataclass
 from pathlib import Path
-from .rubric import format_rubric_for_prompt, RUBRIC_DIMENSIONS, MAX_MODIFIER, MIN_MODIFIER
+from .rubric import (
+    format_rubric_for_prompt,
+    RUBRIC_DIMENSIONS,
+    MAX_MODIFIER,
+    MIN_MODIFIER,
+    CRITICAL_MISS_THRESHOLD,
+    CRITICAL_MISS_PENALTY,
+    CRITICAL_MISS_ZEROES_BONUSES,
+)
 
 
 @dataclass
@@ -52,6 +60,15 @@ def build_reviewer_prompt(
 Score each of the 7 dimensions from 0 to 5 with a brief justification.
 Apply any applicable bonus or penalty modifiers (max +3, min -3 total).
 Be fair but rigorous.
+
+**CRITICAL**: The single most important question is whether the agent identified the
+**Key Pattern** listed above. Each dataset is specifically designed to test one core
+statistical concept. An analysis that does excellent technical work but misses or only
+partially identifies this pattern should score ≤ 3 on pattern_identification and ≤ 3
+on conclusions, regardless of how polished the rest of the work is. "Partially identified"
+(score 3) means the agent noticed something related but did not explicitly name or
+demonstrate the pattern. A score of 4-5 requires the agent to clearly identify AND
+demonstrate the pattern with evidence.
 
 Return ONLY valid JSON in this exact format:
 {{
@@ -123,16 +140,34 @@ def score_analysis(
     # Extract scores
     scores = {k: v["score"] for k, v in data["scores"].items()}
 
+    # Apply critical miss rule: if pattern_identification is at or below threshold,
+    # zero out bonuses and apply the critical miss penalty.
+    modifiers = list(data.get("modifiers", []))
+    pattern_score = scores.get("pattern_identification", 0)
+    critical_miss = pattern_score <= CRITICAL_MISS_THRESHOLD
+
+    if critical_miss:
+        if CRITICAL_MISS_ZEROES_BONUSES:
+            modifiers = [m for m in modifiers if m["value"] < 0]
+        modifiers.append({
+            "description": f"Critical miss: failed to identify the core pattern (pattern_identification={pattern_score})",
+            "value": CRITICAL_MISS_PENALTY,
+        })
+
     # Clamp modifier total
-    modifier_total = sum(m["value"] for m in data.get("modifiers", []))
+    modifier_total = sum(m["value"] for m in modifiers)
     modifier_total = max(MIN_MODIFIER, min(MAX_MODIFIER, modifier_total))
+
+    # Recompute total from dimension scores + clamped modifiers
+    dimension_total = sum(scores.values())
+    total = max(0, dimension_total + modifier_total)
 
     return ScoreResult(
         dataset_name=dataset_name,
         agent=agent,
         scores=scores,
-        modifiers=data.get("modifiers", []),
-        total=data["total"],
+        modifiers=modifiers,
+        total=total,
         summary=data["summary"],
         raw_response=raw,
     )

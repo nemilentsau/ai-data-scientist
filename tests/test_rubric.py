@@ -7,6 +7,9 @@ from reviewer.rubric import (
     MAX_DIMENSION_SCORE,
     MAX_MODIFIER,
     MIN_MODIFIER,
+    CRITICAL_MISS_THRESHOLD,
+    CRITICAL_MISS_PENALTY,
+    CRITICAL_MISS_ZEROES_BONUSES,
     Dimension,
     Modifier,
     format_rubric_for_prompt,
@@ -23,7 +26,13 @@ def test_max_dimension_score_is_35():
 
 def test_modifier_bounds():
     assert MAX_MODIFIER == 3
-    assert MIN_MODIFIER == -3
+    assert MIN_MODIFIER == -8  # room for critical miss penalty (-5) + regular penalties (-3)
+
+
+def test_critical_miss_constants():
+    assert CRITICAL_MISS_THRESHOLD == 3
+    assert CRITICAL_MISS_PENALTY == -5
+    assert CRITICAL_MISS_ZEROES_BONUSES is True
 
 
 def test_all_bonus_modifiers_are_positive():
@@ -51,3 +60,9 @@ def test_format_rubric_for_prompt_contains_modifiers():
     text = format_rubric_for_prompt()
     assert "Bonus" in text
     assert "Penalty" in text
+
+
+def test_format_rubric_for_prompt_contains_critical_miss_rule():
+    text = format_rubric_for_prompt()
+    assert "Critical Miss" in text
+    assert "pattern_identification" in text

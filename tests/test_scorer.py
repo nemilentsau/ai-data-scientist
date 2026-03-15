@@ -15,6 +15,13 @@ def test_reviewer_prompt_includes_ground_truth():
         assert trap in prompt
 
 
+def test_reviewer_prompt_includes_critical_miss_rule():
+    meta = get_dataset("simpsons_paradox")
+    prompt = build_reviewer_prompt(meta, "Some analysis", "Some transcript")
+    assert "Key Pattern" in prompt
+    assert "critical" in prompt.lower() or "CRITICAL" in prompt
+
+
 def test_reviewer_prompt_includes_agent_output():
     meta = get_dataset("pure_noise")
     report = "This is the agent's analysis report."
