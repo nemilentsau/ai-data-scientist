@@ -150,6 +150,5 @@ uv run pytest tests/ -v
 
 - Python 3.14+
 - `uv` for package management
-- `claude` CLI (for Claude Code agent runs)
+- `claude` CLI (for Claude Code agent runs + LLM reviewer scoring)
 - `codex` CLI (for Codex agent runs)
-- `ANTHROPIC_API_KEY` environment variable (for the LLM reviewer)

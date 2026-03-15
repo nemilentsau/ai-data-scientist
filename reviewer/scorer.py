@@ -1,9 +1,9 @@
 import json
-import os
+import subprocess
 from dataclasses import dataclass
 from pathlib import Path
-from anthropic import Anthropic
 from .rubric import format_rubric_for_prompt, RUBRIC_DIMENSIONS, MAX_MODIFIER, MIN_MODIFIER
+
 
 @dataclass
 class ScoreResult:
@@ -14,6 +14,7 @@ class ScoreResult:
     total: int
     summary: str
     raw_response: str
+
 
 def build_reviewer_prompt(
     dataset_metadata,
@@ -77,7 +78,7 @@ def score_analysis(
     dataset_metadata,
     results_dir: Path,
 ) -> ScoreResult:
-    """Score an agent's analysis of a dataset."""
+    """Score an agent's analysis using claude CLI (same auth as the harness)."""
     # Read agent outputs
     report_path = results_dir / "analysis_report.md"
     analysis_report = report_path.read_text() if report_path.exists() else "[No analysis report found]"
@@ -95,17 +96,22 @@ def score_analysis(
 
     prompt = build_reviewer_prompt(dataset_metadata, analysis_report, session_transcript)
 
-    client = Anthropic()
-    response = client.messages.create(
-        model="claude-sonnet-4-20250514",
-        max_tokens=4096,
-        messages=[{"role": "user", "content": prompt}],
+    # Use claude CLI — same OAuth auth the user already has
+    result = subprocess.run(
+        ["claude", "-p", prompt, "--output-format", "json", "--max-turns", "1"],
+        capture_output=True,
+        text=True,
+        timeout=120,
     )
 
-    raw = response.content[0].text
+    if result.returncode != 0:
+        raise RuntimeError(f"claude CLI failed: {result.stderr}")
 
-    # Parse JSON from response
-    # Try to extract JSON from markdown code blocks if present
+    # claude -p --output-format json returns a JSON object with a "result" field
+    cli_output = json.loads(result.stdout)
+    raw = cli_output.get("result", result.stdout)
+
+    # Parse the scoring JSON from the response
     json_str = raw
     if "```json" in raw:
         json_str = raw.split("```json")[1].split("```")[0]

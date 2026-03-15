@@ -10,7 +10,6 @@ PROMPT="$(cat "${SCRIPT_DIR}/prompt_template.txt")"
 
 # Create isolated working directory
 WORK_DIR=$(mktemp -d)
-trap "rm -rf ${WORK_DIR}" EXIT
 
 cp "${DATASET_CSV}" "${WORK_DIR}/dataset.csv"
 mkdir -p "${WORK_DIR}/plots"
@@ -34,12 +33,18 @@ codex exec \
   --json \
   -q "${PROMPT}" \
   > "${RESULTS_DIR}/trace.jsonl" \
-  2> "${RESULTS_DIR}/session.log"
+  2> "${RESULTS_DIR}/session.log" || true
 
-# Copy outputs to results
-cp -r "${WORK_DIR}/analysis_report.md" "${RESULTS_DIR}/" 2>/dev/null || true
-cp -r "${WORK_DIR}/plots" "${RESULTS_DIR}/" 2>/dev/null || true
-cp -r "${WORK_DIR}"/*.py "${RESULTS_DIR}/" 2>/dev/null || true
+# Copy outputs to results — do this BEFORE cleaning up
+cp "${WORK_DIR}/analysis_report.md" "${RESULTS_DIR}/" 2>/dev/null || true
+[ -d "${WORK_DIR}/plots" ] && [ "$(ls -A "${WORK_DIR}/plots" 2>/dev/null)" ] && \
+  cp -r "${WORK_DIR}/plots" "${RESULTS_DIR}/"
+for f in "${WORK_DIR}"/*.py; do
+  [ -f "$f" ] && cp "$f" "${RESULTS_DIR}/"
+done
 
 echo "Codex analysis complete for ${DATASET_NAME}"
-echo "Trace: $(wc -l < "${RESULTS_DIR}/trace.jsonl") events logged"
+[ -f "${RESULTS_DIR}/trace.jsonl" ] && echo "Trace: $(wc -l < "${RESULTS_DIR}/trace.jsonl") events logged"
+
+# Clean up
+rm -rf "${WORK_DIR}"
