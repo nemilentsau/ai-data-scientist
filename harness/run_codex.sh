@@ -15,8 +15,17 @@ trap "rm -rf ${WORK_DIR}" EXIT
 cp "${DATASET_CSV}" "${WORK_DIR}/dataset.csv"
 mkdir -p "${WORK_DIR}/plots"
 
+# Create a fresh venv for the agent with common DS packages
+uv venv "${WORK_DIR}/.venv" --python 3.14 --quiet
+uv pip install --python "${WORK_DIR}/.venv/bin/python" --quiet \
+  numpy pandas scipy scikit-learn matplotlib seaborn statsmodels lifelines
+
 # Create results directory
 mkdir -p "${RESULTS_DIR}"
+
+# Ensure the agent uses its own venv, not the project's
+export VIRTUAL_ENV="${WORK_DIR}/.venv"
+export PATH="${WORK_DIR}/.venv/bin:${PATH}"
 
 # Run Codex CLI headless with --json for structured JSONL trace
 cd "${WORK_DIR}"
@@ -26,13 +35,6 @@ codex exec \
   -q "${PROMPT}" \
   > "${RESULTS_DIR}/trace.jsonl" \
   2> "${RESULTS_DIR}/session.log"
-
-# Also save just the final assistant message
-codex exec \
-  --approval-mode full-auto \
-  -o "${RESULTS_DIR}/codex_output.txt" \
-  -q "${PROMPT}" \
-  2>/dev/null || true
 
 # Copy outputs to results
 cp -r "${WORK_DIR}/analysis_report.md" "${RESULTS_DIR}/" 2>/dev/null || true

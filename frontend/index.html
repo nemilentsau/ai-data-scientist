@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Trace Viewer — AI Data Scientist Benchmark</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header>
+    <h1>Trace Viewer</h1>
+    <p class="subtitle">AI Data Scientist Benchmark</p>
+  </header>
+
+  <div id="controls">
+    <div class="file-input-group">
+      <label for="file-input" class="file-label">Load trace.jsonl</label>
+      <input type="file" id="file-input" accept=".jsonl,.json,.log">
+      <span id="file-name" class="file-name">No file loaded</span>
+    </div>
+    <div class="filter-group">
+      <label>Tools:</label>
+      <div id="tool-filters"></div>
+    </div>
+    <div class="toggle-group">
+      <label><input type="checkbox" id="show-responses"> Responses</label>
+      <label><input type="checkbox" id="errors-only"> Errors only</label>
+    </div>
+  </div>
+
+  <div id="summary-bar" class="hidden">
+    <div class="stat"><span class="stat-value" id="stat-total">0</span><span class="stat-label">Events</span></div>
+    <div class="stat"><span class="stat-value" id="stat-tools">0</span><span class="stat-label">Tool Calls</span></div>
+    <div class="stat"><span class="stat-value" id="stat-errors">0</span><span class="stat-label">Errors</span></div>
+    <div class="stat"><span class="stat-value" id="stat-duration">—</span><span class="stat-label">Duration</span></div>
+    <div class="stat"><span class="stat-value" id="stat-cost">—</span><span class="stat-label">Cost</span></div>
+  </div>
+
+  <main id="timeline" class="hidden"></main>
+
+  <div id="empty-state">
+    <div class="empty-icon">📂</div>
+    <p>Drop a <code>trace.jsonl</code> file here or click "Load trace.jsonl"</p>
+    <p class="hint">Find traces at <code>results/claude/&lt;dataset&gt;/trace.jsonl</code></p>
+  </div>
+
+  <div id="detail-modal" class="modal hidden">
+    <div class="modal-backdrop"></div>
+    <div class="modal-content">
+      <button class="modal-close">&times;</button>
+      <h3 id="modal-title"></h3>
+      <pre id="modal-body"></pre>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

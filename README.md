@@ -99,6 +99,10 @@ ai-data-scientist/
 │   ├── scorer.py             # LLM-based reviewer (reads trace.jsonl)
 │   └── report.py             # Markdown comparison report generator
 ├── tests/                    # pytest suite
+├── frontend/
+│   ├── index.html            # Trace viewer UI
+│   ├── styles.css
+│   └── app.js
 ├── results/                  # Agent outputs + scores (git-ignored)
 └── run_benchmark.py          # Orchestrator
 ```
@@ -118,6 +122,23 @@ Each analysis is scored on 7 dimensions (0-5 each, max 35):
 | Conclusions | Correct, nuanced, acknowledges limitations |
 
 Bonus/penalty modifiers (up to +/-3) for proactive exploration, catching secondary patterns, hallucinating nonexistent patterns, or crashing.
+
+## Trace viewer
+
+```bash
+uv run python frontend/serve.py
+```
+
+Opens `http://localhost:8080` in your browser. Pass a custom port with `uv run python frontend/serve.py 3000`.
+
+Drag and drop a `trace.jsonl` file or click "Load trace.jsonl". The viewer shows:
+- Timeline of every tool call with timestamps and deltas between steps
+- Color-coded icons per tool type (Bash, Read, Write, Edit, Grep, Glob)
+- Error highlighting with inline error messages
+- Expandable inputs/outputs per event
+- Click any event for the full raw JSON
+- Filter by tool type, toggle responses, or show errors only
+- Summary bar with total events, errors, duration, and cost
 
 ## Tests
 

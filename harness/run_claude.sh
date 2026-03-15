@@ -16,6 +16,11 @@ trap "rm -rf ${WORK_DIR}" EXIT
 cp "${DATASET_CSV}" "${WORK_DIR}/dataset.csv"
 mkdir -p "${WORK_DIR}/plots"
 
+# Create a fresh venv for the agent with common DS packages
+uv venv "${WORK_DIR}/.venv" --python 3.14 --quiet
+uv pip install --python "${WORK_DIR}/.venv/bin/python" --quiet \
+  numpy pandas scipy scikit-learn matplotlib seaborn statsmodels lifelines
+
 # Create results directory
 mkdir -p "${RESULTS_DIR}"
 
@@ -27,6 +32,10 @@ echo "Trace file: ${TRACE_FILE}"
 mkdir -p "${WORK_DIR}/.claude/hooks"
 cp "${PROJECT_ROOT}/.claude/settings.json" "${WORK_DIR}/.claude/settings.json"
 cp "${PROJECT_ROOT}/.claude/hooks/trace.sh" "${WORK_DIR}/.claude/hooks/trace.sh"
+
+# Ensure the agent uses its own venv, not the project's
+export VIRTUAL_ENV="${WORK_DIR}/.venv"
+export PATH="${WORK_DIR}/.venv/bin:${PATH}"
 
 # Run Claude Code headless
 cd "${WORK_DIR}"
