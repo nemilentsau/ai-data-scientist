@@ -1,0 +1,11 @@
+results/claude/
+results/codex/
+results/benchmark_report.md
+datasets/generated/
+__pycache__/
+*.pyc
+.env
+*.egg-info/
+dist/
+build/
+.venv/
