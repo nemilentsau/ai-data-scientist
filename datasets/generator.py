@@ -34,7 +34,6 @@ def generate_simpsons_paradox(save_path=None):
         age = (40 + severity * 3 + rng.normal(0, 5, n)).clip(20, 90).astype(int)
         for i in range(n):
             rows.append({
-                "patient_id": len(rows) + 1,
                 "department": dept,
                 "age": age[i],
                 "severity_index": round(severity[i], 2),
@@ -44,6 +43,8 @@ def generate_simpsons_paradox(save_path=None):
                 "readmitted": int(rng.random() < 0.1),
             })
     df = pd.DataFrame(rows)
+    df = df.sample(frac=1, random_state=rng).reset_index(drop=True)
+    df.insert(0, "patient_id", range(1, len(df) + 1))
     if save_path:
         df.to_csv(save_path, index=False)
     return df
