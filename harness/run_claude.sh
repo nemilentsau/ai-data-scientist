@@ -6,6 +6,7 @@ DATASET_CSV="${2:?Missing dataset CSV path}"
 RESULTS_DIR="${3:?Missing results directory}"
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 PROMPT="$(cat "${SCRIPT_DIR}/prompt_template.txt")"
 
 # Create isolated working directory
@@ -17,6 +18,15 @@ mkdir -p "${WORK_DIR}/plots"
 
 # Create results directory
 mkdir -p "${RESULTS_DIR}"
+
+# Set TRACE_FILE so the PostToolUse hook logs every step
+export TRACE_FILE="${RESULTS_DIR}/trace.jsonl"
+echo "Trace file: ${TRACE_FILE}"
+
+# Copy hook config into the work dir so claude picks it up
+mkdir -p "${WORK_DIR}/.claude/hooks"
+cp "${PROJECT_ROOT}/.claude/settings.json" "${WORK_DIR}/.claude/settings.json"
+cp "${PROJECT_ROOT}/.claude/hooks/trace.sh" "${WORK_DIR}/.claude/hooks/trace.sh"
 
 # Run Claude Code headless
 cd "${WORK_DIR}"
@@ -32,3 +42,4 @@ cp -r "${WORK_DIR}/plots" "${RESULTS_DIR}/" 2>/dev/null || true
 cp -r "${WORK_DIR}"/*.py "${RESULTS_DIR}/" 2>/dev/null || true
 
 echo "Claude analysis complete for ${DATASET_NAME}"
+echo "Trace: $(wc -l < "${TRACE_FILE}") events logged"

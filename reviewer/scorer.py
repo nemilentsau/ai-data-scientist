@@ -82,12 +82,16 @@ def score_analysis(
     report_path = results_dir / "analysis_report.md"
     analysis_report = report_path.read_text() if report_path.exists() else "[No analysis report found]"
 
-    # Read session transcript
-    if agent == "claude":
+    # Read session transcript — prefer the detailed trace if available
+    trace_path = results_dir / "trace.jsonl"
+    if trace_path.exists():
+        session_transcript = trace_path.read_text()
+    elif agent == "claude":
         transcript_path = results_dir / "session.json"
+        session_transcript = transcript_path.read_text() if transcript_path.exists() else "[No session transcript found]"
     else:
         transcript_path = results_dir / "session.log"
-    session_transcript = transcript_path.read_text() if transcript_path.exists() else "[No session transcript found]"
+        session_transcript = transcript_path.read_text() if transcript_path.exists() else "[No session transcript found]"
 
     prompt = build_reviewer_prompt(dataset_metadata, analysis_report, session_transcript)
 

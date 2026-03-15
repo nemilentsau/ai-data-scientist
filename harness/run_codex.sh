@@ -18,12 +18,21 @@ mkdir -p "${WORK_DIR}/plots"
 # Create results directory
 mkdir -p "${RESULTS_DIR}"
 
-# Run Codex CLI headless
+# Run Codex CLI headless with --json for structured JSONL trace
 cd "${WORK_DIR}"
-codex --approval-mode full-auto \
-  --full-stdout \
+codex exec \
+  --approval-mode full-auto \
+  --json \
   -q "${PROMPT}" \
-  2>&1 | tee "${RESULTS_DIR}/session.log"
+  > "${RESULTS_DIR}/trace.jsonl" \
+  2> "${RESULTS_DIR}/session.log"
+
+# Also save just the final assistant message
+codex exec \
+  --approval-mode full-auto \
+  -o "${RESULTS_DIR}/codex_output.txt" \
+  -q "${PROMPT}" \
+  2>/dev/null || true
 
 # Copy outputs to results
 cp -r "${WORK_DIR}/analysis_report.md" "${RESULTS_DIR}/" 2>/dev/null || true
@@ -31,3 +40,4 @@ cp -r "${WORK_DIR}/plots" "${RESULTS_DIR}/" 2>/dev/null || true
 cp -r "${WORK_DIR}"/*.py "${RESULTS_DIR}/" 2>/dev/null || true
 
 echo "Codex analysis complete for ${DATASET_NAME}"
+echo "Trace: $(wc -l < "${RESULTS_DIR}/trace.jsonl") events logged"
