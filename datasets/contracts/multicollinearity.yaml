@@ -1,0 +1,43 @@
+name: "multicollinearity"
+category: "Regression"
+difficulty: "medium"
+description: "Multiple features that are highly correlated with each other."
+expected_findings:
+  - "Detect multicollinearity via VIF or correlation matrix"
+  - "Note unstable individual coefficient estimates"
+  - "Suggest remediation (drop features, PCA, regularisation)"
+key_pattern: "Features are strongly inter-correlated, inflating coefficient variance"
+traps:
+  - "Trusting individual coefficient p-values at face value"
+  - "Ignoring correlation between predictors"
+generator_fn: "generate_multicollinearity"
+evaluation_spec:
+  task_family: "predictive"
+  must_have:
+    -
+      id: "multicollinearity_predictor_correlation_detected"
+      description: "Detect strong correlation or high VIF among predictors such as square footage, rooms, and lot size."
+      is_core_insight: true
+    -
+      id: "multicollinearity_instability_explained"
+      description: "Explain that multicollinearity inflates coefficient variance or makes individual coefficients unstable."
+    -
+      id: "multicollinearity_remediation_suggested"
+      description: "Suggest a remediation such as dropping redundant features, regularization, or dimensionality reduction."
+  supporting:
+    -
+      id: "multicollinearity_correlation_matrix_or_vif"
+      description: "Use a correlation matrix, VIF, or equivalent diagnostic to support the claim."
+    -
+      id: "multicollinearity_redundant_features_named"
+      description: "Identify the specific redundant predictors driving the issue."
+    -
+      id: "multicollinearity_predictive_vs_interpretive_tradeoff"
+      description: "Note that predictive fit may remain decent even while coefficient interpretation becomes unreliable."
+  forbidden:
+    -
+      id: "multicollinearity_trusts_individual_p_values"
+      description: "Interpret individual coefficient p-values at face value without caveats."
+    -
+      id: "multicollinearity_ignores_predictor_correlation"
+      description: "Ignore the high correlation structure among predictors."

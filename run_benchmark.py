@@ -2,11 +2,11 @@
 """Benchmark orchestrator: generate datasets → run agents → score → report."""
 
 import argparse
+import json
 import subprocess
 import sys
-import json
-from pathlib import Path
 from datetime import datetime
+from pathlib import Path
 
 ROOT = Path(__file__).parent
 DATASETS_DIR = ROOT / "datasets" / "generated"
@@ -75,12 +75,34 @@ def score_results(dataset_names: list[str], agents: list[str], results_dir: Path
                 score_file.write_text(json.dumps({
                     "dataset": result.dataset_name,
                     "agent": result.agent,
-                    "scores": result.scores,
-                    "modifiers": result.modifiers,
-                    "total": result.total,
+                    "verdict": result.verdict,
+                    "core_insight_pass": result.core_insight_pass,
+                    "required_coverage": result.required_coverage,
+                    "supporting_coverage": result.supporting_coverage,
+                    "oracle_attainment": result.oracle_attainment,
+                    "oracle_metric_name": result.oracle_metric_name,
+                    "oracle_agent_value": result.oracle_agent_value,
+                    "fatal_errors": result.fatal_errors,
+                    "efficiency": result.efficiency,
+                    "criterion_results": [
+                        {
+                            "criterion_id": item.criterion_id,
+                            "group": item.group,
+                            "status": item.status,
+                            "justification": item.justification,
+                            "evidence": item.evidence,
+                        }
+                        for item in result.criterion_results
+                    ],
                     "summary": result.summary,
+                    "raw_response": result.raw_response,
                 }, indent=2))
-                print(f"    Total: {result.total}")
+                print(
+                    "    "
+                    f"Verdict: {result.verdict}, "
+                    f"required={result.required_coverage:.0%}, "
+                    f"supporting={result.supporting_coverage:.0%}"
+                )
             except Exception as e:
                 print(f"    ERROR scoring {agent}/{ds_name}: {e}")
 

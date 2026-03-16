@@ -1,0 +1,46 @@
+name: "concept_drift"
+category: "Temporal"
+difficulty: "hard"
+description: "Underlying distribution shifts abruptly at the midpoint of the series."
+expected_findings:
+  - "Detect distribution shift or concept drift"
+  - "Split analysis into pre- and post-shift segments"
+  - "Report degraded performance of a single global model"
+key_pattern: "Abrupt distribution change at the midpoint of the dataset"
+traps:
+  - "Fitting a single model to all data without checking for drift"
+  - "Ignoring temporal ordering"
+generator_fn: "generate_concept_drift"
+evaluation_spec:
+  task_family: "specialized"
+  must_have:
+    -
+      id: "concept_drift_temporal_order_respected"
+      description: "Preserve temporal order instead of shuffling or pooling away time."
+    -
+      id: "concept_drift_drift_detected"
+      description: "Detect an abrupt distribution or relationship shift near the midpoint of the series."
+      is_core_insight: true
+    -
+      id: "concept_drift_pre_post_segments_compared"
+      description: "Compare pre-drift and post-drift segments explicitly."
+    -
+      id: "concept_drift_single_global_model_problem_noted"
+      description: "Explain that one global model is misleading or degraded across the whole time span."
+  supporting:
+    -
+      id: "concept_drift_relationship_flip_described"
+      description: "Note that the temperature-defect relationship changes sign across regimes."
+    -
+      id: "concept_drift_changepoint_or_rolling_diagnostic"
+      description: "Use a changepoint, rolling metric, or equivalent temporal diagnostic."
+    -
+      id: "concept_drift_adaptation_strategy_suggested"
+      description: "Suggest retraining, segmentation, monitoring, or another drift-aware strategy."
+  forbidden:
+    -
+      id: "concept_drift_single_model_without_drift_check"
+      description: "Fit a single pooled model without checking for drift."
+    -
+      id: "concept_drift_ignores_time_order"
+      description: "Ignore or destroy the temporal ordering in the main analysis."

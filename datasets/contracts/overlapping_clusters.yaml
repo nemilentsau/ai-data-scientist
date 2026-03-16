@@ -1,0 +1,43 @@
+name: "overlapping_clusters"
+category: "Clustering"
+difficulty: "hard"
+description: "Clusters with significant overlap — ambiguous boundaries."
+expected_findings:
+  - "Note cluster ambiguity"
+  - "Perform silhouette or gap-statistic analysis"
+  - "Report uncertainty in cluster assignment"
+key_pattern: "Clusters overlap substantially, making hard assignments unreliable"
+traps:
+  - "Forcing k = 3 without validation"
+  - "Ignoring low silhouette scores"
+generator_fn: "generate_overlapping_clusters"
+evaluation_spec:
+  task_family: "clustering"
+  must_have:
+    -
+      id: "overlapping_clusters_ambiguity_noted"
+      description: "State that the cluster structure is ambiguous or strongly overlapping."
+      is_core_insight: true
+    -
+      id: "overlapping_clusters_validation_metric_used"
+      description: "Use silhouette, gap statistic, or equivalent evidence to assess weak separation."
+    -
+      id: "overlapping_clusters_uncertainty_reported"
+      description: "Report uncertainty in assignments or caution against overconfident hard clusters."
+  supporting:
+    -
+      id: "overlapping_clusters_low_quality_metric_interpreted"
+      description: "Interpret a modest or low silhouette-like score correctly rather than overselling it."
+    -
+      id: "overlapping_clusters_multiple_k_considered"
+      description: "Compare multiple candidate cluster counts instead of forcing a single answer immediately."
+    -
+      id: "overlapping_clusters_soft_or_qualitative_alternative"
+      description: "Suggest a softer segmentation or qualitative interpretation if hard clustering is weak."
+  forbidden:
+    -
+      id: "overlapping_clusters_forces_clean_clusters"
+      description: "Claim the clusters are cleanly separated when the data are visibly overlapping."
+    -
+      id: "overlapping_clusters_forces_k_three_without_validation"
+      description: "Force k = 3 as a strong conclusion without supporting evidence."

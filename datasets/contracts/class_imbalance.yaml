@@ -1,0 +1,52 @@
+name: "class_imbalance"
+category: "Classification"
+difficulty: "medium"
+description: "Binary classification with a 95/5 class split."
+expected_findings:
+  - "Report balanced metrics (F1, precision, recall, AUC)"
+  - "Apply resampling or class-weight adjustment"
+  - "Evaluate with appropriate strategy (stratified CV)"
+key_pattern: "Extreme class imbalance — 95 % majority, 5 % minority"
+traps:
+  - "Reporting accuracy only"
+  - "Ignoring the minority class entirely"
+generator_fn: "generate_class_imbalance"
+evaluation_spec:
+  task_family: "predictive"
+  must_have:
+    -
+      id: "class_imbalance_imbalance_identified"
+      description: "Identify the extreme majority/minority class imbalance."
+      is_core_insight: true
+    -
+      id: "class_imbalance_balanced_metrics_reported"
+      description: "Report minority-sensitive metrics such as precision, recall, F1, PR-AUC, or ROC-AUC."
+    -
+      id: "class_imbalance_minority_class_evaluated"
+      description: "Evaluate fraud detection quality instead of reporting only overall accuracy."
+    -
+      id: "class_imbalance_imbalance_strategy_used"
+      description: "Use or recommend stratification, class weights, or resampling to address imbalance."
+  supporting:
+    -
+      id: "class_imbalance_baseline_accuracy_trap_noted"
+      description: "Explain why high accuracy is a weak metric under a 95/5 split."
+    -
+      id: "class_imbalance_confusion_matrix_or_pr_curve"
+      description: "Include a confusion matrix, PR curve, or equivalent minority-focused diagnostic."
+    -
+      id: "class_imbalance_stratified_validation"
+      description: "Use stratified validation or explicitly preserve class proportions in evaluation."
+  forbidden:
+    -
+      id: "class_imbalance_accuracy_only_reporting"
+      description: "Report accuracy alone as the main success metric."
+    -
+      id: "class_imbalance_ignores_minority_class"
+      description: "Ignore the minority fraud class in model assessment or conclusions."
+  oracle_metric:
+    name: "roc_auc"
+    description: "Best reported ROC-AUC for the fraud classifier."
+    direction: "higher_is_better"
+    baseline_value: 0.5
+    oracle_value: 1.0

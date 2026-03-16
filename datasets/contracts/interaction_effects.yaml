@@ -1,0 +1,49 @@
+name: "interaction_effects"
+category: "Classification"
+difficulty: "hard"
+description: "Label depends on A x B interaction, not main effects alone."
+expected_findings:
+  - "Test for interaction terms or use tree-based models"
+  - "Show that main-effects-only model underperforms"
+  - "Identify A x B as the key interaction"
+key_pattern: "Classification boundary is driven by an A x B interaction effect"
+traps:
+  - "Only checking main effects"
+  - "Using a purely additive model"
+generator_fn: "generate_interaction_effects"
+evaluation_spec:
+  task_family: "predictive"
+  must_have:
+    -
+      id: "interaction_effects_interaction_tested"
+      description: "Test an interaction term or use a model capable of capturing non-additive effects."
+    -
+      id: "interaction_effects_main_effects_only_underperforms"
+      description: "Show that a main-effects-only model underperforms an interaction-aware approach."
+    -
+      id: "interaction_effects_channel_time_interaction_identified"
+      description: "Identify the interaction between channel_score and time_of_day_hour as the key driver."
+      is_core_insight: true
+  supporting:
+    -
+      id: "interaction_effects_interaction_visualized"
+      description: "Visualize or tabulate how conversion changes across channel-time combinations."
+    -
+      id: "interaction_effects_secondary_features_not_overstated"
+      description: "Avoid overstating secondary features like device or page load as the main pattern."
+    -
+      id: "interaction_effects_non_additive_language"
+      description: "Explain that the effect of one variable depends on the value of the other."
+  forbidden:
+    -
+      id: "interaction_effects_main_effects_only_conclusion"
+      description: "Conclude from a purely additive model without checking interactions."
+    -
+      id: "interaction_effects_misses_interaction_pattern"
+      description: "Explain conversion entirely with separate main effects while missing the interaction."
+  oracle_metric:
+    name: "roc_auc"
+    description: "Best reported ROC-AUC for the interaction-aware classifier."
+    direction: "higher_is_better"
+    baseline_value: 0.5
+    oracle_value: 1.0

@@ -1,0 +1,49 @@
+name: "well_separated_clusters"
+category: "Clustering"
+difficulty: "easy"
+description: "Three clearly separated blobs in 2-D space."
+expected_findings:
+  - "Identify k = 3 as optimal cluster count"
+  - "Achieve high silhouette score"
+  - "Visualise clusters in scatter plot"
+key_pattern: "Three well-separated Gaussian blobs"
+traps:
+  - "Not visualising the data"
+  - "Choosing an arbitrary k without justification"
+generator_fn: "generate_well_separated_clusters"
+evaluation_spec:
+  task_family: "clustering"
+  must_have:
+    -
+      id: "well_separated_clusters_k_equals_three_identified"
+      description: "Identify three clusters as the best segmentation."
+      is_core_insight: true
+    -
+      id: "well_separated_clusters_cluster_count_justified"
+      description: "Justify the cluster count with silhouette, elbow, or equivalent evidence."
+    -
+      id: "well_separated_clusters_clusters_visualized"
+      description: "Visualize the cluster structure or otherwise make the separation clear."
+  supporting:
+    -
+      id: "well_separated_clusters_high_separation_noted"
+      description: "Describe the clusters as clearly separated rather than ambiguous."
+    -
+      id: "well_separated_clusters_cluster_profiles_described"
+      description: "Summarize how the customer segments differ on key features."
+    -
+      id: "well_separated_clusters_quality_metric_reported"
+      description: "Report a clustering quality metric such as silhouette score."
+  forbidden:
+    -
+      id: "well_separated_clusters_arbitrary_k_choice"
+      description: "Choose a cluster count arbitrarily without validating it."
+    -
+      id: "well_separated_clusters_no_cluster_visualization"
+      description: "Fail to inspect cluster structure visually or with equivalent diagnostics."
+  oracle_metric:
+    name: "silhouette_score"
+    description: "Best reported silhouette score for the chosen clustering."
+    direction: "higher_is_better"
+    baseline_value: 0.0
+    oracle_value: 1.0

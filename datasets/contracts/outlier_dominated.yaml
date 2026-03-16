@@ -1,0 +1,43 @@
+name: "outlier_dominated"
+category: "Robustness"
+difficulty: "medium"
+description: "Dataset with ~5 % extreme outliers that dominate OLS fit."
+expected_findings:
+  - "Detect outliers via IQR, z-scores or visual inspection"
+  - "Compare robust vs. non-robust estimators"
+  - "Report influence of outliers on results"
+key_pattern: "Small fraction of extreme values distorts ordinary least-squares"
+traps:
+  - "Using OLS without outlier diagnostics"
+  - "Silently removing data without justification"
+generator_fn: "generate_outlier_dominated"
+evaluation_spec:
+  task_family: "predictive"
+  must_have:
+    -
+      id: "outlier_dominated_outliers_detected"
+      description: "Detect the small set of extreme order-total outliers or data-entry errors."
+    -
+      id: "outlier_dominated_influence_on_fit_explained"
+      description: "Explain that the outliers dominate ordinary least-squares or distort the main relationship."
+      is_core_insight: true
+    -
+      id: "outlier_dominated_robust_or_justified_handling"
+      description: "Compare a robust approach against naive OLS or justify a careful outlier handling strategy."
+  supporting:
+    -
+      id: "outlier_dominated_reconstructs_expected_total"
+      description: "Use the component variables to show the extreme totals are inconsistent with normal orders."
+    -
+      id: "outlier_dominated_outlier_fraction_quantified"
+      description: "Quantify roughly how many points are outliers or how influential they are."
+    -
+      id: "outlier_dominated_segment_not_confused"
+      description: "Avoid confusing customer segments with the main outlier problem."
+  forbidden:
+    -
+      id: "outlier_dominated_trusts_ols_without_diagnostics"
+      description: "Fit or interpret OLS without any outlier diagnostics."
+    -
+      id: "outlier_dominated_drops_rows_without_justification"
+      description: "Remove anomalous rows without explaining why."

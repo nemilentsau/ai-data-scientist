@@ -1,0 +1,44 @@
+name: "pure_noise"
+category: "Null/Baseline"
+difficulty: "medium"
+description: "Dataset with no real signal — pure random noise."
+expected_findings:
+  - "Conclude no statistically significant relationships"
+  - "Report low R² or equivalent metric"
+  - "Resist finding spurious patterns"
+key_pattern: "No true relationship between any variables"
+traps:
+  - "Overfitting noise"
+  - "Finding and reporting spurious patterns as real"
+  - "Not performing significance tests"
+generator_fn: "generate_pure_noise"
+evaluation_spec:
+  task_family: "discovery"
+  must_have:
+    -
+      id: "pure_noise_no_signal_conclusion"
+      description: "Conclude that there is no meaningful signal or stable relationship in the dataset."
+      verification_hint: "The final answer must explicitly reject the existence of a real pattern."
+      is_core_insight: true
+    -
+      id: "pure_noise_reports_weak_fit"
+      description: "Report weak predictive power, low explained variance, or non-significant findings."
+      verification_hint: "Look for low R^2, failed significance tests, or equivalent evidence."
+    -
+      id: "pure_noise_supports_null_with_evidence"
+      description: "Support the null conclusion with actual tests or comparisons instead of guesswork."
+      verification_hint: "The analysis should cite tests, metrics, or repeated checks."
+  supporting:
+    -
+      id: "pure_noise_tests_multiple_relationships"
+      description: "Check more than one candidate relationship or variable pairing before concluding there is no signal."
+    -
+      id: "pure_noise_visualizes_lack_of_structure"
+      description: "Include a visualization that shows the lack of structure or predictive pattern."
+  forbidden:
+    -
+      id: "pure_noise_claims_spurious_relationship"
+      description: "Claim a specific relationship as real despite the dataset being pure noise."
+    -
+      id: "pure_noise_overfit_as_signal"
+      description: "Treat overfit model output as evidence of real signal."

@@ -1,0 +1,46 @@
+name: "survival_censored"
+category: "Specialized"
+difficulty: "hard"
+description: "Right-censored survival/time-to-event data."
+expected_findings:
+  - "Use Kaplan-Meier estimator or Cox proportional-hazards model"
+  - "Account for censoring in analysis"
+  - "Produce survival curves"
+key_pattern: "Right-censored observations require survival-analysis methods"
+traps:
+  - "Computing naive mean of observed times"
+  - "Ignoring the censoring indicator"
+generator_fn: "generate_survival_censored"
+evaluation_spec:
+  task_family: "specialized"
+  must_have:
+    -
+      id: "survival_censored_censoring_accounted_for"
+      description: "Explicitly use the censoring indicator instead of treating observed times as complete data."
+      is_core_insight: true
+    -
+      id: "survival_censored_survival_method_used"
+      description: "Use a survival-analysis method such as Kaplan-Meier or Cox regression."
+    -
+      id: "survival_censored_treatment_groups_compared"
+      description: "Compare the treatment groups using a censoring-aware method."
+    -
+      id: "survival_censored_drug_b_better_survival"
+      description: "Conclude that Drug_B shows better survival than Drug_A or an equivalent treatment advantage."
+  supporting:
+    -
+      id: "survival_censored_survival_curves_shown"
+      description: "Produce survival curves or an equivalent visualization."
+    -
+      id: "survival_censored_hazard_or_risk_interpreted"
+      description: "Interpret treatment effect in terms of survival, hazard, or time-to-event risk."
+    -
+      id: "survival_censored_covariates_considered"
+      description: "Acknowledge that age or stage may also affect survival when discussing results."
+  forbidden:
+    -
+      id: "survival_censored_naive_mean_time"
+      description: "Compute or compare naive mean observed times while ignoring censoring."
+    -
+      id: "survival_censored_ignores_event_indicator"
+      description: "Ignore the event/censoring indicator in the final analysis."

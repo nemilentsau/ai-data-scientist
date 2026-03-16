@@ -1,0 +1,54 @@
+name: "simpsons_paradox"
+category: "Causal/Confounding"
+difficulty: "hard"
+description: "Trend reversal when grouped by a confounding variable."
+expected_findings:
+  - "Segment data by group variable"
+  - "Report trend reversal between aggregate and per-group analysis"
+  - "Identify the confounding group variable"
+key_pattern: "Aggregate trend reverses direction within every sub-group"
+traps:
+  - "Reporting only the aggregate trend"
+  - "Ignoring the grouping variable"
+generator_fn: "generate_simpsons_paradox"
+evaluation_spec:
+  task_family: "discovery"
+  must_have:
+    -
+      id: "simpsons_paradox_aggregate_effect"
+      description: "Compute or explicitly compare the aggregate treatment effect."
+      verification_hint: "Look for an overall treatment comparison before stratification."
+    -
+      id: "simpsons_paradox_within_group_effects"
+      description: "Compute or explicitly compare treatment effects within each group."
+      verification_hint: "Look for subgroup comparisons rather than aggregate-only analysis."
+    -
+      id: "simpsons_paradox_reversal_identified"
+      description: "Explicitly state that the treatment direction reverses between aggregate and within-group analysis."
+      verification_hint: "The analysis must say the overall trend reverses within every subgroup."
+      is_core_insight: true
+    -
+      id: "simpsons_paradox_confounder_identified"
+      description: "Identify the grouping variable as the confounder driving the reversal."
+      verification_hint: "The analysis should explain that group composition drives the aggregate mismatch."
+    -
+      id: "simpsons_paradox_correct_conclusion"
+      description: "Give the practical conclusion based on the stratified analysis, not the aggregate-only trend."
+      verification_hint: "The final recommendation should follow the within-group evidence."
+  supporting:
+    -
+      id: "simpsons_paradox_named_simpsons_paradox"
+      description: "Name Simpson's paradox or clearly explain the mechanism in equivalent language."
+    -
+      id: "simpsons_paradox_effect_sizes_quantified"
+      description: "Quantify the aggregate and subgroup effect sizes."
+    -
+      id: "simpsons_paradox_visualized_reversal"
+      description: "Include a visualization or table that makes the reversal visible."
+  forbidden:
+    -
+      id: "simpsons_paradox_aggregate_only_conclusion"
+      description: "Reach a final conclusion from the aggregate trend while ignoring subgroup reversal."
+    -
+      id: "simpsons_paradox_ignores_grouping_variable"
+      description: "Ignore the grouping variable or claim there is no confounding structure."

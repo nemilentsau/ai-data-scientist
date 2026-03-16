@@ -1,0 +1,46 @@
+name: "anscombes_quartet"
+category: "Visualization"
+difficulty: "medium"
+description: "Four datasets with identical summary statistics but very different distributions."
+expected_findings:
+  - "Visualize all four datasets"
+  - "Note that summary statistics are identical"
+  - "Identify distinct shapes (linear, quadratic, outlier, vertical)"
+key_pattern: "Identical means, variances, correlations and regression lines but different shapes"
+traps:
+  - "Only computing summary statistics without plotting"
+  - "Treating all four subsets identically"
+generator_fn: "generate_anscombes_quartet"
+evaluation_spec:
+  task_family: "discovery"
+  must_have:
+    -
+      id: "anscombes_quartet_visualized_all_batches"
+      description: "Visualize or analyze all four batches separately rather than pooling them."
+      verification_hint: "Look for per-batch plots or explicit subgroup handling."
+    -
+      id: "anscombes_quartet_identical_summaries_noted"
+      description: "Note that the batches have very similar summary statistics or regression summaries."
+      verification_hint: "The analysis should say the high-level summaries look similar across batches."
+    -
+      id: "anscombes_quartet_different_shapes_identified"
+      description: "Explicitly state that the batches have materially different shapes despite similar summaries."
+      verification_hint: "The analysis should mention distinct patterns such as linear, nonlinear, outlier-driven, or vertical structure."
+      is_core_insight: true
+  supporting:
+    -
+      id: "anscombes_quartet_distinct_patterns_described"
+      description: "Describe the different shapes or anomalies in at least two batches."
+    -
+      id: "anscombes_quartet_summary_only_is_inadequate"
+      description: "Explain why summary statistics alone are inadequate for this dataset."
+    -
+      id: "anscombes_quartet_named_anscombe"
+      description: "Name Anscombe's quartet or explain the same lesson in equivalent language."
+  forbidden:
+    -
+      id: "anscombes_quartet_summary_only_conclusion"
+      description: "Conclude the batches are effectively the same using only summary statistics."
+    -
+      id: "anscombes_quartet_pooled_identically"
+      description: "Treat all four batches identically without acknowledging distinct shapes."

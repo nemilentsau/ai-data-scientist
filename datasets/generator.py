@@ -218,7 +218,9 @@ def generate_outlier_dominated(save_path=None):
     # 5 % outliers: data-entry errors multiply total by 100 or add huge offset
     n_outliers = int(0.05 * n)
     outlier_idx = rng.choice(n, n_outliers, replace=False)
-    order_total[outlier_idx] += rng.choice([-1, 1], n_outliers) * rng.uniform(5000, 20000, n_outliers)
+    order_total[outlier_idx] += (
+        rng.choice([-1, 1], n_outliers) * rng.uniform(5000, 20000, n_outliers)
+    )
     customer_segment = rng.choice(["New", "Returning", "VIP"], n, p=[0.4, 0.45, 0.15])
     df = pd.DataFrame({
         "order_id": range(10000, 10000 + n),
@@ -407,7 +409,10 @@ def generate_well_separated_clusters(save_path=None):
                 "avg_order_value": max(1, rng.normal(c["avg_order"], 4)),
                 "purchase_frequency_monthly": max(0.1, rng.normal(c["frequency"], 1.5)),
                 "days_since_last_purchase": max(0, rng.normal(c["recency"], 3)),
-                "total_lifetime_spend": max(10, rng.normal(c["avg_order"] * c["frequency"] * 6, 200)),
+                "total_lifetime_spend": max(
+                    10,
+                    rng.normal(c["avg_order"] * c["frequency"] * 6, 200),
+                ),
                 "support_contacts": max(0, int(rng.normal(2, 1.5))),
                 "account_age_months": rng.randint(1, 60),
             })
@@ -501,7 +506,12 @@ def generate_multimodal(save_path=None):
     component = rng.choice(3, n, p=[0.35, 0.4, 0.25])
     means = [800, 1600, 3200]
     stds = [150, 300, 500]
-    rent = np.array([rng.normal(means[c], stds[c]) for c in component]).clip(300).round(0).astype(int)
+    rent = (
+        np.array([rng.normal(means[c], stds[c]) for c in component])
+        .clip(300)
+        .round(0)
+        .astype(int)
+    )
     sq_ft = (rent * rng.uniform(0.5, 0.9, n) + rng.normal(0, 50, n)).clip(200).round(0).astype(int)
     bedrooms = np.where(rent < 1200, rng.choice([0, 1], n),
                np.where(rent < 2500, rng.choice([1, 2, 3], n),

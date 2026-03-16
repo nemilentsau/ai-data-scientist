@@ -1,0 +1,52 @@
+name: "lognormal_skew"
+category: "Transformation"
+difficulty: "medium"
+description: "Target variable follows a log-normal distribution."
+expected_findings:
+  - "Detect right skew in the target"
+  - "Apply log (or Box-Cox) transform"
+  - "Show improved model fit after transformation"
+key_pattern: "Target is log-normally distributed — heavy right skew"
+traps:
+  - "Assuming normality of the target"
+  - "Not checking residual distribution"
+generator_fn: "generate_lognormal_skew"
+evaluation_spec:
+  task_family: "predictive"
+  must_have:
+    -
+      id: "lognormal_skew_right_skew_detected"
+      description: "Detect that the target has strong right skew or heavy-tailed behavior."
+    -
+      id: "lognormal_skew_lognormal_structure_identified"
+      description: "Identify the funding target as approximately log-normal or best modeled on the log scale."
+      is_core_insight: true
+    -
+      id: "lognormal_skew_target_transformed"
+      description: "Apply a log transform, Box-Cox transform, or equivalent variance-stabilizing target treatment."
+    -
+      id: "lognormal_skew_post_transform_improvement_shown"
+      description: "Show improved fit, residual behavior, or stability after the transformation."
+  supporting:
+    -
+      id: "lognormal_skew_distribution_plot_used"
+      description: "Use a target distribution plot or residual diagnostic to justify the transform."
+    -
+      id: "lognormal_skew_back_transform_interpreted"
+      description: "Interpret results correctly on the transformed scale or after back-transformation."
+    -
+      id: "lognormal_skew_normal_target_assumption_rejected"
+      description: "Explicitly reject modeling the raw target as approximately normal."
+  forbidden:
+    -
+      id: "lognormal_skew_assumes_raw_normality"
+      description: "Assume the raw funding target is roughly normal without checking skew."
+    -
+      id: "lognormal_skew_skips_transform_despite_skew"
+      description: "Proceed with an untransformed model as if the heavy skew were unimportant."
+  oracle_metric:
+    name: "r2"
+    description: "Best reported R^2 after the chosen target transformation."
+    direction: "higher_is_better"
+    baseline_value: 0.0
+    oracle_value: 1.0

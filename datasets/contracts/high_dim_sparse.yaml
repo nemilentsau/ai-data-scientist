@@ -1,0 +1,52 @@
+name: "high_dim_sparse"
+category: "Feature Selection"
+difficulty: "medium"
+description: "100 features but only 3 are truly informative."
+expected_findings:
+  - "Perform feature selection or regularisation"
+  - "Identify the small set of informative features"
+  - "Demonstrate improved performance with fewer features"
+key_pattern: "Only 3 out of 100 features carry predictive signal"
+traps:
+  - "Using all 100 features without selection"
+  - "Overfitting on noise features"
+generator_fn: "generate_high_dim_sparse"
+evaluation_spec:
+  task_family: "predictive"
+  must_have:
+    -
+      id: "high_dim_sparse_feature_selection_used"
+      description: "Use feature selection, sparsity, or regularization instead of trusting all 100 features equally."
+    -
+      id: "high_dim_sparse_small_signal_set_identified"
+      description: "Identify that only a very small subset of features carries the predictive signal."
+      is_core_insight: true
+    -
+      id: "high_dim_sparse_true_genes_recovered"
+      description: "Recover gene_000, gene_001, and gene_002 or a very small set containing them."
+    -
+      id: "high_dim_sparse_reduced_model_benefit_shown"
+      description: "Show that a sparse model improves or preserves performance relative to using all features."
+  supporting:
+    -
+      id: "high_dim_sparse_overfitting_risk_noted"
+      description: "Explain why using all 100 features risks overfitting."
+    -
+      id: "high_dim_sparse_sparse_method_named"
+      description: "Use or recommend a sparse method such as lasso, regularized logistic regression, or feature ranking."
+    -
+      id: "high_dim_sparse_noise_features_deemphasized"
+      description: "Avoid presenting many noise genes as equally important drivers."
+  forbidden:
+    -
+      id: "high_dim_sparse_uses_all_features_uncritically"
+      description: "Use all 100 features without any feature selection or regularization discussion."
+    -
+      id: "high_dim_sparse_hallucinates_many_predictors"
+      description: "Claim that many noise features are strongly predictive without evidence."
+  oracle_metric:
+    name: "roc_auc"
+    description: "Best reported ROC-AUC for the sparse classifier."
+    direction: "higher_is_better"
+    baseline_value: 0.5
+    oracle_value: 1.0

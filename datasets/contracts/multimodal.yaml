@@ -1,0 +1,46 @@
+name: "multimodal"
+category: "EDA"
+difficulty: "medium"
+description: "Target variable is a mixture of 3 Gaussians."
+expected_findings:
+  - "Detect multimodality (histogram, KDE)"
+  - "Identify approximately 3 modes"
+  - "Avoid single-Gaussian assumptions in modelling"
+key_pattern: "Three-component Gaussian mixture in the target variable"
+traps:
+  - "Assuming normality without checking"
+  - "Not plotting the distribution"
+generator_fn: "generate_multimodal"
+evaluation_spec:
+  task_family: "discovery"
+  must_have:
+    -
+      id: "multimodal_distribution_visualized"
+      description: "Inspect the target distribution directly with a histogram, KDE, or equivalent view."
+    -
+      id: "multimodal_multimodality_identified"
+      description: "Identify that the target distribution is multimodal rather than approximately Gaussian."
+      is_core_insight: true
+    -
+      id: "multimodal_three_modes_noted"
+      description: "Recognize that the distribution has roughly three modes or market segments."
+    -
+      id: "multimodal_single_gaussian_rejected"
+      description: "Reject a single-Gaussian assumption as inappropriate for this target."
+  supporting:
+    -
+      id: "multimodal_segment_interpretation"
+      description: "Interpret the modes as distinct market segments or subpopulations."
+    -
+      id: "multimodal_mode_locations_approximated"
+      description: "Approximate where the modes occur or describe their scale meaningfully."
+    -
+      id: "multimodal_mixture_or_segmentation_suggested"
+      description: "Suggest a mixture model, segmentation, or similar approach better suited than a single normal model."
+  forbidden:
+    -
+      id: "multimodal_assumes_normality"
+      description: "Assume the rent distribution is approximately normal without checking it."
+    -
+      id: "multimodal_summary_only_distribution"
+      description: "Summarize the target with mean and variance only while missing the multiple modes."

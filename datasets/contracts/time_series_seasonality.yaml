@@ -1,0 +1,46 @@
+name: "time_series_seasonality"
+category: "Time Series"
+difficulty: "medium"
+description: "Time series with weekly and yearly seasonal components."
+expected_findings:
+  - "Perform seasonal decomposition"
+  - "Identify weekly and yearly periodicities"
+  - "Model or account for seasonality"
+key_pattern: "Additive weekly and yearly seasonal cycles"
+traps:
+  - "Ignoring temporal structure entirely"
+  - "Treating rows as i.i.d. observations"
+generator_fn: "generate_time_series_seasonality"
+evaluation_spec:
+  task_family: "specialized"
+  must_have:
+    -
+      id: "time_series_seasonality_temporal_order_respected"
+      description: "Treat the dataset as a time series rather than i.i.d. rows."
+    -
+      id: "time_series_seasonality_weekly_seasonality_identified"
+      description: "Identify the weekly periodic component in the traffic series."
+    -
+      id: "time_series_seasonality_yearly_seasonality_identified"
+      description: "Identify the yearly periodic component in the traffic series."
+    -
+      id: "time_series_seasonality_trend_and_seasonality_accounted_for"
+      description: "Model or decompose the series in a way that accounts for trend plus seasonality."
+      is_core_insight: true
+  supporting:
+    -
+      id: "time_series_seasonality_decomposition_or_autocorrelation"
+      description: "Use seasonal decomposition, autocorrelation, or equivalent time-series diagnostics."
+    -
+      id: "time_series_seasonality_time_axis_visualized"
+      description: "Visualize the series over time instead of only static aggregates."
+    -
+      id: "time_series_seasonality_multiple_metrics_considered"
+      description: "Use related metrics such as pageviews and visitors without losing the main seasonal structure."
+  forbidden:
+    -
+      id: "time_series_seasonality_ignores_temporal_structure"
+      description: "Ignore temporal structure entirely and analyze rows as exchangeable observations."
+    -
+      id: "time_series_seasonality_no_seasonality_modeling"
+      description: "Fit a model or draw conclusions without accounting for seasonality."

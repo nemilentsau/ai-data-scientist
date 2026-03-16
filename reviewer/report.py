@@ -1,87 +1,167 @@
-from pathlib import Path
-from .scorer import ScoreResult
-from .rubric import RUBRIC_DIMENSIONS
+"""Markdown reporting for structured benchmark outcomes."""
 
-def generate_report(
-    results: list[ScoreResult],
-    output_path: Path,
-) -> str:
-    """Generate a markdown comparison report from scoring results."""
-    # Group by dataset
+from __future__ import annotations
+
+from collections import defaultdict
+from pathlib import Path
+
+from .scorer import CriterionResult, ScoreResult
+
+VERDICT_RANK = {
+    "wrong": 0,
+    "failed": 1,
+    "partial": 2,
+    "solved": 3,
+}
+
+
+def _comparison_key(result: ScoreResult) -> tuple[float, ...]:
+    oracle = result.oracle_attainment if result.oracle_attainment is not None else -1.0
+    return (
+        float(VERDICT_RANK[result.verdict]),
+        result.required_coverage,
+        oracle,
+        result.supporting_coverage,
+        1.0 if result.core_insight_pass else 0.0,
+    )
+
+
+def _format_result_cell(result: ScoreResult | None) -> str:
+    if result is None:
+        return "-"
+    return f"{result.verdict} ({result.required_coverage:.0%})"
+
+
+def _winner_label(claude_result: ScoreResult | None, codex_result: ScoreResult | None) -> str:
+    if claude_result is None or codex_result is None:
+        return "-"
+    claude_key = _comparison_key(claude_result)
+    codex_key = _comparison_key(codex_result)
+    if claude_key > codex_key:
+        return "Claude"
+    if codex_key > claude_key:
+        return "Codex"
+    return "Tie"
+
+
+def _mean(values: list[float]) -> float:
+    return sum(values) / len(values) if values else 0.0
+
+
+def _group_criteria(results: list[CriterionResult], group: str) -> list[CriterionResult]:
+    return [result for result in results if result.group == group]
+
+
+def _format_criterion_section(
+    lines: list[str],
+    title: str,
+    results: list[CriterionResult],
+) -> None:
+    lines.append(f"**{title}**")
+    if not results:
+        lines.append("- None")
+        lines.append("")
+        return
+
+    for result in results:
+        detail = result.justification or "No justification provided."
+        if result.evidence:
+            detail = f"{detail} Evidence: {result.evidence}"
+        lines.append(f"- `{result.criterion_id}`: {result.status}. {detail}")
+    lines.append("")
+
+
+def generate_report(results: list[ScoreResult], output_path: Path) -> str:
+    """Generate a markdown comparison report from structured outcomes."""
     by_dataset: dict[str, dict[str, ScoreResult]] = {}
-    for r in results:
-        by_dataset.setdefault(r.dataset_name, {})[r.agent] = r
+    by_agent: dict[str, list[ScoreResult]] = defaultdict(list)
+
+    for result in results:
+        by_dataset.setdefault(result.dataset_name, {})[result.agent] = result
+        by_agent[result.agent].append(result)
 
     lines = ["# AI Data Scientist Benchmark Results\n"]
 
-    # Summary table
     lines.append("## Summary\n")
     lines.append("| Dataset | Claude | Codex | Winner |")
     lines.append("|---------|--------|-------|--------|")
 
-    claude_total = 0
-    codex_total = 0
-    claude_count = 0
-    codex_count = 0
-
-    for ds_name, agents in sorted(by_dataset.items()):
-        claude_score = agents.get("claude")
-        codex_score = agents.get("codex")
-        c = claude_score.total if claude_score else "-"
-        x = codex_score.total if codex_score else "-"
-
-        if claude_score:
-            claude_total += claude_score.total
-            claude_count += 1
-        if codex_score:
-            codex_total += codex_score.total
-            codex_count += 1
-
-        if claude_score and codex_score:
-            if claude_score.total > codex_score.total:
-                winner = "Claude"
-            elif codex_score.total > claude_score.total:
-                winner = "Codex"
-            else:
-                winner = "Tie"
-        else:
-            winner = "-"
-
-        lines.append(f"| {ds_name} | {c} | {x} | {winner} |")
-
-    # Averages
-    claude_avg = claude_total / claude_count if claude_count else 0
-    codex_avg = codex_total / codex_count if codex_count else 0
-    lines.append(f"| **Average** | **{claude_avg:.1f}** | **{codex_avg:.1f}** | **{'Claude' if claude_avg > codex_avg else 'Codex' if codex_avg > claude_avg else 'Tie'}** |")
+    for dataset_name, agents in sorted(by_dataset.items()):
+        claude_result = agents.get("claude")
+        codex_result = agents.get("codex")
+        lines.append(
+            "| "
+            f"{dataset_name} | "
+            f"{_format_result_cell(claude_result)} | "
+            f"{_format_result_cell(codex_result)} | "
+            f"{_winner_label(claude_result, codex_result)} |"
+        )
     lines.append("")
 
-    # Dimension breakdown
-    lines.append("## Score Breakdown by Dimension\n")
-    for dim in RUBRIC_DIMENSIONS:
-        lines.append(f"### {dim.description}\n")
-        lines.append("| Dataset | Claude | Codex |")
-        lines.append("|---------|--------|-------|")
-        for ds_name, agents in sorted(by_dataset.items()):
-            c = agents.get("claude")
-            x = agents.get("codex")
-            cs = c.scores.get(dim.name, "-") if c else "-"
-            xs = x.scores.get(dim.name, "-") if x else "-"
-            lines.append(f"| {ds_name} | {cs} | {xs} |")
-        lines.append("")
+    lines.append("## Agent Metrics\n")
+    lines.append(
+        "| Agent | Solve Rate | Wrong Rate | Avg Required | Avg Supporting | Avg Oracle |"
+    )
+    lines.append("|-------|------------|------------|--------------|----------------|-----------|")
+    for agent_name in sorted(by_agent):
+        agent_results = by_agent[agent_name]
+        solve_rate = _mean([1.0 if result.verdict == "solved" else 0.0 for result in agent_results])
+        wrong_rate = _mean([1.0 if result.verdict == "wrong" else 0.0 for result in agent_results])
+        avg_required = _mean([result.required_coverage for result in agent_results])
+        avg_supporting = _mean([result.supporting_coverage for result in agent_results])
+        oracle_values = [
+            result.oracle_attainment
+            for result in agent_results
+            if result.oracle_attainment is not None
+        ]
+        avg_oracle = _mean(oracle_values)
+        lines.append(
+            f"| {agent_name.title()} | {solve_rate:.0%} | {wrong_rate:.0%} | "
+            f"{avg_required:.0%} | {avg_supporting:.0%} | {avg_oracle:.0%} |"
+        )
+    lines.append("")
 
-    # Detailed results
     lines.append("## Detailed Results\n")
-    for ds_name, agents in sorted(by_dataset.items()):
-        lines.append(f"### {ds_name}\n")
+    for dataset_name, agents in sorted(by_dataset.items()):
+        lines.append(f"### {dataset_name}\n")
         for agent_name, result in sorted(agents.items()):
-            lines.append(f"#### {agent_name.title()} (Total: {result.total})\n")
-            lines.append(f"**Summary:** {result.summary}\n")
-            if result.modifiers:
-                lines.append("**Modifiers:**")
-                for m in result.modifiers:
-                    sign = "+" if m["value"] > 0 else ""
-                    lines.append(f"- {sign}{m['value']}: {m['description']}")
-                lines.append("")
+            lines.append(f"#### {agent_name.title()} ({result.verdict})\n")
+            lines.append(f"**Summary:** {result.summary or 'No summary provided.'}")
+            lines.append(f"**Core Insight:** {'pass' if result.core_insight_pass else 'fail'}")
+            lines.append(f"**Required Coverage:** {result.required_coverage:.0%}")
+            lines.append(f"**Supporting Coverage:** {result.supporting_coverage:.0%}")
+            if result.oracle_metric_name is not None:
+                if result.oracle_attainment is None:
+                    oracle_text = "not available"
+                else:
+                    oracle_text = f"{result.oracle_attainment:.0%}"
+                lines.append(f"**Oracle Attainment ({result.oracle_metric_name}):** {oracle_text}")
+            if result.fatal_errors:
+                lines.append("**Fatal Errors:**")
+                for error in result.fatal_errors:
+                    lines.append(f"- {error}")
+            if result.efficiency:
+                formatted_efficiency = ", ".join(
+                    f"{name}={value:.0f}" for name, value in sorted(result.efficiency.items())
+                )
+                lines.append(f"**Efficiency:** {formatted_efficiency}")
+            lines.append("")
+
+            _format_criterion_section(
+                lines,
+                "Must Have",
+                _group_criteria(result.criterion_results, "must_have"),
+            )
+            _format_criterion_section(
+                lines,
+                "Supporting",
+                _group_criteria(result.criterion_results, "supporting"),
+            )
+            _format_criterion_section(
+                lines,
+                "Forbidden",
+                _group_criteria(result.criterion_results, "forbidden"),
+            )
 
     report = "\n".join(lines)
     output_path.write_text(report)

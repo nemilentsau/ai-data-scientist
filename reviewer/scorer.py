@@ -1,119 +1,370 @@
+"""LLM-assisted reviewer that produces structured benchmark outcomes."""
+
+from __future__ import annotations
+
 import json
 import subprocess
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
-from .rubric import (
-    format_rubric_for_prompt,
-    RUBRIC_DIMENSIONS,
-    MAX_MODIFIER,
-    MIN_MODIFIER,
-    CRITICAL_MISS_THRESHOLD,
-    CRITICAL_MISS_PENALTY,
-    CRITICAL_MISS_ZEROES_BONUSES,
+from typing import Any, Literal
+
+from datasets.registry import (
+    Criterion,
+    DatasetMeta,
+    EvaluationSpec,
+    OracleMetric,
+    get_evaluation_spec,
 )
+
+from .rubric import TRANSCRIPT_CHAR_LIMIT, format_rubric_for_prompt
+
+CriterionStatus = Literal["hit", "partial", "miss"]
+Verdict = Literal["solved", "partial", "failed", "wrong"]
+
+
+@dataclass(frozen=True)
+class CriterionResult:
+    """Structured judgment for a single criterion."""
+
+    criterion_id: str
+    group: Literal["must_have", "supporting", "forbidden"]
+    status: CriterionStatus
+    justification: str
+    evidence: str = ""
 
 
 @dataclass
 class ScoreResult:
+    """Structured outcome for one dataset/agent pair."""
+
     dataset_name: str
     agent: str
-    scores: dict[str, int]          # dimension_name -> score 0-5
-    modifiers: list[dict]           # [{"description": ..., "value": +/-1}]
-    total: int
-    summary: str
-    raw_response: str
+    verdict: Verdict
+    core_insight_pass: bool
+    required_coverage: float
+    supporting_coverage: float
+    oracle_attainment: float | None
+    oracle_metric_name: str | None
+    oracle_agent_value: float | None
+    fatal_errors: list[str] = field(default_factory=list)
+    efficiency: dict[str, float] = field(default_factory=dict)
+    criterion_results: list[CriterionResult] = field(default_factory=list)
+    summary: str = ""
+    raw_response: str = ""
+
+
+def _grouped(criteria_results: list[CriterionResult], group: str) -> list[CriterionResult]:
+    return [result for result in criteria_results if result.group == group]
+
+
+def compute_coverage(results: list[CriterionResult]) -> float:
+    """Compute normalized coverage from criterion statuses."""
+    if not results:
+        return 1.0
+
+    score_map: dict[CriterionStatus, float] = {
+        "hit": 1.0,
+        "partial": 0.5,
+        "miss": 0.0,
+    }
+    return sum(score_map[result.status] for result in results) / len(results)
+
+
+def determine_verdict(
+    required_results: list[CriterionResult],
+    forbidden_results: list[CriterionResult],
+) -> Verdict:
+    """Determine the final dataset verdict."""
+    if any(result.status == "hit" for result in forbidden_results):
+        return "wrong"
+    if required_results and all(result.status == "hit" for result in required_results):
+        return "solved"
+    if any(result.status in {"hit", "partial"} for result in required_results):
+        return "partial"
+    return "failed"
+
+
+def normalize_oracle_attainment(
+    oracle_metric: OracleMetric | None,
+    agent_value: float | None,
+) -> float | None:
+    """Normalize a reported metric against a baseline and oracle."""
+    if oracle_metric is None or agent_value is None:
+        return None
+
+    baseline = oracle_metric.baseline_value
+    oracle = oracle_metric.oracle_value
+
+    if oracle == baseline:
+        return 1.0 if agent_value == oracle else 0.0
+
+    if oracle_metric.direction == "higher_is_better":
+        normalized = (agent_value - baseline) / (oracle - baseline)
+    else:
+        normalized = (baseline - agent_value) / (baseline - oracle)
+
+    return max(0.0, min(1.0, normalized))
 
 
 def build_reviewer_prompt(
-    dataset_metadata,
+    dataset_metadata: DatasetMeta,
     analysis_report: str,
     session_transcript: str,
 ) -> str:
-    rubric_text = format_rubric_for_prompt()
+    """Build the dataset-specific review prompt."""
+    rubric_text = format_rubric_for_prompt(dataset_metadata)
+    spec = get_evaluation_spec(dataset_metadata)
+    transcript_excerpt = session_transcript[:TRANSCRIPT_CHAR_LIMIT]
+    expected_findings = "\n".join(
+        f"- {finding}" for finding in dataset_metadata.expected_findings
+    )
+    common_traps = "\n".join(f"- {trap}" for trap in dataset_metadata.traps)
 
-    return f"""You are a senior data scientist reviewing an analysis. Score it against the rubric below.
+    oracle_instructions = ""
+    if spec.oracle_metric is not None:
+        oracle_instructions = f"""
+Also extract the agent's reported value for the oracle metric if possible:
+- name: {spec.oracle_metric.name}
+- description: {spec.oracle_metric.description}
+- if the value is not reported or cannot be inferred reliably, return null
+"""
 
-## Ground Truth for This Dataset
-**Key Pattern:** {dataset_metadata.key_pattern}
+    prompt_lines = [
+        (
+            "You are a senior data scientist reviewing an analysis against a "
+            "dataset-specific evaluation contract."
+        ),
+        "",
+        "## Ground Truth for This Dataset",
+        f"**Key Pattern:** {dataset_metadata.key_pattern}",
+        "",
+        "**Expected Findings:**",
+        expected_findings,
+        "",
+        "**Common Traps:**",
+        common_traps,
+        "",
+        rubric_text,
+        "",
+        "---",
+        "",
+        "## Agent's Analysis Report",
+        analysis_report,
+        "",
+        "---",
+        "",
+        "## Agent's Session Transcript (abbreviated)",
+        transcript_excerpt,
+        "",
+        "---",
+        "",
+        "## Instructions",
+        "Judge each listed criterion ID exactly once.",
+        "",
+        "- For `must_have` and `supporting`, use one of: `hit`, `partial`, `miss`",
+        "- For `forbidden`, use only: `hit` or `miss`",
+        (
+            "- Always include a brief justification and a short evidence snippet "
+            "when available"
+        ),
+        (
+            "- Be strict about the core insight; technical polish does not "
+            "compensate for missing the key pattern"
+        ),
+    ]
 
-**Expected Findings:**
-{chr(10).join(f'- {f}' for f in dataset_metadata.expected_findings)}
+    if oracle_instructions:
+        prompt_lines.extend([oracle_instructions.strip(), ""])
 
-**Common Traps (penalize if present):**
-{chr(10).join(f'- {t}' for t in dataset_metadata.traps)}
+    prompt_lines.extend(
+        [
+            "Return ONLY valid JSON in this exact structure:",
+            "{",
+            '  "must_have": {',
+            '    "<criterion_id>": {',
+            '      "status": "hit|partial|miss",',
+            '      "justification": "...",',
+            '      "evidence": "..."',
+            "    }",
+            "  },",
+            '  "supporting": {',
+            '    "<criterion_id>": {',
+            '      "status": "hit|partial|miss",',
+            '      "justification": "...",',
+            '      "evidence": "..."',
+            "    }",
+            "  },",
+            '  "forbidden": {',
+            '    "<criterion_id>": {',
+            '      "status": "hit|miss",',
+            '      "justification": "...",',
+            '      "evidence": "..."',
+            "    }",
+            "  },",
+            '  "oracle_metric": {',
+            '    "agent_value": 0.0,',
+            '    "justification": "..."',
+            "  },",
+            '  "summary": "One paragraph overall assessment"',
+            "}",
+            "",
+            (
+                "The `must_have`, `supporting`, and `forbidden` objects must "
+                "contain every criterion ID listed in the evaluation contract above."
+            ),
+        ]
+    )
 
-{rubric_text}
+    return "\n".join(prompt_lines)
 
----
 
-## Agent's Analysis Report
-{analysis_report}
+def _extract_json_payload(raw: str) -> dict[str, Any]:
+    json_str = raw
+    if "```json" in raw:
+        json_str = raw.split("```json", maxsplit=1)[1].split("```", maxsplit=1)[0]
+    elif "```" in raw:
+        json_str = raw.split("```", maxsplit=1)[1].split("```", maxsplit=1)[0]
+    return json.loads(json_str.strip())
 
----
 
-## Agent's Session Transcript (abbreviated)
-{session_transcript[:20000]}
+def _normalize_status(
+    status: str | None,
+    *,
+    allow_partial: bool,
+) -> CriterionStatus:
+    normalized = (status or "miss").strip().lower()
+    if normalized == "hit":
+        return "hit"
+    if normalized == "partial" and allow_partial:
+        return "partial"
+    if normalized == "partial":
+        return "hit"
+    return "miss"
 
----
 
-## Instructions
-Score each of the 7 dimensions from 0 to 5 with a brief justification.
-Apply any applicable bonus or penalty modifiers (max +3, min -3 total).
-Be fair but rigorous.
+def _coerce_optional_float(value: Any) -> float | None:
+    if value is None:
+        return None
+    if isinstance(value, (int, float)):
+        return float(value)
+    if isinstance(value, str):
+        text = value.strip()
+        if not text:
+            return None
+        try:
+            return float(text)
+        except ValueError:
+            return None
+    return None
 
-**CRITICAL**: The single most important question is whether the agent identified the
-**Key Pattern** listed above. Each dataset is specifically designed to test one core
-statistical concept. An analysis that does excellent technical work but misses or only
-partially identifies this pattern should score ≤ 3 on pattern_identification and ≤ 3
-on conclusions, regardless of how polished the rest of the work is. "Partially identified"
-(score 3) means the agent noticed something related but did not explicitly name or
-demonstrate the pattern. A score of 4-5 requires the agent to clearly identify AND
-demonstrate the pattern with evidence.
 
-Return ONLY valid JSON in this exact format:
-{{
-  "scores": {{
-    "data_loading_inspection": {{"score": N, "justification": "..."}},
-    "eda_quality": {{"score": N, "justification": "..."}},
-    "pattern_identification": {{"score": N, "justification": "..."}},
-    "method_selection": {{"score": N, "justification": "..."}},
-    "assumption_checking": {{"score": N, "justification": "..."}},
-    "code_quality": {{"score": N, "justification": "..."}},
-    "conclusions": {{"score": N, "justification": "..."}}
-  }},
-  "modifiers": [
-    {{"description": "...", "value": +1 or -1}}
-  ],
-  "total": N,
-  "summary": "One paragraph overall assessment"
-}}"""
+def _build_group_results(
+    group_name: Literal["must_have", "supporting", "forbidden"],
+    criteria: list[Criterion],
+    payload: dict[str, Any],
+) -> list[CriterionResult]:
+    results: list[CriterionResult] = []
+    allow_partial = group_name != "forbidden"
+
+    for criterion in criteria:
+        criterion_payload = payload.get(criterion.id, {})
+        status = _normalize_status(
+            criterion_payload.get("status"),
+            allow_partial=allow_partial,
+        )
+        results.append(
+            CriterionResult(
+                criterion_id=criterion.id,
+                group=group_name,
+                status=status,
+                justification=str(criterion_payload.get("justification", "")),
+                evidence=str(criterion_payload.get("evidence", "")),
+            )
+        )
+
+    return results
+
+
+def _parse_reviewer_response(
+    raw_response: str,
+    evaluation_spec: EvaluationSpec,
+) -> tuple[list[CriterionResult], float | None, str]:
+    data = _extract_json_payload(raw_response)
+
+    must_have = _build_group_results(
+        "must_have",
+        evaluation_spec.must_have,
+        data.get("must_have", {}),
+    )
+    supporting = _build_group_results(
+        "supporting",
+        evaluation_spec.supporting,
+        data.get("supporting", {}),
+    )
+    forbidden = _build_group_results(
+        "forbidden",
+        evaluation_spec.forbidden,
+        data.get("forbidden", {}),
+    )
+
+    oracle_payload = data.get("oracle_metric")
+    agent_value = None
+    if isinstance(oracle_payload, dict):
+        agent_value = _coerce_optional_float(oracle_payload.get("agent_value"))
+
+    summary = str(data.get("summary", "")).strip()
+    return must_have + supporting + forbidden, agent_value, summary
+
+
+def _collect_efficiency_metrics(results_dir: Path, session_transcript: str) -> dict[str, float]:
+    metrics: dict[str, float] = {
+        "transcript_chars": float(len(session_transcript)),
+    }
+
+    trace_path = results_dir / "trace.jsonl"
+    if trace_path.exists():
+        with trace_path.open() as trace_file:
+            metrics["trace_events"] = float(sum(1 for _ in trace_file))
+
+    report_path = results_dir / "analysis_report.md"
+    if report_path.exists():
+        metrics["report_chars"] = float(len(report_path.read_text()))
+
+    return metrics
 
 
 def score_analysis(
     dataset_name: str,
     agent: str,
-    dataset_metadata,
+    dataset_metadata: DatasetMeta,
     results_dir: Path,
 ) -> ScoreResult:
-    """Score an agent's analysis using claude CLI (same auth as the harness)."""
-    # Read agent outputs
+    """Score an agent's analysis using Claude CLI as the structured reviewer."""
     report_path = results_dir / "analysis_report.md"
-    analysis_report = report_path.read_text() if report_path.exists() else "[No analysis report found]"
+    analysis_report = (
+        report_path.read_text() if report_path.exists() else "[No analysis report found]"
+    )
 
-    # Read session transcript — prefer the detailed trace if available
     trace_path = results_dir / "trace.jsonl"
     if trace_path.exists():
         session_transcript = trace_path.read_text()
     elif agent == "claude":
         transcript_path = results_dir / "session.json"
-        session_transcript = transcript_path.read_text() if transcript_path.exists() else "[No session transcript found]"
+        session_transcript = (
+            transcript_path.read_text()
+            if transcript_path.exists()
+            else "[No session transcript found]"
+        )
     else:
         transcript_path = results_dir / "session.log"
-        session_transcript = transcript_path.read_text() if transcript_path.exists() else "[No session transcript found]"
+        session_transcript = (
+            transcript_path.read_text()
+            if transcript_path.exists()
+            else "[No session transcript found]"
+        )
 
     prompt = build_reviewer_prompt(dataset_metadata, analysis_report, session_transcript)
 
-    # Use claude CLI — same OAuth auth the user already has
     result = subprocess.run(
         ["claude", "-p", prompt, "--output-format", "json", "--max-turns", "1"],
         capture_output=True,
@@ -124,50 +375,64 @@ def score_analysis(
     if result.returncode != 0:
         raise RuntimeError(f"claude CLI failed: {result.stderr}")
 
-    # claude -p --output-format json returns a JSON object with a "result" field
     cli_output = json.loads(result.stdout)
-    raw = cli_output.get("result", result.stdout)
+    raw_response = cli_output.get("result", result.stdout)
 
-    # Parse the scoring JSON from the response
-    json_str = raw
-    if "```json" in raw:
-        json_str = raw.split("```json")[1].split("```")[0]
-    elif "```" in raw:
-        json_str = raw.split("```")[1].split("```")[0]
+    evaluation_spec = get_evaluation_spec(dataset_metadata)
+    criterion_results, oracle_agent_value, summary = _parse_reviewer_response(
+        raw_response,
+        evaluation_spec,
+    )
 
-    data = json.loads(json_str.strip())
+    required_results = _grouped(criterion_results, "must_have")
+    supporting_results = _grouped(criterion_results, "supporting")
+    forbidden_results = _grouped(criterion_results, "forbidden")
 
-    # Extract scores
-    scores = {k: v["score"] for k, v in data["scores"].items()}
+    core_insight_ids = {
+        criterion.id for criterion in evaluation_spec.must_have if criterion.is_core_insight
+    }
+    core_insight_pass = all(
+        result.status == "hit"
+        for result in required_results
+        if result.criterion_id in core_insight_ids
+    )
+    if not core_insight_ids:
+        core_insight_pass = False
 
-    # Apply critical miss rule: if pattern_identification is at or below threshold,
-    # zero out bonuses and apply the critical miss penalty.
-    modifiers = list(data.get("modifiers", []))
-    pattern_score = scores.get("pattern_identification", 0)
-    critical_miss = pattern_score <= CRITICAL_MISS_THRESHOLD
+    fatal_errors = [
+        criterion.description
+        for criterion in evaluation_spec.forbidden
+        if any(
+            result.criterion_id == criterion.id and result.status == "hit"
+            for result in forbidden_results
+        )
+    ]
 
-    if critical_miss:
-        if CRITICAL_MISS_ZEROES_BONUSES:
-            modifiers = [m for m in modifiers if m["value"] < 0]
-        modifiers.append({
-            "description": f"Critical miss: failed to identify the core pattern (pattern_identification={pattern_score})",
-            "value": CRITICAL_MISS_PENALTY,
-        })
-
-    # Clamp modifier total
-    modifier_total = sum(m["value"] for m in modifiers)
-    modifier_total = max(MIN_MODIFIER, min(MAX_MODIFIER, modifier_total))
-
-    # Recompute total from dimension scores + clamped modifiers
-    dimension_total = sum(scores.values())
-    total = max(0, dimension_total + modifier_total)
+    verdict = determine_verdict(required_results, forbidden_results)
+    required_coverage = compute_coverage(required_results)
+    supporting_coverage = compute_coverage(supporting_results)
+    oracle_attainment = normalize_oracle_attainment(
+        evaluation_spec.oracle_metric,
+        oracle_agent_value,
+    )
 
     return ScoreResult(
         dataset_name=dataset_name,
         agent=agent,
-        scores=scores,
-        modifiers=modifiers,
-        total=total,
-        summary=data["summary"],
-        raw_response=raw,
+        verdict=verdict,
+        core_insight_pass=core_insight_pass,
+        required_coverage=required_coverage,
+        supporting_coverage=supporting_coverage,
+        oracle_attainment=oracle_attainment,
+        oracle_metric_name=(
+            evaluation_spec.oracle_metric.name
+            if evaluation_spec.oracle_metric is not None
+            else None
+        ),
+        oracle_agent_value=oracle_agent_value,
+        fatal_errors=fatal_errors,
+        efficiency=_collect_efficiency_metrics(results_dir, session_transcript),
+        criterion_results=criterion_results,
+        summary=summary,
+        raw_response=raw_response,
     )

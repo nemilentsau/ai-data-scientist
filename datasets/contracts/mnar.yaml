@@ -1,0 +1,47 @@
+name: "mnar"
+category: "Data Quality"
+difficulty: "hard"
+description: "Missingness is correlated with the unobserved target value (MNAR)."
+expected_findings:
+  - "Analyse the missingness pattern"
+  - "Recognise data is Missing Not At Random"
+  - "Discuss bias from naive imputation or deletion"
+key_pattern: "Probability of being missing depends on the missing value itself"
+traps:
+  - "Dropping missing rows without analysis"
+  - "Imputing with mean/median blindly"
+  - "Assuming Missing Completely At Random"
+generator_fn: "generate_mnar"
+evaluation_spec:
+  task_family: "discovery"
+  must_have:
+    -
+      id: "mnar_missingness_pattern_analyzed"
+      description: "Analyze the missingness pattern instead of dropping incomplete rows immediately."
+    -
+      id: "mnar_mnar_identified"
+      description: "Recognize that higher-income respondents are more likely to have missing income, making the data MNAR."
+      is_core_insight: true
+    -
+      id: "mnar_bias_from_naive_handling_explained"
+      description: "Explain why naive deletion or simple mean imputation would bias downstream conclusions."
+  supporting:
+    -
+      id: "mnar_proxy_variable_used"
+      description: "Use proxies such as education or age to support the missingness diagnosis."
+    -
+      id: "mnar_mcar_rejected"
+      description: "Explicitly reject the assumption that data are missing completely at random."
+    -
+      id: "mnar_sensitivity_or_caveat"
+      description: "Propose a sensitivity analysis or caveat rather than pretending the missingness is ignorable."
+  forbidden:
+    -
+      id: "mnar_drops_missing_rows_blindly"
+      description: "Drop missing-income rows without analyzing the missingness mechanism."
+    -
+      id: "mnar_assumes_mcar"
+      description: "Assume the missing values are MCAR or harmless without evidence."
+    -
+      id: "mnar_blind_mean_imputation"
+      description: "Recommend mean or median imputation as sufficient without caveats."

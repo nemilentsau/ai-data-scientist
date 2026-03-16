@@ -1,0 +1,56 @@
+name: "deterministic_linear"
+category: "Regression"
+difficulty: "easy"
+description: "Perfect deterministic relationship y = 2x + 3."
+expected_findings:
+  - "Identify exact linear relationship"
+  - "Report R² ≈ 1.0"
+  - "Report correct slope (2) and intercept (3)"
+key_pattern: "Perfect linear relationship y = 2x + 3"
+traps:
+  - "Overcomplicating the model"
+  - "Trying nonlinear fits on perfectly linear data"
+generator_fn: "generate_deterministic_linear"
+evaluation_spec:
+  task_family: "predictive"
+  must_have:
+    -
+      id: "deterministic_linear_linear_relationship_identified"
+      description: "Identify the relationship as linear and exact or deterministic."
+      verification_hint: "The analysis should state that the relationship is perfectly linear or exact."
+      is_core_insight: true
+    -
+      id: "deterministic_linear_slope_recovered"
+      description: "Recover a slope close to 2."
+      verification_hint: "Look for a reported slope or coefficient near 2."
+    -
+      id: "deterministic_linear_intercept_recovered"
+      description: "Recover an intercept close to 3."
+      verification_hint: "Look for a reported intercept near 3."
+    -
+      id: "deterministic_linear_fit_near_perfect"
+      description: "Report a near-perfect fit such as R^2 approximately 1.0."
+      verification_hint: "The analysis should report R^2 very close to 1.0 or equivalent zero residual error."
+  supporting:
+    -
+      id: "deterministic_linear_equation_written"
+      description: "Write the recovered equation explicitly."
+    -
+      id: "deterministic_linear_ignores_noise_columns"
+      description: "Identify irrelevant noise columns or explain why they are unnecessary."
+    -
+      id: "deterministic_linear_avoids_overcomplication"
+      description: "Avoid unnecessary nonlinear or overly complex models for this exact linear task."
+  forbidden:
+    -
+      id: "deterministic_linear_claims_nonlinear_structure"
+      description: "Claim a nonlinear relationship or recommend a nonlinear model as necessary."
+    -
+      id: "deterministic_linear_unnecessary_model_complexity"
+      description: "Use unnecessary model complexity as the main approach despite the exact linear structure."
+  oracle_metric:
+    name: "r2"
+    description: "Best reported R^2 for the final model."
+    direction: "higher_is_better"
+    baseline_value: 0.0
+    oracle_value: 1.0

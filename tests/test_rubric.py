@@ -1,68 +1,42 @@
-"""Tests for scoring rubric — structure and formatting."""
+"""Tests for dataset-specific contract formatting."""
 
-from reviewer.rubric import (
-    RUBRIC_DIMENSIONS,
-    BONUS_MODIFIERS,
-    PENALTY_MODIFIERS,
-    MAX_DIMENSION_SCORE,
-    MAX_MODIFIER,
-    MIN_MODIFIER,
-    CRITICAL_MISS_THRESHOLD,
-    CRITICAL_MISS_PENALTY,
-    CRITICAL_MISS_ZEROES_BONUSES,
-    Dimension,
-    Modifier,
-    format_rubric_for_prompt,
-)
+from datasets.registry import get_dataset
+from reviewer.rubric import TRANSCRIPT_CHAR_LIMIT, format_rubric_for_prompt
 
 
-def test_seven_dimensions():
-    assert len(RUBRIC_DIMENSIONS) == 7
+def test_contract_prompt_lists_required_sections():
+    prompt = format_rubric_for_prompt(get_dataset("simpsons_paradox"))
+
+    assert "Evaluation Contract" in prompt
+    assert "Must Have Criteria" in prompt
+    assert "Supporting Criteria" in prompt
+    assert "Forbidden Criteria" in prompt
+    assert "Verdict Rules" in prompt
 
 
-def test_max_dimension_score_is_35():
-    assert MAX_DIMENSION_SCORE == 35
+def test_contract_prompt_includes_named_criteria_for_pilot_dataset():
+    prompt = format_rubric_for_prompt(get_dataset("simpsons_paradox"))
+
+    assert "simpsons_paradox_reversal_identified" in prompt
+    assert "simpsons_paradox_correct_conclusion" in prompt
+    assert "simpsons_paradox_aggregate_only_conclusion" in prompt
 
 
-def test_modifier_bounds():
-    assert MAX_MODIFIER == 3
-    assert MIN_MODIFIER == -8  # room for critical miss penalty (-5) + regular penalties (-3)
+def test_contract_prompt_includes_oracle_metric_when_available():
+    prompt = format_rubric_for_prompt(get_dataset("deterministic_linear"))
+
+    assert "Oracle Metric" in prompt
+    assert "`r2`" in prompt
+    assert "higher_is_better" in prompt
 
 
-def test_critical_miss_constants():
-    assert CRITICAL_MISS_THRESHOLD == 3
-    assert CRITICAL_MISS_PENALTY == -5
-    assert CRITICAL_MISS_ZEROES_BONUSES is True
+def test_contract_prompt_includes_custom_contract_for_anscombes():
+    prompt = format_rubric_for_prompt(get_dataset("anscombes_quartet"))
+
+    assert "anscombes_quartet_different_shapes_identified" in prompt
+    assert "anscombes_quartet_visualized_all_batches" in prompt
+    assert "anscombes_quartet_summary_only_conclusion" in prompt
 
 
-def test_all_bonus_modifiers_are_positive():
-    for m in BONUS_MODIFIERS:
-        assert m.value > 0
-
-
-def test_all_penalty_modifiers_are_negative():
-    for m in PENALTY_MODIFIERS:
-        assert m.value < 0
-
-
-def test_dimension_names_are_unique():
-    names = [d.name for d in RUBRIC_DIMENSIONS]
-    assert len(names) == len(set(names))
-
-
-def test_format_rubric_for_prompt_contains_all_dimensions():
-    text = format_rubric_for_prompt()
-    for dim in RUBRIC_DIMENSIONS:
-        assert dim.description in text
-
-
-def test_format_rubric_for_prompt_contains_modifiers():
-    text = format_rubric_for_prompt()
-    assert "Bonus" in text
-    assert "Penalty" in text
-
-
-def test_format_rubric_for_prompt_contains_critical_miss_rule():
-    text = format_rubric_for_prompt()
-    assert "Critical Miss" in text
-    assert "pattern_identification" in text
+def test_transcript_character_limit_is_20000():
+    assert TRANSCRIPT_CHAR_LIMIT == 20_000

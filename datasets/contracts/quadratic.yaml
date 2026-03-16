@@ -1,0 +1,52 @@
+name: "quadratic"
+category: "Regression"
+difficulty: "medium"
+description: "True relationship is y = x² + noise, disguised as a regression task."
+expected_findings:
+  - "Detect non-linearity in residual plots"
+  - "Fit polynomial or other nonlinear model"
+  - "Report substantially better R² than linear baseline"
+key_pattern: "Quadratic relationship y = x² + noise"
+traps:
+  - "Only trying a linear model"
+  - "Not inspecting residuals"
+generator_fn: "generate_quadratic"
+evaluation_spec:
+  task_family: "predictive"
+  must_have:
+    -
+      id: "quadratic_nonlinearity_detected"
+      description: "Detect that a simple linear model is missing a nonlinear pattern."
+    -
+      id: "quadratic_quadratic_relationship_identified"
+      description: "Identify the core relationship as quadratic or second-order."
+      is_core_insight: true
+    -
+      id: "quadratic_nonlinear_model_fit"
+      description: "Fit a quadratic, polynomial, or equivalent nonlinear model."
+    -
+      id: "quadratic_improvement_over_linear_shown"
+      description: "Show that the nonlinear model substantially improves on a linear baseline."
+  supporting:
+    -
+      id: "quadratic_residuals_compared"
+      description: "Use residual diagnostics or side-by-side model comparison to justify the nonlinear fit."
+    -
+      id: "quadratic_equation_or_feature_transform"
+      description: "Write the quadratic form explicitly or create the squared feature intentionally."
+    -
+      id: "quadratic_noise_columns_not_overinterpreted"
+      description: "Avoid over-interpreting the nuisance features as the primary pattern."
+  forbidden:
+    -
+      id: "quadratic_linear_only_conclusion"
+      description: "Conclude with a linear-only model despite clear nonlinear structure."
+    -
+      id: "quadratic_no_residual_checks"
+      description: "Skip model diagnostics that would reveal the nonlinear pattern."
+  oracle_metric:
+    name: "r2"
+    description: "Best reported R^2 for the nonlinear model."
+    direction: "higher_is_better"
+    baseline_value: 0.0
+    oracle_value: 1.0

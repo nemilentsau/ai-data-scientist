@@ -1,0 +1,43 @@
+name: "spurious_correlation"
+category: "Causal"
+difficulty: "hard"
+description: "Two variables are correlated only because both trend with time."
+expected_findings:
+  - "Identify time as a confounding variable"
+  - "Show that partial correlation controlling for time is near zero"
+  - "Warn against causal interpretation"
+key_pattern: "Spurious correlation driven by a shared time trend"
+traps:
+  - "Claiming a causal relationship"
+  - "Not controlling for the time confounder"
+generator_fn: "generate_spurious_correlation"
+evaluation_spec:
+  task_family: "discovery"
+  must_have:
+    -
+      id: "spurious_correlation_shared_confounder_identified"
+      description: "Identify temperature or the shared seasonal trend as the confounder driving the correlation."
+      is_core_insight: true
+    -
+      id: "spurious_correlation_controlled_analysis_done"
+      description: "Control for temperature, date, or seasonality and show the direct relationship largely disappears."
+    -
+      id: "spurious_correlation_causal_warning_given"
+      description: "Warn against interpreting the raw correlation as causal."
+  supporting:
+    -
+      id: "spurious_correlation_seasonal_pattern_described"
+      description: "Explain that both variables move together because they rise in warm periods."
+    -
+      id: "spurious_correlation_partial_correlation_or_regression"
+      description: "Use partial correlation, controlled regression, or equivalent confound-adjusted analysis."
+    -
+      id: "spurious_correlation_time_axis_respected"
+      description: "Use the time structure as evidence rather than treating the correlation as timeless."
+  forbidden:
+    -
+      id: "spurious_correlation_claims_direct_causality"
+      description: "Claim that ice cream sales directly cause drowning incidents or vice versa."
+    -
+      id: "spurious_correlation_ignores_confounder"
+      description: "Draw the main conclusion from the raw correlation without controlling for the confounder."

@@ -1,0 +1,43 @@
+name: "heteroscedasticity"
+category: "Regression"
+difficulty: "medium"
+description: "Variance of residuals grows with the predictor."
+expected_findings:
+  - "Produce residual plots"
+  - "Identify heteroscedasticity (non-constant variance)"
+  - "Suggest weighted regression or variance-stabilising transform"
+key_pattern: "Residual spread increases with fitted values"
+traps:
+  - "Assuming constant variance without checking"
+  - "Omitting residual diagnostics"
+generator_fn: "generate_heteroscedasticity"
+evaluation_spec:
+  task_family: "discovery"
+  must_have:
+    -
+      id: "heteroscedasticity_residual_diagnostics_run"
+      description: "Inspect residuals or equivalent diagnostics instead of fitting only a mean trend."
+    -
+      id: "heteroscedasticity_non_constant_variance_identified"
+      description: "Identify that residual variance increases with ad spend or fitted values."
+      is_core_insight: true
+    -
+      id: "heteroscedasticity_remedy_suggested"
+      description: "Recommend robust standard errors, weighted regression, or a variance-stabilizing transform."
+  supporting:
+    -
+      id: "heteroscedasticity_residual_plot_used"
+      description: "Use a residual plot or formal heteroscedasticity test to support the diagnosis."
+    -
+      id: "heteroscedasticity_inference_risk_noted"
+      description: "Explain that standard OLS inference is unreliable under heteroscedasticity."
+    -
+      id: "heteroscedasticity_linear_mean_trend_preserved"
+      description: "Distinguish the mean trend from the variance problem rather than calling the model useless."
+  forbidden:
+    -
+      id: "heteroscedasticity_assumes_constant_variance"
+      description: "Assume constant variance without checking residual behavior."
+    -
+      id: "heteroscedasticity_uses_ols_uncritically"
+      description: "Report OLS significance or confidence as trustworthy without caveats."
