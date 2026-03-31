@@ -1,5 +1,0 @@
-Completed. The report is at [analysis_report.md](/var/folders/j_/dt6mk_nd7tbfpyx2v5z_lv6c0000gn/T/tmp.IDym4zKNkD/analysis_report.md), the reproducible pipeline is [analysis_pipeline.py](/var/folders/j_/dt6mk_nd7tbfpyx2v5z_lv6c0000gn/T/tmp.IDym4zKNkD/analysis_pipeline.py), and the PNGs are in [plots](/var/folders/j_/dt6mk_nd7tbfpyx2v5z_lv6c0000gn/T/tmp.IDym4zKNkD/plots).
-
-Main result: the dataset is operationally clean, but `voltage_mv` is not an independent target. It is deterministically encoded as `voltage_mv = 2 * temperature_c + 3` to floating-point precision, including within each sensor. I validated that with a chronological 80/20 split: temperature-only linear regression achieved test `R^2 = 1.0` with residuals at machine precision, while models excluding temperature had almost no predictive power.
-
-Saved plots include missingness, distributions, correlation heatmap, sensor boxplots, time series, temperature-vs-voltage scatter, and residual diagnostics. The report also documents the small humidity/pressure outliers, weak temporal dependence, model comparisons, and why standard residual-assumption tests are not meaningful once the fit is exact.
