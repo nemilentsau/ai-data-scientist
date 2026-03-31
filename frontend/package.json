@@ -1,5 +1,5 @@
 {
-  "name": "trace-viewer",
+  "name": "benchmark-dashboard",
   "private": true,
   "version": "1.0.0",
   "type": "module",

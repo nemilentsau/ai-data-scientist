@@ -1,154 +1,122 @@
 <script>
-  import { parseTrace, extractTools, computeStats, extractPlots } from "./lib/parse.js";
-  import Summary from "./lib/Summary.svelte";
-  import ToolFilter from "./lib/ToolFilter.svelte";
-  import Timeline from "./lib/Timeline.svelte";
-  import EventModal from "./lib/EventModal.svelte";
-  import PlotGallery from "./lib/PlotGallery.svelte";
-  import ReportView from "./lib/ReportView.svelte";
-  import FileLoader from "./lib/FileLoader.svelte";
+  import manifest from "virtual:manifest";
+  import { parseTrace, computeStats } from "./lib/parse.js";
+  import RunCard from "./lib/RunCard.svelte";
+  import RunDetail from "./lib/RunDetail.svelte";
 
-  let events = $state([]);
-  let meta = $state(null);
-  let tools = $state([]);
-  let stats = $state(null);
-  let plots = $state([]);
-  let activeTools = $state(new Set());
-  let showResponses = $state(true);
-  let errorsOnly = $state(false);
-  let selectedEvent = $state(null);
-  let reportText = $state("");
-  let activeTab = $state("timeline");
-  let resultsDir = $state("");
+  let search = $state("");
+  let selectedRun = $state(null);
+  let filterVerdict = $state("all");
 
-  function handleTraceLoaded(text, dirPath) {
-    const parsed = parseTrace(text);
-    events = parsed.events;
-    meta = parsed.meta;
-    tools = extractTools(events);
-    stats = computeStats(events, meta);
-    plots = extractPlots(events);
-    activeTools = new Set(tools);
-    resultsDir = dirPath || "";
-    reportText = "";
-    activeTab = "timeline";
-  }
-
-  function handleReportLoaded(text) {
-    reportText = text;
-  }
-
-  let filteredEvents = $derived.by(() => {
-    let filtered = events;
-    if (activeTools.size < tools.length) {
-      filtered = filtered.filter((e) => activeTools.has(e.tool));
-    }
-    if (errorsOnly) {
-      filtered = filtered.filter(
-        (e) => e.error || e.event === "PostToolUseFailure"
-      );
-    }
-    return filtered;
+  // Pre-process runs: parse traces, attach computed stats
+  let runs = $derived.by(() => {
+    return manifest.runs.map((run) => {
+      const parsed = run.trace ? parseTrace(run.trace) : { events: [], meta: null };
+      const stats = computeStats(parsed.events, parsed.meta);
+      return { ...run, parsedTrace: parsed, stats };
+    });
   });
 
-  function toggleTool(tool) {
-    const next = new Set(activeTools);
-    if (next.has(tool)) next.delete(tool);
-    else next.add(tool);
-    activeTools = next;
+  let verdicts = $derived([...new Set(runs.map((r) => r.score?.verdict).filter(Boolean))]);
+
+  let filteredRuns = $derived.by(() => {
+    let result = runs;
+    if (filterVerdict !== "all") {
+      result = result.filter((r) => r.score?.verdict === filterVerdict);
+    }
+    if (search.trim()) {
+      const q = search.toLowerCase();
+      result = result.filter((r) => {
+        const haystack = [
+          r.agent,
+          r.dataset,
+          r.score?.verdict,
+          r.score?.summary,
+          r.report,
+          ...(r.score?.criterion_results?.map((c) => `${c.criterion_id} ${c.justification} ${c.evidence}`) ?? []),
+        ]
+          .filter(Boolean)
+          .join(" ")
+          .toLowerCase();
+        return haystack.includes(q);
+      });
+    }
+    return result;
+  });
+
+  function selectRun(run) {
+    selectedRun = run;
   }
 
-  function selectAll() {
-    activeTools = new Set(tools);
-  }
-
-  function selectNone() {
-    activeTools = new Set();
+  function goBack() {
+    selectedRun = null;
   }
 </script>
 
 <div class="app">
   <header>
-    <h1>Trace Viewer</h1>
-    <FileLoader onTraceLoaded={handleTraceLoaded} onReportLoaded={handleReportLoaded} />
+    <div class="header-left">
+      {#if selectedRun}
+        <button class="back-btn" onclick={goBack}>&larr;</button>
+      {/if}
+      <h1>Benchmark Dashboard</h1>
+    </div>
+    {#if runs.length > 0}
+      <div class="header-stats">
+        <span class="stat-chip">{runs.length} run{runs.length !== 1 ? "s" : ""}</span>
+        <span class="stat-chip">{new Set(runs.map((r) => r.agent)).size} agent{new Set(runs.map((r) => r.agent)).size !== 1 ? "s" : ""}</span>
+        <span class="stat-chip">{new Set(runs.map((r) => r.dataset)).size} dataset{new Set(runs.map((r) => r.dataset)).size !== 1 ? "s" : ""}</span>
+      </div>
+    {/if}
   </header>
 
-  {#if stats}
-    <Summary {stats} />
-
-    <nav class="tabs">
-      <button
-        class="tab"
-        class:active={activeTab === "timeline"}
-        onclick={() => (activeTab = "timeline")}
-      >
-        Timeline ({events.length})
-      </button>
-      {#if reportText}
-        <button
-          class="tab"
-          class:active={activeTab === "report"}
-          onclick={() => (activeTab = "report")}
-        >
-          Report
-        </button>
-      {/if}
-      {#if plots.length > 0}
-        <button
-          class="tab"
-          class:active={activeTab === "plots"}
-          onclick={() => (activeTab = "plots")}
-        >
-          Plots ({plots.length})
-        </button>
-      {/if}
-    </nav>
-
-    {#if activeTab === "timeline"}
-      <div class="controls">
-        <ToolFilter
-          {tools}
-          {activeTools}
-          onToggle={toggleTool}
-          onSelectAll={selectAll}
-          onSelectNone={selectNone}
-        />
-        <div class="toggles">
-          <label>
-            <input type="checkbox" bind:checked={showResponses} />
-            Responses
-          </label>
-          <label>
-            <input type="checkbox" bind:checked={errorsOnly} />
-            Errors only
-          </label>
-        </div>
-      </div>
-
-      <Timeline
-        events={filteredEvents}
-        allEvents={events}
-        {showResponses}
-        onSelect={(e) => (selectedEvent = e)}
-      />
-    {:else if activeTab === "report"}
-      <ReportView text={reportText} />
-    {:else if activeTab === "plots"}
-      <PlotGallery {plots} {resultsDir} />
-    {/if}
-  {:else}
+  {#if selectedRun}
+    <RunDetail run={selectedRun} />
+  {:else if runs.length === 0}
     <div class="empty">
-      <div class="empty-icon">&#9776;</div>
-      <p>Drop a <code>trace.jsonl</code> file or use the loader above</p>
-      <p class="hint">
-        You can also load an entire results directory (trace.jsonl +
-        analysis_report.md + plots/)
-      </p>
+      <div class="empty-icon">&#128202;</div>
+      <p>No benchmark results found</p>
+      <p class="hint">Run benchmarks to populate <code>results/</code></p>
     </div>
-  {/if}
+  {:else}
+    <div class="controls">
+      <input
+        class="search"
+        type="text"
+        placeholder="Search runs, criteria, reports..."
+        bind:value={search}
+      />
+      <div class="filters">
+        <button
+          class="filter-btn"
+          class:active={filterVerdict === "all"}
+          onclick={() => (filterVerdict = "all")}
+        >
+          All
+        </button>
+        {#each verdicts as v}
+          <button
+            class="filter-btn"
+            class:active={filterVerdict === v}
+            onclick={() => (filterVerdict = v)}
+          >
+            {v}
+          </button>
+        {/each}
+      </div>
+    </div>
 
-  {#if selectedEvent}
-    <EventModal event={selectedEvent} onClose={() => (selectedEvent = null)} />
+    <div class="run-grid">
+      {#each filteredRuns as run (run.id)}
+        <RunCard {run} onSelect={() => selectRun(run)} />
+      {/each}
+    </div>
+
+    {#if filteredRuns.length === 0 && search}
+      <div class="empty">
+        <p>No runs match "{search}"</p>
+      </div>
+    {/if}
   {/if}
 </div>
 
@@ -164,9 +132,15 @@
     align-items: center;
     justify-content: space-between;
     gap: 16px;
-    margin-bottom: 16px;
+    margin-bottom: 20px;
     padding-bottom: 12px;
     border-bottom: 1px solid var(--border);
+  }
+
+  .header-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
   }
 
   h1 {
@@ -175,56 +149,88 @@
     color: var(--text);
   }
 
-  .tabs {
-    display: flex;
-    gap: 2px;
-    margin-bottom: 12px;
-    border-bottom: 1px solid var(--border);
-  }
-
-  .tab {
-    padding: 8px 16px;
-    background: none;
-    border: none;
-    border-bottom: 2px solid transparent;
+  .back-btn {
+    padding: 4px 10px;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
     color: var(--text-muted);
-    font-size: 0.9rem;
+    font-size: 1rem;
     transition: all 0.15s;
   }
 
-  .tab:hover {
+  .back-btn:hover {
     color: var(--text);
+    border-color: var(--text-muted);
   }
 
-  .tab.active {
-    color: var(--accent);
-    border-bottom-color: var(--accent);
+  .header-stats {
+    display: flex;
+    gap: 8px;
+  }
+
+  .stat-chip {
+    font-size: 0.75rem;
+    padding: 3px 10px;
+    background: var(--bg-tertiary);
+    border-radius: 12px;
+    color: var(--text-muted);
   }
 
   .controls {
     display: flex;
+    gap: 12px;
+    margin-bottom: 16px;
     align-items: center;
-    justify-content: space-between;
-    gap: 16px;
-    margin-bottom: 12px;
   }
 
-  .toggles {
-    display: flex;
-    gap: 16px;
-    font-size: 0.85rem;
+  .search {
+    flex: 1;
+    padding: 8px 14px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text);
+    font-size: 0.9rem;
+    font-family: inherit;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+
+  .search::placeholder {
     color: var(--text-muted);
   }
 
-  .toggles label {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    cursor: pointer;
+  .search:focus {
+    border-color: var(--accent);
   }
 
-  .toggles input[type="checkbox"] {
-    accent-color: var(--accent);
+  .filters {
+    display: flex;
+    gap: 4px;
+  }
+
+  .filter-btn {
+    padding: 6px 14px;
+    font-size: 0.8rem;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text-muted);
+    text-transform: capitalize;
+    transition: all 0.15s;
+  }
+
+  .filter-btn.active {
+    background: color-mix(in srgb, var(--accent) 15%, transparent);
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
+  .run-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    gap: 12px;
   }
 
   .empty {
@@ -232,7 +238,7 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    min-height: 50vh;
+    min-height: 40vh;
     color: var(--text-muted);
     text-align: center;
     gap: 12px;

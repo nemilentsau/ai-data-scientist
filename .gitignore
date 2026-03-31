@@ -1,6 +1,4 @@
-results/claude/
-results/codex/
-results/benchmark_report.md
+results/**/.DS_Store
 datasets/generated/
 __pycache__/
 *.pyc
