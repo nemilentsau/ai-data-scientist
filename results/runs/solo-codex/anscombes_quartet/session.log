@@ -1,0 +1,12 @@
+dataset=anscombes_quartet
+project_root=/Users/andreinemilentsau/Projects/ai-data-scientist
+work_dir=/var/folders/j_/dt6mk_nd7tbfpyx2v5z_lv6c0000gn/T/tmp.vAlufQ2PnU
+codex_home=/var/folders/j_/dt6mk_nd7tbfpyx2v5z_lv6c0000gn/T/tmp.vAlufQ2PnU/.codex-home
+max_turns=30
+tools=
+codex-cli 0.117.0
+
+2026-03-31T18:01:33.406969Z ERROR codex_core::models_manager::manager: failed to refresh available models: timeout waiting for child process to exit
+2026-03-31T18:01:33.406944Z  WARN codex_core::plugins::startup_sync: skipping startup remote plugin sync because curated marketplace is not ready codex_home=/private/var/folders/j_/dt6mk_nd7tbfpyx2v5z_lv6c0000gn/T/tmp.vAlufQ2PnU/.codex-home
+2026-03-31T18:01:36.265635Z  WARN codex_core::shell_snapshot: Failed to delete shell snapshot at "/private/var/folders/j_/dt6mk_nd7tbfpyx2v5z_lv6c0000gn/T/tmp.vAlufQ2PnU/.codex-home/shell_snapshots/019d450e-df78-7ff3-bf2f-525007a59102.tmp-1774980095869215000": Os { code: 2, kind: NotFound, message: "No such file or directory" }
+2026-03-31T18:02:22.859413Z ERROR codex_core::tools::router: error=write_stdin failed: stdin is closed for this session; rerun exec_command with tty=true to keep stdin open

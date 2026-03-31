@@ -1,0 +1,24 @@
+dataset=deterministic_linear
+project_root=/Users/andreinemilentsau/Projects/ai-data-scientist
+work_dir=/var/folders/j_/dt6mk_nd7tbfpyx2v5z_lv6c0000gn/T/tmp.IDym4zKNkD
+codex_home=/var/folders/j_/dt6mk_nd7tbfpyx2v5z_lv6c0000gn/T/tmp.IDym4zKNkD/.codex-home
+max_turns=30
+tools=
+codex-cli 0.117.0
+
+2026-03-31T17:00:57.306821Z  WARN codex_core::shell_snapshot: Failed to delete shell snapshot at "/private/var/folders/j_/dt6mk_nd7tbfpyx2v5z_lv6c0000gn/T/tmp.IDym4zKNkD/.codex-home/shell_snapshots/019d44d7-58db-7341-80f5-0eb4c8d343c3.tmp-1774976456923916000": Os { code: 2, kind: NotFound, message: "No such file or directory" }
+2026-03-31T17:00:59.012552Z  WARN codex_core::plugins::startup_sync: skipping startup remote plugin sync because curated marketplace is not ready codex_home=/private/var/folders/j_/dt6mk_nd7tbfpyx2v5z_lv6c0000gn/T/tmp.IDym4zKNkD/.codex-home
+2026-03-31T17:06:09.694038Z  WARN codex_core::codex: stream disconnected - retrying sampling request (1/5 in 216ms)...
+2026-03-31T17:06:24.916296Z  WARN codex_core::codex: stream disconnected - retrying sampling request (2/5 in 391ms)...
+2026-03-31T17:53:58.424578Z  WARN codex_core::codex: stream disconnected - retrying sampling request (1/5 in 200ms)...
+2026-03-31T17:53:58.630741Z ERROR codex_api::endpoint::responses_websocket: failed to connect to websocket: IO error: failed to lookup address information: nodename nor servname provided, or not known, url: wss://chatgpt.com/backend-api/codex/responses
+2026-03-31T17:53:58.631136Z  WARN codex_core::codex: stream disconnected - retrying sampling request (2/5 in 437ms)...
+2026-03-31T17:53:59.071822Z ERROR codex_api::endpoint::responses_websocket: failed to connect to websocket: IO error: failed to lookup address information: nodename nor servname provided, or not known, url: wss://chatgpt.com/backend-api/codex/responses
+2026-03-31T17:53:59.072140Z  WARN codex_core::codex: stream disconnected - retrying sampling request (3/5 in 733ms)...
+2026-03-31T17:53:59.809168Z ERROR codex_api::endpoint::responses_websocket: failed to connect to websocket: IO error: failed to lookup address information: nodename nor servname provided, or not known, url: wss://chatgpt.com/backend-api/codex/responses
+2026-03-31T17:53:59.809534Z  WARN codex_core::codex: stream disconnected - retrying sampling request (4/5 in 1.658s)...
+2026-03-31T17:54:01.473832Z ERROR codex_api::endpoint::responses_websocket: failed to connect to websocket: IO error: failed to lookup address information: nodename nor servname provided, or not known, url: wss://chatgpt.com/backend-api/codex/responses
+2026-03-31T17:54:01.474666Z  WARN codex_core::codex: stream disconnected - retrying sampling request (5/5 in 3.467s)...
+2026-03-31T17:54:04.946469Z ERROR codex_api::endpoint::responses_websocket: failed to connect to websocket: IO error: failed to lookup address information: nodename nor servname provided, or not known, url: wss://chatgpt.com/backend-api/codex/responses
+2026-03-31T17:54:04.947275Z  WARN codex_core::client: falling back to HTTP
+2026-03-31T17:54:38.254237Z  WARN codex_exec: thread/read failed while backfilling turn items for turn completion: thread/read: thread/read failed: ephemeral threads do not support includeTurns

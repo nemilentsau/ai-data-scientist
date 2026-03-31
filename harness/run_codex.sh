@@ -33,15 +33,28 @@ uv pip install --python "${WORK_DIR}/.venv/bin/python" --quiet \
 # Create results directory
 mkdir -p "${RESULTS_DIR}"
 
+# Use a benchmark-local Codex home so personal ~/.codex config does not leak
+# into runs. We copy only the auth/version files needed to keep the CLI logged in.
+CODEX_HOME_DIR="${WORK_DIR}/.codex-home"
+mkdir -p "${CODEX_HOME_DIR}" "${CODEX_HOME_DIR}/shell_snapshots"
+if [ -f "${HOME}/.codex/auth.json" ]; then
+  cp "${HOME}/.codex/auth.json" "${CODEX_HOME_DIR}/auth.json"
+fi
+if [ -f "${HOME}/.codex/version.json" ]; then
+  cp "${HOME}/.codex/version.json" "${CODEX_HOME_DIR}/version.json"
+fi
+
 # Ensure the agent uses its own venv, not the project's
 export VIRTUAL_ENV="${WORK_DIR}/.venv"
 export PATH="${WORK_DIR}/.venv/bin:${PATH}"
+export CODEX_HOME="${CODEX_HOME_DIR}"
 
 # Keep a lightweight session log with the exact benchmark settings plus Codex stderr.
 {
   echo "dataset=${DATASET_NAME}"
   echo "project_root=${PROJECT_ROOT}"
   echo "work_dir=${WORK_DIR}"
+  echo "codex_home=${CODEX_HOME}"
   echo "max_turns=${MAX_TURNS}"
   echo "tools=${TOOLS}"
   codex --version 2>/dev/null || true
