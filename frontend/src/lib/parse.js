@@ -2,14 +2,14 @@
 export function parseTrace(text) {
   const lines = text.trim().split("\n");
   const events = [];
-  let meta = null;
+  const meta = { num_turns: 0 };
 
   for (const line of lines) {
     if (!line.trim()) continue;
     try {
       const obj = JSON.parse(line);
       if (obj.type === "result") {
-        meta = obj;
+        Object.assign(meta, obj);
         continue;
       }
       if (obj.tool || obj.event) {
@@ -24,13 +24,42 @@ export function parseTrace(text) {
           obj.tool_response_parsed = obj.tool_response;
         }
         events.push(obj);
+        continue;
+      }
+
+      if (obj.type === "thread.started") {
+        meta.thread_id = obj.thread_id;
+        continue;
+      }
+
+      if (obj.type === "turn.completed") {
+        meta.num_turns += 1;
+        if (obj.usage) meta.usage = obj.usage;
+        continue;
+      }
+
+      if (obj.type === "turn.failed") {
+        meta.num_turns += 1;
+        events.push(normalizeCodexSystemEvent(obj, "Turn failed"));
+        continue;
+      }
+
+      if (obj.type === "error") {
+        events.push(normalizeCodexSystemEvent(obj, obj.message ?? "Codex error"));
+        continue;
+      }
+
+      if ((obj.type === "item.completed" || obj.type === "item.started") && obj.item) {
+        const normalized = normalizeCodexItem(obj);
+        if (normalized) events.push(normalized);
       }
     } catch {
       // skip malformed lines
     }
   }
 
-  return { events, meta };
+  const hasMeta = Object.keys(meta).some((key) => key !== "num_turns") || meta.num_turns > 0;
+  return { events, meta: hasMeta ? meta : null };
 }
 
 /** Parse a session.json file (Claude CLI output). */
@@ -60,10 +89,13 @@ export function computeStats(events, meta, session) {
 
   let durationMs = meta?.duration_ms ?? session?.duration_ms ?? 0;
   if (!durationMs && events.length >= 2) {
-    const first = new Date(events[0].timestamp).getTime();
-    const last = new Date(events[events.length - 1].timestamp).getTime();
-    durationMs = last - first;
+    const first = Date.parse(events[0].timestamp ?? "");
+    const last = Date.parse(events[events.length - 1].timestamp ?? "");
+    if (Number.isFinite(first) && Number.isFinite(last)) {
+      durationMs = last - first;
+    }
   }
+  if (!Number.isFinite(durationMs) || durationMs < 0) durationMs = 0;
 
   return {
     totalEvents: events.length,
@@ -78,6 +110,7 @@ export function computeStats(events, meta, session) {
 
 /** Format ms to human readable duration. */
 export function formatDuration(ms) {
+  if (!Number.isFinite(ms) || ms < 0) return "0ms";
   if (ms < 1000) return `${ms}ms`;
   const s = Math.floor(ms / 1000);
   if (s < 60) return `${s}s`;
@@ -108,6 +141,11 @@ const TOOL_COLORS = {
   Glob: "var(--cyan)",
   Grep: "var(--cyan)",
   Agent: "var(--pink)",
+  Reasoning: "var(--text-muted)",
+  MCP: "var(--accent)",
+  Web: "var(--cyan)",
+  Plan: "var(--orange)",
+  System: "var(--red)",
 };
 
 export function toolColor(tool) {
@@ -123,6 +161,11 @@ const TOOL_ICONS = {
   Glob: "G",
   Grep: "?",
   Agent: "A",
+  Reasoning: "~",
+  MCP: "M",
+  Web: "W",
+  Plan: "P",
+  System: "!",
 };
 
 export function toolIcon(tool) {
@@ -138,15 +181,23 @@ export function summarizeInput(tool, input) {
     case "Read":
       return shortPath(input.file_path ?? "");
     case "Write":
-      return shortPath(input.file_path ?? "");
+      return summarizeFileTarget(input);
     case "Edit":
-      return shortPath(input.file_path ?? "");
+      return summarizeFileTarget(input);
     case "Glob":
       return input.pattern ?? "";
     case "Grep":
       return input.pattern ?? "";
     case "Agent":
+    case "Reasoning":
+    case "Plan":
       return input.description ?? input.prompt?.slice(0, 80) ?? "";
+    case "Web":
+      return input.query ?? input.description ?? "";
+    case "MCP":
+      return input.description ?? input.server ?? JSON.stringify(input).slice(0, 80);
+    case "System":
+      return input.description ?? "";
     default:
       return JSON.stringify(input).slice(0, 100);
   }
@@ -166,7 +217,7 @@ export function extractCode(event) {
   if (event.tool === "Write" && event.tool_input.content) {
     return { code: event.tool_input.content, language: guessLanguage(event.tool_input.file_path) };
   }
-  if (event.tool === "Edit") {
+  if (event.tool === "Edit" && (event.tool_input.old_string || event.tool_input.new_string)) {
     return {
       code: formatDiff(event.tool_input.old_string, event.tool_input.new_string),
       language: "diff",
@@ -213,6 +264,13 @@ export function extractPlots(events) {
     if (e.tool === "Write" && e.tool_input?.file_path?.match(/\.(png|jpg|jpeg|svg|gif)$/i)) {
       plots.push(e.tool_input.file_path);
     }
+    if ((e.tool === "Write" || e.tool === "Edit") && e.tool_input?.changes) {
+      for (const change of e.tool_input.changes) {
+        if (change.path?.match(/\.(png|jpg|jpeg|svg|gif)$/i)) {
+          plots.push(change.path);
+        }
+      }
+    }
     // Also check Bash commands that might create plots via matplotlib savefig
     if (e.tool === "Bash" && e.tool_input?.command) {
       const matches = e.tool_input.command.match(/savefig\(['"]([^'"]+)['"]\)/g);
@@ -252,4 +310,154 @@ export function parseReport(text) {
   }
   if (currentSection) sections.push(currentSection);
   return sections;
+}
+
+function normalizeCodexItem(obj) {
+  const item = obj.item ?? {};
+  const eventType = obj.type;
+
+  if (eventType === "item.started" && !["command_execution", "file_change"].includes(item.type)) {
+    return null;
+  }
+
+  const tool = codexToolName(item);
+  const tool_input = codexToolInput(item);
+  const tool_response = codexToolResponse(item);
+  const error = codexItemError(item);
+
+  const normalized = {
+    event: eventType,
+    tool,
+    tool_input,
+    tool_response,
+    error,
+    codex_item_type: item.type,
+    status: item.status ?? (eventType === "item.started" ? "in_progress" : "completed"),
+    item_id: item.id ?? null,
+    raw_item: item,
+  };
+
+  if (typeof tool_response === "string") {
+    normalized.tool_response_parsed = tool_response;
+  } else {
+    normalized.tool_response_parsed = tool_response;
+  }
+
+  return normalized;
+}
+
+function normalizeCodexSystemEvent(obj, description) {
+  return {
+    event: obj.type,
+    tool: "System",
+    tool_input: { description },
+    tool_response: obj,
+    tool_response_parsed: obj,
+    error: obj.message ?? description,
+  };
+}
+
+function codexToolName(item) {
+  switch (item.type) {
+    case "command_execution":
+      return "Bash";
+    case "file_change":
+      return inferFileChangeTool(item.changes);
+    case "agent_message":
+      return "Agent";
+    case "reasoning":
+      return "Reasoning";
+    case "mcp_tool_call":
+      return "MCP";
+    case "web_search":
+      return "Web";
+    case "plan_update":
+      return "Plan";
+    case "error":
+      return "System";
+    default:
+      return "System";
+  }
+}
+
+function codexToolInput(item) {
+  switch (item.type) {
+    case "command_execution":
+      return { command: item.command ?? "" };
+    case "file_change":
+      return {
+        file_path: item.changes?.[0]?.path ?? "",
+        changes: item.changes ?? [],
+      };
+    case "agent_message":
+      return { description: item.text ?? "" };
+    case "reasoning":
+      return { description: item.text ?? item.summary ?? "" };
+    case "web_search":
+      return { query: item.query ?? "", description: item.query ?? "" };
+    case "plan_update":
+      return { description: summarizePlan(item.plan ?? item.steps ?? []) };
+    case "mcp_tool_call":
+      return {
+        description: item.server_name ?? item.name ?? item.tool_name ?? "",
+        ...item,
+      };
+    case "error":
+      return { description: item.message ?? "Codex error" };
+    default:
+      return item;
+  }
+}
+
+function codexToolResponse(item) {
+  switch (item.type) {
+    case "command_execution":
+      return {
+        output: item.aggregated_output ?? "",
+        exit_code: item.exit_code,
+      };
+    case "file_change":
+      return { changes: item.changes ?? [] };
+    case "agent_message":
+      return item.text ?? "";
+    case "reasoning":
+      return item.text ?? item.summary ?? item;
+    case "error":
+      return item.message ?? "";
+    default:
+      return item;
+  }
+}
+
+function codexItemError(item) {
+  if (item.type === "error") return item.message ?? "Codex error";
+  if (item.type === "command_execution" && item.exit_code && item.exit_code !== 0) {
+    return {
+      exit_code: item.exit_code,
+      output: item.aggregated_output ?? "",
+    };
+  }
+  return null;
+}
+
+function inferFileChangeTool(changes = []) {
+  if (changes.length > 0 && changes.every((change) => change.kind === "add")) {
+    return "Write";
+  }
+  return "Edit";
+}
+
+function summarizeFileTarget(input) {
+  if (input.file_path) return shortPath(input.file_path);
+  if (Array.isArray(input.changes) && input.changes.length > 0) {
+    return input.changes.map((change) => shortPath(change.path ?? "")).join(", ");
+  }
+  return "";
+}
+
+function summarizePlan(steps) {
+  if (!Array.isArray(steps) || steps.length === 0) return "";
+  return steps
+    .map((step) => step?.description ?? step?.title ?? String(step))
+    .join(" | ");
 }

@@ -15,6 +15,14 @@ export default function benchmarkManifest() {
   const configsDir = path.join(resultsDir, "configs");
   const runsDir = path.join(resultsDir, "runs");
 
+  function readJsonIfValid(filePath) {
+    try {
+      return JSON.parse(fs.readFileSync(filePath, "utf-8"));
+    } catch {
+      return null;
+    }
+  }
+
   function buildManifest() {
     const configs = {};
     const runs = [];
@@ -44,13 +52,13 @@ export default function benchmarkManifest() {
           // score.json
           const scorePath = path.join(runDir, "score.json");
           if (fs.existsSync(scorePath)) {
-            run.score = JSON.parse(fs.readFileSync(scorePath, "utf-8"));
+            run.score = readJsonIfValid(scorePath);
           }
 
           // session.json
           const sessionPath = path.join(runDir, "session.json");
           if (fs.existsSync(sessionPath)) {
-            run.session = JSON.parse(fs.readFileSync(sessionPath, "utf-8"));
+            run.session = readJsonIfValid(sessionPath);
           }
 
           // analysis_report.md

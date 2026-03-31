@@ -88,7 +88,7 @@
     <div class="empty">
       <div class="empty-icon">&#128202;</div>
       <p>No benchmark results found</p>
-      <p class="hint">Run benchmarks with <code>--config solo-baseline</code> to populate results</p>
+      <p class="hint">Run benchmarks with <code>--config solo-baseline</code> or <code>--config solo-codex</code> to populate results</p>
     </div>
   {:else}
     <div class="controls">

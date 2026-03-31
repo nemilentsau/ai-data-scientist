@@ -12,7 +12,7 @@
   - **Python files changed**: run tests. Iterate until all pass — 0 errors, no exceptions.
 
 ## Testing
-- Read `.Codex/testing/SKILL.md` before writing any test.
+- Read `.codex/testing/SKILL.md` before writing any test.
 - Tests live in `tests/`.
 - Name tests after behaviour, not function names.
 - One test per branch + two tests per boundary. No redundant parametrize cases.
