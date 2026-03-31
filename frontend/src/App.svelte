@@ -1,47 +1,59 @@
 <script>
   import manifest from "virtual:manifest";
   import { parseTrace, computeStats } from "./lib/parse.js";
-  import RunCard from "./lib/RunCard.svelte";
+  import ComparisonMatrix from "./lib/ComparisonMatrix.svelte";
   import RunDetail from "./lib/RunDetail.svelte";
 
-  let search = $state("");
   let selectedRun = $state(null);
-  let filterVerdict = $state("all");
+  let search = $state("");
 
   // Pre-process runs: parse traces, attach computed stats
   let runs = $derived.by(() => {
     return manifest.runs.map((run) => {
       const parsed = run.trace ? parseTrace(run.trace) : { events: [], meta: null };
-      const stats = computeStats(parsed.events, parsed.meta);
+      const stats = computeStats(parsed.events, parsed.meta, run.session);
       return { ...run, parsedTrace: parsed, stats };
     });
   });
 
-  let verdicts = $derived([...new Set(runs.map((r) => r.score?.verdict).filter(Boolean))]);
+  let configs = $derived(manifest.configs);
+  let configNames = $derived(Object.keys(configs).sort());
+  let datasets = $derived([...new Set(runs.map((r) => r.dataset))].sort());
 
-  let filteredRuns = $derived.by(() => {
-    let result = runs;
-    if (filterVerdict !== "all") {
-      result = result.filter((r) => r.score?.verdict === filterVerdict);
+  // Build lookup: { "config/dataset": run }
+  let runMap = $derived.by(() => {
+    const map = {};
+    for (const run of runs) {
+      map[run.id] = run;
     }
-    if (search.trim()) {
-      const q = search.toLowerCase();
-      result = result.filter((r) => {
+    return map;
+  });
+
+  let filteredDatasets = $derived.by(() => {
+    if (!search.trim()) return datasets;
+    const q = search.toLowerCase();
+    return datasets.filter((ds) => {
+      // Search dataset name
+      if (ds.toLowerCase().includes(q)) return true;
+      // Search across all config runs for this dataset
+      for (const cfg of configNames) {
+        const run = runMap[`${cfg}/${ds}`];
+        if (!run) continue;
         const haystack = [
-          r.agent,
-          r.dataset,
-          r.score?.verdict,
-          r.score?.summary,
-          r.report,
-          ...(r.score?.criterion_results?.map((c) => `${c.criterion_id} ${c.justification} ${c.evidence}`) ?? []),
+          run.score?.verdict,
+          run.score?.summary,
+          run.report,
+          ...(run.score?.criterion_results?.map(
+            (c) => `${c.criterion_id} ${c.justification} ${c.evidence}`
+          ) ?? []),
         ]
           .filter(Boolean)
           .join(" ")
           .toLowerCase();
-        return haystack.includes(q);
-      });
-    }
-    return result;
+        if (haystack.includes(q)) return true;
+      }
+      return false;
+    });
   });
 
   function selectRun(run) {
@@ -61,60 +73,44 @@
       {/if}
       <h1>Benchmark Dashboard</h1>
     </div>
-    {#if runs.length > 0}
+    {#if runs.length > 0 && !selectedRun}
       <div class="header-stats">
+        <span class="stat-chip">{configNames.length} config{configNames.length !== 1 ? "s" : ""}</span>
+        <span class="stat-chip">{datasets.length} dataset{datasets.length !== 1 ? "s" : ""}</span>
         <span class="stat-chip">{runs.length} run{runs.length !== 1 ? "s" : ""}</span>
-        <span class="stat-chip">{new Set(runs.map((r) => r.agent)).size} agent{new Set(runs.map((r) => r.agent)).size !== 1 ? "s" : ""}</span>
-        <span class="stat-chip">{new Set(runs.map((r) => r.dataset)).size} dataset{new Set(runs.map((r) => r.dataset)).size !== 1 ? "s" : ""}</span>
       </div>
     {/if}
   </header>
 
   {#if selectedRun}
-    <RunDetail run={selectedRun} />
+    <RunDetail run={selectedRun} config={configs[selectedRun.config]} />
   {:else if runs.length === 0}
     <div class="empty">
       <div class="empty-icon">&#128202;</div>
       <p>No benchmark results found</p>
-      <p class="hint">Run benchmarks to populate <code>results/</code></p>
+      <p class="hint">Run benchmarks with <code>--config solo-baseline</code> to populate results</p>
     </div>
   {:else}
     <div class="controls">
       <input
         class="search"
         type="text"
-        placeholder="Search runs, criteria, reports..."
+        placeholder="Search datasets, criteria, reports..."
         bind:value={search}
       />
-      <div class="filters">
-        <button
-          class="filter-btn"
-          class:active={filterVerdict === "all"}
-          onclick={() => (filterVerdict = "all")}
-        >
-          All
-        </button>
-        {#each verdicts as v}
-          <button
-            class="filter-btn"
-            class:active={filterVerdict === v}
-            onclick={() => (filterVerdict = v)}
-          >
-            {v}
-          </button>
-        {/each}
-      </div>
     </div>
 
-    <div class="run-grid">
-      {#each filteredRuns as run (run.id)}
-        <RunCard {run} onSelect={() => selectRun(run)} />
-      {/each}
-    </div>
+    <ComparisonMatrix
+      {configNames}
+      {configs}
+      datasets={filteredDatasets}
+      {runMap}
+      onSelect={selectRun}
+    />
 
-    {#if filteredRuns.length === 0 && search}
+    {#if filteredDatasets.length === 0 && search}
       <div class="empty">
-        <p>No runs match "{search}"</p>
+        <p>No datasets match "{search}"</p>
       </div>
     {/if}
   {/if}
@@ -122,7 +118,7 @@
 
 <style>
   .app {
-    max-width: 1200px;
+    max-width: 1400px;
     margin: 0 auto;
     padding: 16px 24px;
   }
@@ -178,14 +174,12 @@
   }
 
   .controls {
-    display: flex;
-    gap: 12px;
     margin-bottom: 16px;
-    align-items: center;
   }
 
   .search {
-    flex: 1;
+    width: 100%;
+    max-width: 400px;
     padding: 8px 14px;
     background: var(--bg-secondary);
     border: 1px solid var(--border);
@@ -203,34 +197,6 @@
 
   .search:focus {
     border-color: var(--accent);
-  }
-
-  .filters {
-    display: flex;
-    gap: 4px;
-  }
-
-  .filter-btn {
-    padding: 6px 14px;
-    font-size: 0.8rem;
-    background: var(--bg-secondary);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    color: var(--text-muted);
-    text-transform: capitalize;
-    transition: all 0.15s;
-  }
-
-  .filter-btn.active {
-    background: color-mix(in srgb, var(--accent) 15%, transparent);
-    border-color: var(--accent);
-    color: var(--accent);
-  }
-
-  .run-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
-    gap: 12px;
   }
 
   .empty {

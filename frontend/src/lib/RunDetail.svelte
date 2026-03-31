@@ -6,7 +6,7 @@
   import ToolFilter from "./ToolFilter.svelte";
   import EventModal from "./EventModal.svelte";
 
-  let { run } = $props();
+  let { run, config = null } = $props();
 
   let activeTab = $state("score");
   let selectedEvent = $state(null);
@@ -35,8 +35,10 @@
   }
 
   const verdictColors = {
+    solved: "var(--green)",
     pass: "var(--green)",
     partial: "var(--orange)",
+    wrong: "var(--red)",
     fail: "var(--red)",
   };
 </script>
@@ -44,7 +46,7 @@
 <div class="detail">
   <div class="detail-header">
     <div class="run-title">
-      <span class="agent-name">{run.agent}</span>
+      <span class="config-name">{run.config}</span>
       <span class="separator">/</span>
       <span class="dataset-name">{run.dataset.replace(/_/g, " ")}</span>
     </div>
@@ -178,7 +180,7 @@
     gap: 8px;
   }
 
-  .agent-name {
+  .config-name {
     font-size: 0.8rem;
     font-weight: 600;
     text-transform: uppercase;

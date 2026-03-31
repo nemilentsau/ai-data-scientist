@@ -1,0 +1,16 @@
+name: solo-baseline
+description: Single Claude agent with generic data science prompt
+created: "2026-03-31"
+team:
+  - role: analyst
+    model: claude-opus-4-6
+    prompt: prompts/analyst-generic.md
+    max_turns: 30
+    tools:
+      - Bash
+      - Read
+      - Write
+      - Edit
+      - Glob
+      - Grep
+harness: harness/run_claude.sh

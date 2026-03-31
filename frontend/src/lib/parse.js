@@ -53,12 +53,12 @@ export function extractTools(events) {
   return [...tools].sort();
 }
 
-/** Compute summary stats from events + meta. */
-export function computeStats(events, meta) {
+/** Compute summary stats from events + meta + session. */
+export function computeStats(events, meta, session) {
   const toolCalls = events.filter((e) => e.tool).length;
   const errors = events.filter((e) => e.error || e.event === "PostToolUseFailure").length;
 
-  let durationMs = meta?.duration_ms ?? 0;
+  let durationMs = meta?.duration_ms ?? session?.duration_ms ?? 0;
   if (!durationMs && events.length >= 2) {
     const first = new Date(events[0].timestamp).getTime();
     const last = new Date(events[events.length - 1].timestamp).getTime();
@@ -71,8 +71,8 @@ export function computeStats(events, meta) {
     errors,
     durationMs,
     durationFormatted: formatDuration(durationMs),
-    costUsd: meta?.total_cost_usd ?? null,
-    numTurns: meta?.num_turns ?? null,
+    costUsd: meta?.total_cost_usd ?? session?.total_cost_usd ?? null,
+    numTurns: meta?.num_turns ?? session?.num_turns ?? null,
   };
 }
 
