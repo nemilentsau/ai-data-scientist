@@ -1,0 +1,78 @@
+{
+  "dataset": "interaction_effects",
+  "config": "solo-baseline",
+  "agent": "claude",
+  "verdict": "partial",
+  "core_insight_pass": true,
+  "required_coverage": 0.6666666666666666,
+  "supporting_coverage": 0.8333333333333334,
+  "oracle_attainment": 0.3939999999999999,
+  "oracle_metric_name": "roc_auc",
+  "oracle_agent_value": 0.697,
+  "fatal_errors": [],
+  "efficiency": {
+    "transcript_chars": 56205.0,
+    "trace_events": 11.0,
+    "report_chars": 9169.0
+  },
+  "criterion_results": [
+    {
+      "criterion_id": "interaction_effects_interaction_tested",
+      "group": "must_have",
+      "status": "hit",
+      "justification": "The agent trained an explicit LR + Interaction Term model as well as tree-based models (Random Forest, Gradient Boosting) that are capable of capturing non-additive effects.",
+      "evidence": "Model table includes 'LR + Interaction Term' with CV ROC-AUC 0.697 and test ROC-AUC 0.695, plus Random Forest and Gradient Boosting entries."
+    },
+    {
+      "criterion_id": "interaction_effects_main_effects_only_underperforms",
+      "group": "must_have",
+      "status": "miss",
+      "justification": "The agent concluded the opposite: it selected the main-effects Logistic Regression as the best model and stated 'Tree-based models do not improve performance, confirming that the relationships are approximately linear in log-odds and that complex interactions beyond time x channel are not present.' The numbers show near-identical performance (0.698 vs 0.695 test AUC), and the agent never argued the main-effects model was inferior.",
+      "evidence": "Selected model: Logistic Regression. It achieves the best test AUC... Tree-based models do not improve performance."
+    },
+    {
+      "criterion_id": "interaction_effects_channel_time_interaction_identified",
+      "group": "must_have",
+      "status": "hit",
+      "justification": "The agent explicitly identified the channel_score \u00d7 time_of_day_hour interaction as 'the dominant pattern in the data' in EDA and reiterated it in conclusions.",
+      "evidence": "EDA: 'This multiplicative interaction is the dominant pattern in the data.' Conclusion #1: 'Their interaction amplifies the effect -- evening + high-quality channels yield the highest conversion rates (>60%).'"
+    },
+    {
+      "criterion_id": "interaction_effects_interaction_visualized",
+      "group": "supporting",
+      "status": "hit",
+      "justification": "The agent created an interaction heatmap (plots/09_interaction_heatmap.png) and computed a crosstab of time_evening \u00d7 high_channel showing conversion rates across all four combinations.",
+      "evidence": "Crosstab: evening+high_channel: 61.3% conversion, non-evening+low_channel: 18.7%. Plot 09: 'Conversion rate heatmap: channel score x time of day.'"
+    },
+    {
+      "criterion_id": "interaction_effects_secondary_features_not_overstated",
+      "group": "supporting",
+      "status": "hit",
+      "justification": "The agent clearly identified ad_budget, page_load_time, device, and previous_visits as non-predictors and did not overstate their importance.",
+      "evidence": "Conclusion #2: 'Ad budget does not predict conversion.' Conclusion #3: 'Page load time does not predict conversion.' Conclusion #4: 'Device type and visit history are not significant predictors.'"
+    },
+    {
+      "criterion_id": "interaction_effects_non_additive_language",
+      "group": "supporting",
+      "status": "partial",
+      "justification": "The agent used 'multiplicative interaction' and 'amplifies the effect' language, and the crosstab implicitly shows that channel_score's effect depends on time_of_day. However, the agent never explicitly stated that the effect of one variable depends on the level of the other, and the modeling section actually contradicts the non-additive framing by selecting the additive model.",
+      "evidence": "'This multiplicative interaction is the dominant pattern in the data.' But also: 'confirming that the relationships are approximately linear in log-odds and that complex interactions beyond time x channel are not present.'"
+    },
+    {
+      "criterion_id": "interaction_effects_main_effects_only_conclusion",
+      "group": "forbidden",
+      "status": "miss",
+      "justification": "The agent did check interactions (trained interaction models, examined interaction in EDA, discussed interaction in conclusions). While the agent selected the main-effects model, the conclusions explicitly discuss the interaction pattern, so the final conclusion is not drawn purely from an additive model without checking.",
+      "evidence": "Agent trained LR + Interaction Term, RF, and GB models. Conclusions discuss the channel \u00d7 time interaction."
+    },
+    {
+      "criterion_id": "interaction_effects_misses_interaction_pattern",
+      "group": "forbidden",
+      "status": "miss",
+      "justification": "The agent explicitly identified the channel_score \u00d7 time_of_day_hour interaction pattern in EDA and conclusions. The interaction was not missed.",
+      "evidence": "'Interaction between time and channel score: The strongest conversion rates occur when both factors are high simultaneously... This multiplicative interaction is the dominant pattern in the data.'"
+    }
+  ],
+  "summary": "The agent correctly identified the channel_score \u00d7 time_of_day_hour interaction as 'the dominant pattern' through EDA (crosstab, heatmap) and did test interaction-aware models. However, it critically failed to demonstrate that a main-effects-only model underperforms \u2014 instead selecting the plain Logistic Regression as the best model and explicitly claiming interactions don't improve performance. This internal contradiction (EDA says interaction is dominant, modeling says it doesn't matter) undermines the analysis. The near-identical AUC values (~0.695-0.698) suggest the interaction term may have been poorly specified, preventing the modeling from capturing the true non-additive pattern. Two of three must-have criteria are met with no forbidden criteria hit, yielding a partial verdict.",
+  "raw_response": "```json\n{\n  \"must_have\": {\n    \"interaction_effects_interaction_tested\": {\n      \"status\": \"hit\",\n      \"justification\": \"The agent trained an explicit LR + Interaction Term model as well as tree-based models (Random Forest, Gradient Boosting) that are capable of capturing non-additive effects.\",\n      \"evidence\": \"Model table includes 'LR + Interaction Term' with CV ROC-AUC 0.697 and test ROC-AUC 0.695, plus Random Forest and Gradient Boosting entries.\"\n    },\n    \"interaction_effects_main_effects_only_underperforms\": {\n      \"status\": \"miss\",\n      \"justification\": \"The agent concluded the opposite: it selected the main-effects Logistic Regression as the best model and stated 'Tree-based models do not improve performance, confirming that the relationships are approximately linear in log-odds and that complex interactions beyond time x channel are not present.' The numbers show near-identical performance (0.698 vs 0.695 test AUC), and the agent never argued the main-effects model was inferior.\",\n      \"evidence\": \"Selected model: Logistic Regression. It achieves the best test AUC... Tree-based models do not improve performance.\"\n    },\n    \"interaction_effects_channel_time_interaction_identified\": {\n      \"status\": \"hit\",\n      \"justification\": \"The agent explicitly identified the channel_score \u00d7 time_of_day_hour interaction as 'the dominant pattern in the data' in EDA and reiterated it in conclusions.\",\n      \"evidence\": \"EDA: 'This multiplicative interaction is the dominant pattern in the data.' Conclusion #1: 'Their interaction amplifies the effect -- evening + high-quality channels yield the highest conversion rates (>60%).'\"\n    }\n  },\n  \"supporting\": {\n    \"interaction_effects_interaction_visualized\": {\n      \"status\": \"hit\",\n      \"justification\": \"The agent created an interaction heatmap (plots/09_interaction_heatmap.png) and computed a crosstab of time_evening \u00d7 high_channel showing conversion rates across all four combinations.\",\n      \"evidence\": \"Crosstab: evening+high_channel: 61.3% conversion, non-evening+low_channel: 18.7%. Plot 09: 'Conversion rate heatmap: channel score x time of day.'\"\n    },\n    \"interaction_effects_secondary_features_not_overstated\": {\n      \"status\": \"hit\",\n      \"justification\": \"The agent clearly identified ad_budget, page_load_time, device, and previous_visits as non-predictors and did not overstate their importance.\",\n      \"evidence\": \"Conclusion #2: 'Ad budget does not predict conversion.' Conclusion #3: 'Page load time does not predict conversion.' Conclusion #4: 'Device type and visit history are not significant predictors.'\"\n    },\n    \"interaction_effects_non_additive_language\": {\n      \"status\": \"partial\",\n      \"justification\": \"The agent used 'multiplicative interaction' and 'amplifies the effect' language, and the crosstab implicitly shows that channel_score's effect depends on time_of_day. However, the agent never explicitly stated that the effect of one variable depends on the level of the other, and the modeling section actually contradicts the non-additive framing by selecting the additive model.\",\n      \"evidence\": \"'This multiplicative interaction is the dominant pattern in the data.' But also: 'confirming that the relationships are approximately linear in log-odds and that complex interactions beyond time x channel are not present.'\"\n    }\n  },\n  \"forbidden\": {\n    \"interaction_effects_main_effects_only_conclusion\": {\n      \"status\": \"miss\",\n      \"justification\": \"The agent did check interactions (trained interaction models, examined interaction in EDA, discussed interaction in conclusions). While the agent selected the main-effects model, the conclusions explicitly discuss the interaction pattern, so the final conclusion is not drawn purely from an additive model without checking.\",\n      \"evidence\": \"Agent trained LR + Interaction Term, RF, and GB models. Conclusions discuss the channel \u00d7 time interaction.\"\n    },\n    \"interaction_effects_misses_interaction_pattern\": {\n      \"status\": \"miss\",\n      \"justification\": \"The agent explicitly identified the channel_score \u00d7 time_of_day_hour interaction pattern in EDA and conclusions. The interaction was not missed.\",\n      \"evidence\": \"'Interaction between time and channel score: The strongest conversion rates occur when both factors are high simultaneously... This multiplicative interaction is the dominant pattern in the data.'\"\n    }\n  },\n  \"oracle_metric\": {\n    \"agent_value\": 0.697,\n    \"justification\": \"The best reported ROC-AUC for an interaction-aware classifier is 0.697 (CV ROC-AUC for LR + Interaction Term). Test ROC-AUC was 0.695. Both values are well below the oracle of 1.0, suggesting the interaction term may not have been properly specified or the model was not fully leveraging the interaction pattern.\"\n  },\n  \"summary\": \"The agent correctly identified the channel_score \u00d7 time_of_day_hour interaction as 'the dominant pattern' through EDA (crosstab, heatmap) and did test interaction-aware models. However, it critically failed to demonstrate that a main-effects-only model underperforms \u2014 instead selecting the plain Logistic Regression as the best model and explicitly claiming interactions don't improve performance. This internal contradiction (EDA says interaction is dominant, modeling says it doesn't matter) undermines the analysis. The near-identical AUC values (~0.695-0.698) suggest the interaction term may have been poorly specified, preventing the modeling from capturing the true non-additive pattern. Two of three must-have criteria are met with no forbidden criteria hit, yielding a partial verdict.\"\n}\n```"
+}

@@ -1,0 +1,78 @@
+{
+  "dataset": "spurious_correlation",
+  "config": "solo-codex",
+  "agent": "codex",
+  "verdict": "partial",
+  "core_insight_pass": true,
+  "required_coverage": 0.8333333333333334,
+  "supporting_coverage": 0.8333333333333334,
+  "oracle_attainment": null,
+  "oracle_metric_name": null,
+  "oracle_agent_value": 0.55,
+  "fatal_errors": [],
+  "efficiency": {
+    "transcript_chars": 73471.0,
+    "trace_events": 51.0,
+    "report_chars": 15551.0
+  },
+  "criterion_results": [
+    {
+      "criterion_id": "spurious_correlation_shared_confounder_identified",
+      "group": "must_have",
+      "status": "hit",
+      "justification": "The agent clearly identifies temperature and shared seasonality as the confounder driving all correlations, including between ice cream sales and drowning.",
+      "evidence": "\"The dataset is dominated by shared seasonality. Temperature, UV, ice cream sales, and pool visits all rise and fall together over the year.\" and \"avoid saying that ice cream sales or pool visits themselves cause drowning; they likely proxy for shared seasonal exposure.\""
+    },
+    {
+      "criterion_id": "spurious_correlation_controlled_analysis_done",
+      "group": "must_have",
+      "status": "partial",
+      "justification": "The agent fits a Poisson GLM for drowning using weather variables (temperature, UV, humidity) as controls, and computes VIF showing collinearity among seasonal proxies. However, the report never explicitly shows the ice-cream-sales \u2194 drowning relationship disappearing after controlling for temperature (e.g., no partial correlation, no before/after regression comparison). The session transcript shows competing models were fit (exposure_sales vs weather_only) but these results are not presented in the report to demonstrate the relationship largely vanishes.",
+      "evidence": "Drowning Poisson GLM uses avg_temperature_c, uv_index, humidity_pct as predictors. VIF table shows collinearity. But no explicit demonstration such as 'partial correlation controlling for temperature \u2248 0' or 'ice cream coefficient becomes insignificant when temperature is added.'"
+    },
+    {
+      "criterion_id": "spurious_correlation_causal_warning_given",
+      "group": "must_have",
+      "status": "hit",
+      "justification": "The agent explicitly warns against causal interpretation of the raw correlations in both the findings and recommendations sections.",
+      "evidence": "\"For causal claims, avoid saying that ice cream sales or pool visits themselves cause drowning; they likely proxy for shared seasonal exposure.\" and \"Multicollinearity limits causal interpretation. Because many predictors are seasonal proxies, coefficient-level interpretations should be made cautiously.\""
+    },
+    {
+      "criterion_id": "spurious_correlation_seasonal_pattern_described",
+      "group": "supporting",
+      "status": "hit",
+      "justification": "The agent provides detailed monthly profiles and explicitly describes both variables rising together in warm periods.",
+      "evidence": "\"Winter months have near-zero pool use and very low ice cream demand. Late spring through summer has the highest temperature, UV, sales, visits, and incidents. Drowning incidents peak in June and July on average, aligning with the highest exposure/activity months.\""
+    },
+    {
+      "criterion_id": "spurious_correlation_partial_correlation_or_regression",
+      "group": "supporting",
+      "status": "partial",
+      "justification": "The agent runs controlled regressions (drowning ~ weather) and computes VIF, which are forms of confound-adjusted analysis. However, they never compute a partial correlation between ice cream sales and drowning controlling for temperature, nor do they present a regression of drowning on ice cream + temperature to show the ice cream coefficient becoming negligible.",
+      "evidence": "Poisson GLM: drowning ~ avg_temperature_c + uv_index + humidity_pct. VIF computed for all features. But no partial correlation or regression directly comparing the spurious pair before/after controlling."
+    },
+    {
+      "criterion_id": "spurious_correlation_time_axis_respected",
+      "group": "supporting",
+      "status": "hit",
+      "justification": "The agent uses time-series plots, monthly seasonality breakdown, temporal train/test split (2023 train, 2024 holdout), and discusses the annual cycle as the structural driver.",
+      "evidence": "\"I fit models on 2023 as training data and evaluated them on 2024 as a forward holdout set. That is stricter than random splitting because it respects time order.\" Monthly profiles presented. Time series overview plotted."
+    },
+    {
+      "criterion_id": "spurious_correlation_claims_direct_causality",
+      "group": "forbidden",
+      "status": "miss",
+      "justification": "The agent explicitly warns against claiming direct causality between ice cream sales and drowning.",
+      "evidence": "\"avoid saying that ice cream sales or pool visits themselves cause drowning; they likely proxy for shared seasonal exposure.\""
+    },
+    {
+      "criterion_id": "spurious_correlation_ignores_confounder",
+      "group": "forbidden",
+      "status": "miss",
+      "justification": "The agent consistently frames the raw correlations as driven by a shared seasonal confounder and never draws conclusions from raw correlations alone.",
+      "evidence": "\"The dataset is dominated by shared seasonality\" and \"Multicollinearity limits causal interpretation\" appear as primary findings, not afterthoughts."
+    }
+  ],
+  "summary": "The agent produces a thorough, well-structured analysis that correctly identifies temperature and shared seasonality as the confounder, warns clearly against causal interpretation, and describes the seasonal mechanism in detail. These earn hits on two of three must-haves and most supporting criteria. The critical gap is that the agent never explicitly demonstrates the controlled analysis showing the ice-cream-sales \u2194 drowning relationship largely disappears once temperature is accounted for \u2014 no partial correlation, no before/after regression comparison for the spurious pair. The session transcript shows competing models were explored but these results were not synthesized into the key demonstration. This makes the verdict 'partial': strong conceptual understanding but incomplete analytical proof of the spurious relationship collapsing under controls.",
+  "raw_response": "```json\n{\n  \"must_have\": {\n    \"spurious_correlation_shared_confounder_identified\": {\n      \"status\": \"hit\",\n      \"justification\": \"The agent clearly identifies temperature and shared seasonality as the confounder driving all correlations, including between ice cream sales and drowning.\",\n      \"evidence\": \"\\\"The dataset is dominated by shared seasonality. Temperature, UV, ice cream sales, and pool visits all rise and fall together over the year.\\\" and \\\"avoid saying that ice cream sales or pool visits themselves cause drowning; they likely proxy for shared seasonal exposure.\\\"\"\n    },\n    \"spurious_correlation_controlled_analysis_done\": {\n      \"status\": \"partial\",\n      \"justification\": \"The agent fits a Poisson GLM for drowning using weather variables (temperature, UV, humidity) as controls, and computes VIF showing collinearity among seasonal proxies. However, the report never explicitly shows the ice-cream-sales \u2194 drowning relationship disappearing after controlling for temperature (e.g., no partial correlation, no before/after regression comparison). The session transcript shows competing models were fit (exposure_sales vs weather_only) but these results are not presented in the report to demonstrate the relationship largely vanishes.\",\n      \"evidence\": \"Drowning Poisson GLM uses avg_temperature_c, uv_index, humidity_pct as predictors. VIF table shows collinearity. But no explicit demonstration such as 'partial correlation controlling for temperature \u2248 0' or 'ice cream coefficient becomes insignificant when temperature is added.'\"\n    },\n    \"spurious_correlation_causal_warning_given\": {\n      \"status\": \"hit\",\n      \"justification\": \"The agent explicitly warns against causal interpretation of the raw correlations in both the findings and recommendations sections.\",\n      \"evidence\": \"\\\"For causal claims, avoid saying that ice cream sales or pool visits themselves cause drowning; they likely proxy for shared seasonal exposure.\\\" and \\\"Multicollinearity limits causal interpretation. Because many predictors are seasonal proxies, coefficient-level interpretations should be made cautiously.\\\"\"\n    }\n  },\n  \"supporting\": {\n    \"spurious_correlation_seasonal_pattern_described\": {\n      \"status\": \"hit\",\n      \"justification\": \"The agent provides detailed monthly profiles and explicitly describes both variables rising together in warm periods.\",\n      \"evidence\": \"\\\"Winter months have near-zero pool use and very low ice cream demand. Late spring through summer has the highest temperature, UV, sales, visits, and incidents. Drowning incidents peak in June and July on average, aligning with the highest exposure/activity months.\\\"\"\n    },\n    \"spurious_correlation_partial_correlation_or_regression\": {\n      \"status\": \"partial\",\n      \"justification\": \"The agent runs controlled regressions (drowning ~ weather) and computes VIF, which are forms of confound-adjusted analysis. However, they never compute a partial correlation between ice cream sales and drowning controlling for temperature, nor do they present a regression of drowning on ice cream + temperature to show the ice cream coefficient becoming negligible.\",\n      \"evidence\": \"Poisson GLM: drowning ~ avg_temperature_c + uv_index + humidity_pct. VIF computed for all features. But no partial correlation or regression directly comparing the spurious pair before/after controlling.\"\n    },\n    \"spurious_correlation_time_axis_respected\": {\n      \"status\": \"hit\",\n      \"justification\": \"The agent uses time-series plots, monthly seasonality breakdown, temporal train/test split (2023 train, 2024 holdout), and discusses the annual cycle as the structural driver.\",\n      \"evidence\": \"\\\"I fit models on 2023 as training data and evaluated them on 2024 as a forward holdout set. That is stricter than random splitting because it respects time order.\\\" Monthly profiles presented. Time series overview plotted.\"\n    }\n  },\n  \"forbidden\": {\n    \"spurious_correlation_claims_direct_causality\": {\n      \"status\": \"miss\",\n      \"justification\": \"The agent explicitly warns against claiming direct causality between ice cream sales and drowning.\",\n      \"evidence\": \"\\\"avoid saying that ice cream sales or pool visits themselves cause drowning; they likely proxy for shared seasonal exposure.\\\"\"\n    },\n    \"spurious_correlation_ignores_confounder\": {\n      \"status\": \"miss\",\n      \"justification\": \"The agent consistently frames the raw correlations as driven by a shared seasonal confounder and never draws conclusions from raw correlations alone.\",\n      \"evidence\": \"\\\"The dataset is dominated by shared seasonality\\\" and \\\"Multicollinearity limits causal interpretation\\\" appear as primary findings, not afterthoughts.\"\n    }\n  },\n  \"oracle_metric\": {\n    \"agent_value\": 0.55,\n    \"justification\": \"The agent correctly identifies the core pattern (spurious correlation driven by shared seasonality/temperature), warns against causal interpretation, and describes the seasonal mechanism well. However, it falls short of the 'solved' verdict because it never explicitly demonstrates that the ice-cream \u2194 drowning relationship disappears after controlling for temperature \u2014 the key analytical proof. The controlled regressions model drowning from weather variables but don't directly address the spurious pair. The analysis is more of a general EDA/modeling exercise than a focused spurious-correlation investigation.\"\n  },\n  \"summary\": \"The agent produces a thorough, well-structured analysis that correctly identifies temperature and shared seasonality as the confounder, warns clearly against causal interpretation, and describes the seasonal mechanism in detail. These earn hits on two of three must-haves and most supporting criteria. The critical gap is that the agent never explicitly demonstrates the controlled analysis showing the ice-cream-sales \u2194 drowning relationship largely disappears once temperature is accounted for \u2014 no partial correlation, no before/after regression comparison for the spurious pair. The session transcript shows competing models were explored but these results were not synthesized into the key demonstration. This makes the verdict 'partial': strong conceptual understanding but incomplete analytical proof of the spurious relationship collapsing under controls.\"\n}"
+}

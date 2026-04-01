@@ -1,0 +1,77 @@
+{
+  "dataset": "heteroscedasticity",
+  "config": "solo-baseline",
+  "agent": "claude",
+  "verdict": "failed",
+  "core_insight_pass": false,
+  "required_coverage": 0.0,
+  "supporting_coverage": 0.0,
+  "oracle_attainment": null,
+  "oracle_metric_name": null,
+  "oracle_agent_value": 0.0,
+  "fatal_errors": [],
+  "efficiency": {
+    "transcript_chars": 63279.0,
+    "trace_events": 9.0
+  },
+  "criterion_results": [
+    {
+      "criterion_id": "heteroscedasticity_residual_diagnostics_run",
+      "group": "must_have",
+      "status": "miss",
+      "justification": "The agent never computed or inspected residuals. Step 1 was data profiling, step 2 was general EDA (distributions, correlations, boxplots, ANOVA), and step 3 (model building, which might have included residual analysis) failed before execution. No residual diagnostics were run.",
+      "evidence": "Session shows step1_inspect.py (summary stats), step2_eda.py (distributions, correlations, channel/region comparisons), and step3_models.py which failed at PostToolUseFailure before producing any output."
+    },
+    {
+      "criterion_id": "heteroscedasticity_non_constant_variance_identified",
+      "group": "must_have",
+      "status": "miss",
+      "justification": "The agent never identified that residual variance increases with ad spend or fitted values. The EDA focused entirely on channel/region performance comparisons, monthly trends, and overall correlations \u2014 none of which examine the variance structure of residuals.",
+      "evidence": "No mention of non-constant variance, fan-shaped residuals, or increasing spread anywhere in the session transcript."
+    },
+    {
+      "criterion_id": "heteroscedasticity_remedy_suggested",
+      "group": "must_have",
+      "status": "miss",
+      "justification": "No recommendation for robust standard errors, weighted regression, or any variance-stabilizing transform was made anywhere in the session.",
+      "evidence": "No analysis report was produced. Session transcript contains no discussion of remedies for heteroscedasticity."
+    },
+    {
+      "criterion_id": "heteroscedasticity_residual_plot_used",
+      "group": "supporting",
+      "status": "miss",
+      "justification": "No residual plot was generated. The plots created were distributions, correlation heatmap, scatter plots (spend vs revenue by channel), boxplots of channel/region performance, monthly trends, and region\u00d7channel heatmaps \u2014 none are residual plots.",
+      "evidence": "Plots saved: 01_distributions.png, 02_correlation_heatmap.png, 03_scatter_by_channel.png, 04_channel_performance.png, 05_region_performance.png, 06_monthly_trends.png, 07_region_channel_heatmap.png"
+    },
+    {
+      "criterion_id": "heteroscedasticity_inference_risk_noted",
+      "group": "supporting",
+      "status": "miss",
+      "justification": "No discussion of OLS inference reliability under heteroscedasticity. The agent ran ANOVA and linear regression without any caveats about variance assumptions.",
+      "evidence": "No analysis report produced; no mention of inference risk in session transcript."
+    },
+    {
+      "criterion_id": "heteroscedasticity_linear_mean_trend_preserved",
+      "group": "supporting",
+      "status": "miss",
+      "justification": "The agent never distinguished between the mean trend and the variance problem. The scatter plot of ad_spend vs revenue shows a clear linear relationship, but the agent made no observation about variance increasing along that trend.",
+      "evidence": "step2_eda.py fits regression lines per channel in scatter plots but makes no commentary on the variance structure around those lines."
+    },
+    {
+      "criterion_id": "heteroscedasticity_assumes_constant_variance",
+      "group": "forbidden",
+      "status": "miss",
+      "justification": "The agent did not explicitly assume or assert constant variance. While it ran ANOVA (which assumes homoscedasticity) without checking, the analysis was incomplete and no final claims were made in a report. The omission is captured by the must-have misses rather than this forbidden criterion.",
+      "evidence": "No analysis report was produced; no explicit claim of constant variance found in session."
+    },
+    {
+      "criterion_id": "heteroscedasticity_uses_ols_uncritically",
+      "group": "forbidden",
+      "status": "miss",
+      "justification": "While the agent fit linear regression lines in scatter plots, no final report was produced that presented OLS significance or confidence intervals as trustworthy. The session was incomplete.",
+      "evidence": "step2_eda.py computed linregress per channel for plot overlays, but no report text made claims based on those results."
+    }
+  ],
+  "summary": "The agent completely missed the key pattern in this dataset. Its analysis followed a generic EDA template \u2014 profiling, distributions, correlations, channel/region comparisons, ANOVA \u2014 without ever fitting a model and examining residuals. The model-building step (step 3) failed before execution, and even its design appeared to be a general revenue-prediction pipeline rather than targeted residual diagnostics. No heteroscedasticity was identified, no residual plots were created, and no remedies were suggested. The session produced no analysis report. This is a clear 'failed' verdict.",
+  "raw_response": "```json\n{\n  \"must_have\": {\n    \"heteroscedasticity_residual_diagnostics_run\": {\n      \"status\": \"miss\",\n      \"justification\": \"The agent never computed or inspected residuals. Step 1 was data profiling, step 2 was general EDA (distributions, correlations, boxplots, ANOVA), and step 3 (model building, which might have included residual analysis) failed before execution. No residual diagnostics were run.\",\n      \"evidence\": \"Session shows step1_inspect.py (summary stats), step2_eda.py (distributions, correlations, channel/region comparisons), and step3_models.py which failed at PostToolUseFailure before producing any output.\"\n    },\n    \"heteroscedasticity_non_constant_variance_identified\": {\n      \"status\": \"miss\",\n      \"justification\": \"The agent never identified that residual variance increases with ad spend or fitted values. The EDA focused entirely on channel/region performance comparisons, monthly trends, and overall correlations \u2014 none of which examine the variance structure of residuals.\",\n      \"evidence\": \"No mention of non-constant variance, fan-shaped residuals, or increasing spread anywhere in the session transcript.\"\n    },\n    \"heteroscedasticity_remedy_suggested\": {\n      \"status\": \"miss\",\n      \"justification\": \"No recommendation for robust standard errors, weighted regression, or any variance-stabilizing transform was made anywhere in the session.\",\n      \"evidence\": \"No analysis report was produced. Session transcript contains no discussion of remedies for heteroscedasticity.\"\n    }\n  },\n  \"supporting\": {\n    \"heteroscedasticity_residual_plot_used\": {\n      \"status\": \"miss\",\n      \"justification\": \"No residual plot was generated. The plots created were distributions, correlation heatmap, scatter plots (spend vs revenue by channel), boxplots of channel/region performance, monthly trends, and region\u00d7channel heatmaps \u2014 none are residual plots.\",\n      \"evidence\": \"Plots saved: 01_distributions.png, 02_correlation_heatmap.png, 03_scatter_by_channel.png, 04_channel_performance.png, 05_region_performance.png, 06_monthly_trends.png, 07_region_channel_heatmap.png\"\n    },\n    \"heteroscedasticity_inference_risk_noted\": {\n      \"status\": \"miss\",\n      \"justification\": \"No discussion of OLS inference reliability under heteroscedasticity. The agent ran ANOVA and linear regression without any caveats about variance assumptions.\",\n      \"evidence\": \"No analysis report produced; no mention of inference risk in session transcript.\"\n    },\n    \"heteroscedasticity_linear_mean_trend_preserved\": {\n      \"status\": \"miss\",\n      \"justification\": \"The agent never distinguished between the mean trend and the variance problem. The scatter plot of ad_spend vs revenue shows a clear linear relationship, but the agent made no observation about variance increasing along that trend.\",\n      \"evidence\": \"step2_eda.py fits regression lines per channel in scatter plots but makes no commentary on the variance structure around those lines.\"\n    }\n  },\n  \"forbidden\": {\n    \"heteroscedasticity_assumes_constant_variance\": {\n      \"status\": \"miss\",\n      \"justification\": \"The agent did not explicitly assume or assert constant variance. While it ran ANOVA (which assumes homoscedasticity) without checking, the analysis was incomplete and no final claims were made in a report. The omission is captured by the must-have misses rather than this forbidden criterion.\",\n      \"evidence\": \"No analysis report was produced; no explicit claim of constant variance found in session.\"\n    },\n    \"heteroscedasticity_uses_ols_uncritically\": {\n      \"status\": \"miss\",\n      \"justification\": \"While the agent fit linear regression lines in scatter plots, no final report was produced that presented OLS significance or confidence intervals as trustworthy. The session was incomplete.\",\n      \"evidence\": \"step2_eda.py computed linregress per channel for plot overlays, but no report text made claims based on those results.\"\n    }\n  },\n  \"oracle_metric\": {\n    \"agent_value\": 0.0,\n    \"justification\": \"Verdict: failed. No must-have criterion was hit or partial. The agent's session was cut short when the model-building step failed, and even the completed EDA steps focused entirely on channel/region segmentation and general descriptive statistics. The core task \u2014 detecting heteroscedasticity through residual diagnostics \u2014 was never attempted. No analysis report was produced.\"\n  },\n  \"summary\": \"The agent completely missed the key pattern in this dataset. Its analysis followed a generic EDA template \u2014 profiling, distributions, correlations, channel/region comparisons, ANOVA \u2014 without ever fitting a model and examining residuals. The model-building step (step 3) failed before execution, and even its design appeared to be a general revenue-prediction pipeline rather than targeted residual diagnostics. No heteroscedasticity was identified, no residual plots were created, and no remedies were suggested. The session produced no analysis report. This is a clear 'failed' verdict.\"\n}\n```"
+}

@@ -1,0 +1,71 @@
+{
+  "dataset": "pure_noise",
+  "config": "solo-baseline",
+  "agent": "claude",
+  "verdict": "solved",
+  "core_insight_pass": true,
+  "required_coverage": 1.0,
+  "supporting_coverage": 1.0,
+  "oracle_attainment": null,
+  "oracle_metric_name": null,
+  "oracle_agent_value": 0.0,
+  "fatal_errors": [],
+  "efficiency": {
+    "transcript_chars": 52433.0,
+    "trace_events": 11.0,
+    "report_chars": 8736.0
+  },
+  "criterion_results": [
+    {
+      "criterion_id": "pure_noise_no_signal_conclusion",
+      "group": "must_have",
+      "status": "hit",
+      "justification": "The report explicitly and unambiguously concludes there is no meaningful signal. The primary conclusion states features are statistically independent, and the interpretation section states 'There is no signal to extract and no model to build.'",
+      "evidence": "Primary Conclusion: The features are statistically independent. ... There is no signal to extract and no model to build. This is not a failure of methodology \u2014 it is the correct conclusion given the data."
+    },
+    {
+      "criterion_id": "pure_noise_reports_weak_fit",
+      "group": "must_have",
+      "status": "hit",
+      "justification": "The report comprehensively documents weak/nonexistent predictive power: negative cross-validated R\u00b2 across all five models, adjusted R\u00b2 = 0.000, and a non-significant overall F-test (p = 0.431). All correlations are near zero.",
+      "evidence": "R\u00b2 = 0.010, Adjusted R\u00b2 = 0.000, F-statistic = 1.004, p = 0.431 \u2014 the overall regression is not significant. All models produce negative R\u00b2 values (Linear: -0.013, Ridge: -0.013, Lasso: -0.007, GB: -0.120, RF: -0.098)."
+    },
+    {
+      "criterion_id": "pure_noise_supports_null_with_evidence",
+      "group": "must_have",
+      "status": "hit",
+      "justification": "The null conclusion is supported by a wide array of statistical tests and metrics: Pearson correlations with p-values, ANOVA (F=0.72, p=0.579), Kruskal-Wallis (H=3.96, p=0.41), OLS F-test (p=0.431), 5-fold CV R\u00b2 across 5 models, PCA variance decomposition, cross-target modeling, t-tests for top/bottom 10%, KS/chi-squared goodness-of-fit tests, and interaction/quadratic term screening.",
+      "evidence": "ANOVA F=0.7185, p=0.5794; Kruskal-Wallis H=3.9586, p=0.4116; all CV R\u00b2 negative; PCA variance uniformly distributed (10.6%\u201314.6% per component vs 12.5% expected); cross-target RF R\u00b2 all negative; top vs bottom 10% t-tests all p>0.14."
+    },
+    {
+      "criterion_id": "pure_noise_tests_multiple_relationships",
+      "group": "supporting",
+      "status": "hit",
+      "justification": "The analysis tested all pairwise correlations, multiple group comparisons (salary band, remote %), interaction terms (3 tested), quadratic terms (4 tested), and cross-target prediction where every variable was used as target against all others.",
+      "evidence": "All pairwise Pearson correlations (|r|<0.09); ANOVA for salary_band and remote_pct; interactions: exp_x_training r=0.0087, exp_x_projects r=-0.0070, training_x_satisfaction r=0.0246; quadratic terms all |r|<0.09; cross-target RF R\u00b2 all negative for every variable."
+    },
+    {
+      "criterion_id": "pure_noise_visualizes_lack_of_structure",
+      "group": "supporting",
+      "status": "hit",
+      "justification": "The report includes 10 visualizations explicitly showing the absence of structure: scatter plots with flat LOWESS lines, a near-zero correlation heatmap, PCA scree plot showing uniform variance, box plots with overlapping distributions, and a model comparison chart showing negative R\u00b2 values.",
+      "evidence": "plots/03_scatter_with_lowess.png (flat LOWESS curves), plots/04_correlation_heatmap.png (near-zero correlations), plots/07_pca_analysis.png (uniform variance), plots/09_model_comparison.png (all negative R\u00b2)."
+    },
+    {
+      "criterion_id": "pure_noise_claims_spurious_relationship",
+      "group": "forbidden",
+      "status": "miss",
+      "justification": "The agent does not claim any relationship as real. The only nominally significant result (team_size r=-0.086, p=0.015) is explicitly flagged as 'likely a false positive given 8 simultaneous tests' with a 'trivially small effect size (R\u00b2 = 0.007).'",
+      "evidence": "The team_size correlation (r = -0.086), while nominally significant at alpha = 0.05, has a trivially small effect size (R\u00b2 = 0.007) and is likely a false positive given 8 simultaneous tests."
+    },
+    {
+      "criterion_id": "pure_noise_overfit_as_signal",
+      "group": "forbidden",
+      "status": "miss",
+      "justification": "The agent explicitly identifies overfitting rather than treating it as signal. Complex models with worse (more negative) R\u00b2 are correctly attributed to overfitting noise.",
+      "evidence": "The more complex ensemble methods overfit more severely (negative R\u00b2 further from zero)."
+    }
+  ],
+  "summary": "This is an exemplary analysis of a pure-noise dataset. The agent correctly and decisively concludes that no meaningful signal exists, supporting this conclusion with an extensive battery of statistical tests (correlations, ANOVA, Kruskal-Wallis, OLS F-test, cross-validated modeling, PCA, cross-target prediction, interaction/quadratic screening, and extreme-group comparisons). All must-have criteria are fully met. Both supporting criteria are satisfied with thorough multi-relationship testing and clear visualizations of absent structure. No forbidden criteria are triggered \u2014 the agent properly flags the lone nominally significant result (team_size) as a likely false positive due to multiple testing, and correctly identifies negative R\u00b2 from complex models as overfitting rather than signal. The verdict is **solved**.",
+  "raw_response": "```json\n{\n  \"must_have\": {\n    \"pure_noise_no_signal_conclusion\": {\n      \"status\": \"hit\",\n      \"justification\": \"The report explicitly and unambiguously concludes there is no meaningful signal. The primary conclusion states features are statistically independent, and the interpretation section states 'There is no signal to extract and no model to build.'\",\n      \"evidence\": \"Primary Conclusion: The features are statistically independent. ... There is no signal to extract and no model to build. This is not a failure of methodology \u2014 it is the correct conclusion given the data.\"\n    },\n    \"pure_noise_reports_weak_fit\": {\n      \"status\": \"hit\",\n      \"justification\": \"The report comprehensively documents weak/nonexistent predictive power: negative cross-validated R\u00b2 across all five models, adjusted R\u00b2 = 0.000, and a non-significant overall F-test (p = 0.431). All correlations are near zero.\",\n      \"evidence\": \"R\u00b2 = 0.010, Adjusted R\u00b2 = 0.000, F-statistic = 1.004, p = 0.431 \u2014 the overall regression is not significant. All models produce negative R\u00b2 values (Linear: -0.013, Ridge: -0.013, Lasso: -0.007, GB: -0.120, RF: -0.098).\"\n    },\n    \"pure_noise_supports_null_with_evidence\": {\n      \"status\": \"hit\",\n      \"justification\": \"The null conclusion is supported by a wide array of statistical tests and metrics: Pearson correlations with p-values, ANOVA (F=0.72, p=0.579), Kruskal-Wallis (H=3.96, p=0.41), OLS F-test (p=0.431), 5-fold CV R\u00b2 across 5 models, PCA variance decomposition, cross-target modeling, t-tests for top/bottom 10%, KS/chi-squared goodness-of-fit tests, and interaction/quadratic term screening.\",\n      \"evidence\": \"ANOVA F=0.7185, p=0.5794; Kruskal-Wallis H=3.9586, p=0.4116; all CV R\u00b2 negative; PCA variance uniformly distributed (10.6%\u201314.6% per component vs 12.5% expected); cross-target RF R\u00b2 all negative; top vs bottom 10% t-tests all p>0.14.\"\n    }\n  },\n  \"supporting\": {\n    \"pure_noise_tests_multiple_relationships\": {\n      \"status\": \"hit\",\n      \"justification\": \"The analysis tested all pairwise correlations, multiple group comparisons (salary band, remote %), interaction terms (3 tested), quadratic terms (4 tested), and cross-target prediction where every variable was used as target against all others.\",\n      \"evidence\": \"All pairwise Pearson correlations (|r|<0.09); ANOVA for salary_band and remote_pct; interactions: exp_x_training r=0.0087, exp_x_projects r=-0.0070, training_x_satisfaction r=0.0246; quadratic terms all |r|<0.09; cross-target RF R\u00b2 all negative for every variable.\"\n    },\n    \"pure_noise_visualizes_lack_of_structure\": {\n      \"status\": \"hit\",\n      \"justification\": \"The report includes 10 visualizations explicitly showing the absence of structure: scatter plots with flat LOWESS lines, a near-zero correlation heatmap, PCA scree plot showing uniform variance, box plots with overlapping distributions, and a model comparison chart showing negative R\u00b2 values.\",\n      \"evidence\": \"plots/03_scatter_with_lowess.png (flat LOWESS curves), plots/04_correlation_heatmap.png (near-zero correlations), plots/07_pca_analysis.png (uniform variance), plots/09_model_comparison.png (all negative R\u00b2).\"\n    }\n  },\n  \"forbidden\": {\n    \"pure_noise_claims_spurious_relationship\": {\n      \"status\": \"miss\",\n      \"justification\": \"The agent does not claim any relationship as real. The only nominally significant result (team_size r=-0.086, p=0.015) is explicitly flagged as 'likely a false positive given 8 simultaneous tests' with a 'trivially small effect size (R\u00b2 = 0.007).'\",\n      \"evidence\": \"The team_size correlation (r = -0.086), while nominally significant at alpha = 0.05, has a trivially small effect size (R\u00b2 = 0.007) and is likely a false positive given 8 simultaneous tests.\"\n    },\n    \"pure_noise_overfit_as_signal\": {\n      \"status\": \"miss\",\n      \"justification\": \"The agent explicitly identifies overfitting rather than treating it as signal. Complex models with worse (more negative) R\u00b2 are correctly attributed to overfitting noise.\",\n      \"evidence\": \"The more complex ensemble methods overfit more severely (negative R\u00b2 further from zero).\"\n    }\n  },\n  \"oracle_metric\": {\n    \"agent_value\": 0.0,\n    \"justification\": \"The agent reports Adjusted R\u00b2 = 0.000 and cross-validated R\u00b2 values ranging from -0.120 to -0.007 across all models. The ground truth is pure noise with no relationships. An Adjusted R\u00b2 of 0.0 accurately reflects zero explained variance, which is the correct answer for this dataset.\"\n  },\n  \"summary\": \"This is an exemplary analysis of a pure-noise dataset. The agent correctly and decisively concludes that no meaningful signal exists, supporting this conclusion with an extensive battery of statistical tests (correlations, ANOVA, Kruskal-Wallis, OLS F-test, cross-validated modeling, PCA, cross-target prediction, interaction/quadratic screening, and extreme-group comparisons). All must-have criteria are fully met. Both supporting criteria are satisfied with thorough multi-relationship testing and clear visualizations of absent structure. No forbidden criteria are triggered \u2014 the agent properly flags the lone nominally significant result (team_size) as a likely false positive due to multiple testing, and correctly identifies negative R\u00b2 from complex models as overfitting rather than signal. The verdict is **solved**.\"\n}"
+}

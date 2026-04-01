@@ -1,0 +1,5 @@
+The analysis is complete. I generated the report at [analysis_report.md](/var/folders/j_/dt6mk_nd7tbfpyx2v5z_lv6c0000gn/T/tmp.EkJ2zDGwsc/analysis_report.md) and the reproducible script at [run_analysis.py](/var/folders/j_/dt6mk_nd7tbfpyx2v5z_lv6c0000gn/T/tmp.EkJ2zDGwsc/run_analysis.py). Plots were saved under [plots](/var/folders/j_/dt6mk_nd7tbfpyx2v5z_lv6c0000gn/T/tmp.EkJ2zDGwsc/plots).
+
+Main result: this is a regression problem where `fuel_consumption_lph` is overwhelmingly driven by `engine_rpm`, but the relationship is not purely linear. A linear model with all features is mis-specified by RESET and has much worse validation error, while a parsimonious quadratic RPM model performs best and passes the main residual checks. The final model achieved about `R^2 = 0.995`, in-sample `RMSE = 1.46`, and 10-fold CV `RMSE = 1.46`; adding temperature, humidity, octane, and vehicle age did not add meaningful signal after accounting for RPM curvature.
+
+Verification: I ran `python run_analysis.py`, which produced `analysis_report.md` and 7 PNG plots in `./plots/`.

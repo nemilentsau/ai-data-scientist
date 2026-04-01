@@ -1,0 +1,85 @@
+{
+  "dataset": "class_imbalance",
+  "config": "solo-codex",
+  "agent": "codex",
+  "verdict": "solved",
+  "core_insight_pass": true,
+  "required_coverage": 1.0,
+  "supporting_coverage": 1.0,
+  "oracle_attainment": 0.784,
+  "oracle_metric_name": "roc_auc",
+  "oracle_agent_value": 0.892,
+  "fatal_errors": [],
+  "efficiency": {
+    "transcript_chars": 62681.0,
+    "trace_events": 57.0,
+    "report_chars": 13171.0
+  },
+  "criterion_results": [
+    {
+      "criterion_id": "class_imbalance_imbalance_identified",
+      "group": "must_have",
+      "status": "hit",
+      "justification": "The report explicitly identifies the 95/5 class imbalance early and flags it as a modeling concern.",
+      "evidence": "Fraud prevalence: 5.00% (150 of 3000 transactions) ... The target is materially imbalanced at 5%, so accuracy alone would be misleading."
+    },
+    {
+      "criterion_id": "class_imbalance_balanced_metrics_reported",
+      "group": "must_have",
+      "status": "hit",
+      "justification": "The report centers evaluation on ROC AUC, PR AUC, and Brier score rather than accuracy, all of which are minority-sensitive metrics.",
+      "evidence": "Metrics emphasized ranking and probability quality: ROC AUC, PR AUC, and Brier score. ... Mean ROC AUC: 0.890, Mean PR AUC: 0.548"
+    },
+    {
+      "criterion_id": "class_imbalance_minority_class_evaluated",
+      "group": "must_have",
+      "status": "hit",
+      "justification": "The report evaluates fraud detection quality directly via confusion matrices, PR curves, and threshold discussion rather than reporting only aggregate accuracy.",
+      "evidence": "Holdout confusion matrices provided for both models; PR AUC reported; note that 'the default 0.50 threshold is not necessarily operationally optimal' for fraud detection."
+    },
+    {
+      "criterion_id": "class_imbalance_imbalance_strategy_used",
+      "group": "must_have",
+      "status": "hit",
+      "justification": "The agent used stratified cross-validation and class-weight balancing in logistic regression to address the imbalance.",
+      "evidence": "Logistic regression with class balancing for interpretability ... Repeated stratified 5-fold cross-validation was used because the fraud class is rare."
+    },
+    {
+      "criterion_id": "class_imbalance_baseline_accuracy_trap_noted",
+      "group": "supporting",
+      "status": "hit",
+      "justification": "The report explicitly warns that accuracy is misleading under 95/5 imbalance.",
+      "evidence": "The target is materially imbalanced at 5%, so accuracy alone would be misleading."
+    },
+    {
+      "criterion_id": "class_imbalance_confusion_matrix_or_pr_curve",
+      "group": "supporting",
+      "status": "hit",
+      "justification": "Confusion matrices are provided for both models on the holdout set, and precision-recall curves are generated as plots.",
+      "evidence": "Confusion matrix at 0.50 threshold for Logistic Regression and Random Forest; plots/precision_recall_curves.png generated."
+    },
+    {
+      "criterion_id": "class_imbalance_stratified_validation",
+      "group": "supporting",
+      "status": "hit",
+      "justification": "Stratified cross-validation is explicitly used and the holdout fraud prevalence (4.93%) confirms class proportions were preserved.",
+      "evidence": "Repeated stratified 5-fold cross-validation was used because the fraud class is rare. Test split size: 750 rows with fraud prevalence 4.93%."
+    },
+    {
+      "criterion_id": "class_imbalance_accuracy_only_reporting",
+      "group": "forbidden",
+      "status": "miss",
+      "justification": "Accuracy is never used as a success metric. The report explicitly warns against it and uses ROC AUC, PR AUC, and Brier score throughout.",
+      "evidence": "accuracy alone would be misleading ... Metrics emphasized ranking and probability quality: ROC AUC, PR AUC, and Brier score."
+    },
+    {
+      "criterion_id": "class_imbalance_ignores_minority_class",
+      "group": "forbidden",
+      "status": "miss",
+      "justification": "The entire analysis is framed around fraud detection quality. The minority class is the focus of every modeling and evaluation decision.",
+      "evidence": "Fraud risk is concentrated in a clear behavioral pattern ... both tested models materially outperform the 5% baseline."
+    }
+  ],
+  "summary": "This is an exceptionally thorough analysis that correctly identifies the 95/5 class imbalance upfront and builds every subsequent decision around it. The agent avoids the accuracy trap, uses class-weight balancing and stratified validation, reports minority-sensitive metrics (ROC AUC, PR AUC, Brier score), and provides confusion matrices and PR curves for diagnostic depth. The logistic regression diagnostics (VIF, Box-Tidwell, Hosmer-Lemeshow, calibration) go well beyond requirements. All four must-have criteria are hit, all three supporting criteria are hit, and neither forbidden criterion is triggered. Verdict: solved.",
+  "raw_response": "```json\n{\n  \"must_have\": {\n    \"class_imbalance_imbalance_identified\": {\n      \"status\": \"hit\",\n      \"justification\": \"The report explicitly identifies the 95/5 class imbalance early and flags it as a modeling concern.\",\n      \"evidence\": \"Fraud prevalence: 5.00% (150 of 3000 transactions) ... The target is materially imbalanced at 5%, so accuracy alone would be misleading.\"\n    },\n    \"class_imbalance_balanced_metrics_reported\": {\n      \"status\": \"hit\",\n      \"justification\": \"The report centers evaluation on ROC AUC, PR AUC, and Brier score rather than accuracy, all of which are minority-sensitive metrics.\",\n      \"evidence\": \"Metrics emphasized ranking and probability quality: ROC AUC, PR AUC, and Brier score. ... Mean ROC AUC: 0.890, Mean PR AUC: 0.548\"\n    },\n    \"class_imbalance_minority_class_evaluated\": {\n      \"status\": \"hit\",\n      \"justification\": \"The report evaluates fraud detection quality directly via confusion matrices, PR curves, and threshold discussion rather than reporting only aggregate accuracy.\",\n      \"evidence\": \"Holdout confusion matrices provided for both models; PR AUC reported; note that 'the default 0.50 threshold is not necessarily operationally optimal' for fraud detection.\"\n    },\n    \"class_imbalance_imbalance_strategy_used\": {\n      \"status\": \"hit\",\n      \"justification\": \"The agent used stratified cross-validation and class-weight balancing in logistic regression to address the imbalance.\",\n      \"evidence\": \"Logistic regression with class balancing for interpretability ... Repeated stratified 5-fold cross-validation was used because the fraud class is rare.\"\n    }\n  },\n  \"supporting\": {\n    \"class_imbalance_baseline_accuracy_trap_noted\": {\n      \"status\": \"hit\",\n      \"justification\": \"The report explicitly warns that accuracy is misleading under 95/5 imbalance.\",\n      \"evidence\": \"The target is materially imbalanced at 5%, so accuracy alone would be misleading.\"\n    },\n    \"class_imbalance_confusion_matrix_or_pr_curve\": {\n      \"status\": \"hit\",\n      \"justification\": \"Confusion matrices are provided for both models on the holdout set, and precision-recall curves are generated as plots.\",\n      \"evidence\": \"Confusion matrix at 0.50 threshold for Logistic Regression and Random Forest; plots/precision_recall_curves.png generated.\"\n    },\n    \"class_imbalance_stratified_validation\": {\n      \"status\": \"hit\",\n      \"justification\": \"Stratified cross-validation is explicitly used and the holdout fraud prevalence (4.93%) confirms class proportions were preserved.\",\n      \"evidence\": \"Repeated stratified 5-fold cross-validation was used because the fraud class is rare. Test split size: 750 rows with fraud prevalence 4.93%.\"\n    }\n  },\n  \"forbidden\": {\n    \"class_imbalance_accuracy_only_reporting\": {\n      \"status\": \"miss\",\n      \"justification\": \"Accuracy is never used as a success metric. The report explicitly warns against it and uses ROC AUC, PR AUC, and Brier score throughout.\",\n      \"evidence\": \"accuracy alone would be misleading ... Metrics emphasized ranking and probability quality: ROC AUC, PR AUC, and Brier score.\"\n    },\n    \"class_imbalance_ignores_minority_class\": {\n      \"status\": \"miss\",\n      \"justification\": \"The entire analysis is framed around fraud detection quality. The minority class is the focus of every modeling and evaluation decision.\",\n      \"evidence\": \"Fraud risk is concentrated in a clear behavioral pattern ... both tested models materially outperform the 5% baseline.\"\n    }\n  },\n  \"oracle_metric\": {\n    \"agent_value\": 0.892,\n    \"justification\": \"The best reported ROC-AUC is 0.892 from the Random Forest on the holdout test set. Cross-validated RF ROC-AUC was 0.890.\"\n  },\n  \"summary\": \"This is an exceptionally thorough analysis that correctly identifies the 95/5 class imbalance upfront and builds every subsequent decision around it. The agent avoids the accuracy trap, uses class-weight balancing and stratified validation, reports minority-sensitive metrics (ROC AUC, PR AUC, Brier score), and provides confusion matrices and PR curves for diagnostic depth. The logistic regression diagnostics (VIF, Box-Tidwell, Hosmer-Lemeshow, calibration) go well beyond requirements. All four must-have criteria are hit, all three supporting criteria are hit, and neither forbidden criterion is triggered. Verdict: solved.\"\n}"
+}

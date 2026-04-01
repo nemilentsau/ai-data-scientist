@@ -1,0 +1,5 @@
+The analysis is complete. I generated the report at [analysis_report.md](/var/folders/j_/dt6mk_nd7tbfpyx2v5z_lv6c0000gn/T/tmp.U04XAQyjvI/analysis_report.md) and saved the plots in [/var/folders/j_/dt6mk_nd7tbfpyx2v5z_lv6c0000gn/T/tmp.U04XAQyjvI/plots](/var/folders/j_/dt6mk_nd7tbfpyx2v5z_lv6c0000gn/T/tmp.U04XAQyjvI/plots). The analysis is reproducible via [analyze_dataset.py](/var/folders/j_/dt6mk_nd7tbfpyx2v5z_lv6c0000gn/T/tmp.U04XAQyjvI/analyze_dataset.py).
+
+Main result: the dataset is clean structurally, but the substantive variables have essentially no predictive signal for `gpa`. Cross-validated linear, ridge, and random-forest models all perform at or worse than a mean-only baseline once `student_id` is excluded. The only notable association is an implausible negative relationship between `student_id` and `gpa`, which I treated as likely artifact or leakage rather than meaningful signal.
+
+I also checked linear-model assumptions and influence diagnostics. Multicollinearity is negligible, heteroskedasticity is not the main issue, and the limiting factor is simply lack of usable explanatory power in the available features.

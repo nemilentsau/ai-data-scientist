@@ -23,12 +23,24 @@ fi
 WORK_DIR=$(mktemp -d)
 
 cp "${DATASET_CSV}" "${WORK_DIR}/dataset.csv"
-mkdir -p "${WORK_DIR}/plots"
+mkdir -p "${WORK_DIR}/plots" "${WORK_DIR}/.matplotlib"
 
-# Create a fresh venv for the agent with common DS packages
-uv venv "${WORK_DIR}/.venv" --python 3.14 --quiet
-uv pip install --python "${WORK_DIR}/.venv/bin/python" --quiet \
-  numpy pandas scipy scikit-learn matplotlib seaborn statsmodels lifelines
+# Reuse a shared benchmark venv instead of reinstalling dependencies for every
+# dataset run. The agent still sees it at ./ .venv inside the temp workspace.
+BENCHMARK_VENV="${PROJECT_ROOT}/.codex-benchmark-venv"
+if [ ! -x "${BENCHMARK_VENV}/bin/python" ]; then
+  uv venv "${BENCHMARK_VENV}" --python 3.14 --quiet
+fi
+if ! "${BENCHMARK_VENV}/bin/python" - <<'PY' >/dev/null 2>&1
+mods = ["numpy", "pandas", "scipy", "sklearn", "matplotlib", "seaborn", "statsmodels", "lifelines"]
+for mod in mods:
+    __import__(mod)
+PY
+then
+  uv pip install --python "${BENCHMARK_VENV}/bin/python" --quiet \
+    numpy pandas scipy scikit-learn matplotlib seaborn statsmodels lifelines
+fi
+ln -s "${BENCHMARK_VENV}" "${WORK_DIR}/.venv"
 
 # Create results directory
 mkdir -p "${RESULTS_DIR}"
@@ -48,6 +60,7 @@ fi
 export VIRTUAL_ENV="${WORK_DIR}/.venv"
 export PATH="${WORK_DIR}/.venv/bin:${PATH}"
 export CODEX_HOME="${CODEX_HOME_DIR}"
+export MPLCONFIGDIR="${WORK_DIR}/.matplotlib"
 
 # Keep a lightweight session log with the exact benchmark settings plus Codex stderr.
 {
@@ -70,10 +83,11 @@ if [ -n "${MODEL}" ]; then
   CODEX_ARGS+=(-m "${MODEL}")
 fi
 CODEX_ARGS+=(
+  --disable plugins
+  --disable shell_snapshot
   exec
   -s workspace-write
   --json
-  --ephemeral
   --skip-git-repo-check
   -C "${WORK_DIR}"
   -o "${RESULTS_DIR}/final_message.md"

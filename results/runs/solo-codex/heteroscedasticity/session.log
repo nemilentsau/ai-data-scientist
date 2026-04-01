@@ -1,0 +1,12 @@
+dataset=heteroscedasticity
+project_root=/Users/andreinemilentsau/Projects/ai-data-scientist
+work_dir=/var/folders/j_/dt6mk_nd7tbfpyx2v5z_lv6c0000gn/T/tmp.2BbjRV02H1
+codex_home=/var/folders/j_/dt6mk_nd7tbfpyx2v5z_lv6c0000gn/T/tmp.2BbjRV02H1/.codex-home
+max_turns=30
+tools=
+codex-cli 0.117.0
+
+2026-03-31T22:54:12.738548Z ERROR codex_core::tools::router: error=apply_patch verification failed: Failed to find expected lines in /var/folders/j_/dt6mk_nd7tbfpyx2v5z_lv6c0000gn/T/tmp.2BbjRV02H1/analyze_dataset.py:
+#### Largest Negative Residuals
+{top_negative.to_markdown(index=False)}
+"""

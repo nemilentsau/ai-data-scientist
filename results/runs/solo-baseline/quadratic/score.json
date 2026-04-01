@@ -1,0 +1,85 @@
+{
+  "dataset": "quadratic",
+  "config": "solo-baseline",
+  "agent": "claude",
+  "verdict": "solved",
+  "core_insight_pass": true,
+  "required_coverage": 1.0,
+  "supporting_coverage": 1.0,
+  "oracle_attainment": 0.9954,
+  "oracle_metric_name": "r2",
+  "oracle_agent_value": 0.9954,
+  "fatal_errors": [],
+  "efficiency": {
+    "transcript_chars": 45851.0,
+    "trace_events": 10.0,
+    "report_chars": 8732.0
+  },
+  "criterion_results": [
+    {
+      "criterion_id": "quadratic_nonlinearity_detected",
+      "group": "must_have",
+      "status": "hit",
+      "justification": "The agent explicitly detected nonlinearity through scatter plots, residual analysis from the linear fit, and polynomial degree comparison.",
+      "evidence": "\"The scatter plot shows a clear nonlinear (quadratic/parabolic) relationship between engine RPM and fuel consumption.\" Also created Plot 6 showing residuals from the linear fit with systematic curvature."
+    },
+    {
+      "criterion_id": "quadratic_quadratic_relationship_identified",
+      "group": "must_have",
+      "status": "hit",
+      "justification": "The agent unambiguously identified the core relationship as quadratic/second-order.",
+      "evidence": "\"The relationship is quadratic, not linear. Fuel consumption scales approximately as RPM\u00b2, consistent with engine physics (power ~ RPM\u00b2 at constant torque).\" Simplified equation: \"fuel_consumption ~ 2.0e-6 * RPM^2\"."
+    },
+    {
+      "criterion_id": "quadratic_nonlinear_model_fit",
+      "group": "must_have",
+      "status": "hit",
+      "justification": "A quadratic polynomial model was fit with full OLS regression, coefficient table, and cross-validation.",
+      "evidence": "\"fuel_consumption = 0.066 - 0.000032 * RPM + 0.000002005 * RPM^2\" with t-statistics and p-values for each term. 10-fold CV R\u00b2 = 0.9952 \u00b1 0.0010."
+    },
+    {
+      "criterion_id": "quadratic_improvement_over_linear_shown",
+      "group": "must_have",
+      "status": "hit",
+      "justification": "The agent provided a direct side-by-side comparison of linear vs quadratic models with R\u00b2, MAE, and RMSE metrics.",
+      "evidence": "\"The quadratic term in RPM produces a massive improvement: R\u00b2 jumps from 0.958 to 0.995 (RMSE drops from 4.41 to 1.46 L/h).\" A four-model comparison table was included."
+    },
+    {
+      "criterion_id": "quadratic_residuals_compared",
+      "group": "supporting",
+      "status": "hit",
+      "justification": "Extensive residual diagnostics were performed on both the linear and quadratic models, including normality, homoscedasticity, and independence tests.",
+      "evidence": "Shapiro-Wilk (p=0.70), Breusch-Pagan (p=0.23), Durbin-Watson (2.03) on quadratic residuals. Plot 06 shows linear residuals with clear curvature. Plot 08 is a 4-panel residual diagnostic."
+    },
+    {
+      "criterion_id": "quadratic_equation_or_feature_transform",
+      "group": "supporting",
+      "status": "hit",
+      "justification": "The agent wrote out the full quadratic equation with coefficients and also provided the simplified approximate form.",
+      "evidence": "\"fuel_consumption = 0.066 - 0.000032 * RPM + 0.000002005 * RPM^2\" and simplified \"fuel_consumption ~ 2.0e-6 * RPM^2\". RPM^2 term had t=69.94, p<0.001."
+    },
+    {
+      "criterion_id": "quadratic_noise_columns_not_overinterpreted",
+      "group": "supporting",
+      "status": "hit",
+      "justification": "The agent correctly dismissed all non-RPM features as noise, supported by ANOVA, Kruskal-Wallis, partial correlations, and model comparison showing <0.001 R\u00b2 improvement from adding them.",
+      "evidence": "\"Octane rating has no effect on fuel consumption\" (ANOVA p=0.92, Kruskal-Wallis p=0.91). \"Adding all other features to either model yields negligible improvement (< 0.001 in R\u00b2).\""
+    },
+    {
+      "criterion_id": "quadratic_linear_only_conclusion",
+      "group": "forbidden",
+      "status": "miss",
+      "justification": "The agent explicitly concluded with a quadratic model and stated the relationship is quadratic, not linear.",
+      "evidence": "\"The simplest adequate model is Quadratic RPM only.\" Key finding: \"The relationship is quadratic, not linear.\""
+    },
+    {
+      "criterion_id": "quadratic_no_residual_checks",
+      "group": "forbidden",
+      "status": "miss",
+      "justification": "The agent performed comprehensive residual diagnostics on both the linear and quadratic models.",
+      "evidence": "Residual plots (Plots 06, 08, 10), Shapiro-Wilk, Breusch-Pagan, Durbin-Watson tests, Q-Q plot, residuals-vs-fitted plot, outlier detection via IQR."
+    }
+  ],
+  "summary": "This is an exemplary analysis that comprehensively addresses every aspect of the evaluation contract. The agent correctly identified the quadratic relationship between engine RPM and fuel consumption, fit a polynomial model with R\u00b2 = 0.9954, demonstrated massive improvement over the linear baseline (0.958 \u2192 0.995), performed thorough residual diagnostics on both models, wrote out the explicit quadratic equation, and correctly dismissed all noise features with appropriate statistical tests. No forbidden criteria were triggered. The analysis goes above and beyond with cross-validation, multiple statistical tests, and clear physical interpretation of the quadratic relationship.",
+  "raw_response": "```json\n{\n  \"must_have\": {\n    \"quadratic_nonlinearity_detected\": {\n      \"status\": \"hit\",\n      \"justification\": \"The agent explicitly detected nonlinearity through scatter plots, residual analysis from the linear fit, and polynomial degree comparison.\",\n      \"evidence\": \"\\\"The scatter plot shows a clear nonlinear (quadratic/parabolic) relationship between engine RPM and fuel consumption.\\\" Also created Plot 6 showing residuals from the linear fit with systematic curvature.\"\n    },\n    \"quadratic_quadratic_relationship_identified\": {\n      \"status\": \"hit\",\n      \"justification\": \"The agent unambiguously identified the core relationship as quadratic/second-order.\",\n      \"evidence\": \"\\\"The relationship is quadratic, not linear. Fuel consumption scales approximately as RPM\u00b2, consistent with engine physics (power ~ RPM\u00b2 at constant torque).\\\" Simplified equation: \\\"fuel_consumption ~ 2.0e-6 * RPM^2\\\".\"\n    },\n    \"quadratic_nonlinear_model_fit\": {\n      \"status\": \"hit\",\n      \"justification\": \"A quadratic polynomial model was fit with full OLS regression, coefficient table, and cross-validation.\",\n      \"evidence\": \"\\\"fuel_consumption = 0.066 - 0.000032 * RPM + 0.000002005 * RPM^2\\\" with t-statistics and p-values for each term. 10-fold CV R\u00b2 = 0.9952 \u00b1 0.0010.\"\n    },\n    \"quadratic_improvement_over_linear_shown\": {\n      \"status\": \"hit\",\n      \"justification\": \"The agent provided a direct side-by-side comparison of linear vs quadratic models with R\u00b2, MAE, and RMSE metrics.\",\n      \"evidence\": \"\\\"The quadratic term in RPM produces a massive improvement: R\u00b2 jumps from 0.958 to 0.995 (RMSE drops from 4.41 to 1.46 L/h).\\\" A four-model comparison table was included.\"\n    }\n  },\n  \"supporting\": {\n    \"quadratic_residuals_compared\": {\n      \"status\": \"hit\",\n      \"justification\": \"Extensive residual diagnostics were performed on both the linear and quadratic models, including normality, homoscedasticity, and independence tests.\",\n      \"evidence\": \"Shapiro-Wilk (p=0.70), Breusch-Pagan (p=0.23), Durbin-Watson (2.03) on quadratic residuals. Plot 06 shows linear residuals with clear curvature. Plot 08 is a 4-panel residual diagnostic.\"\n    },\n    \"quadratic_equation_or_feature_transform\": {\n      \"status\": \"hit\",\n      \"justification\": \"The agent wrote out the full quadratic equation with coefficients and also provided the simplified approximate form.\",\n      \"evidence\": \"\\\"fuel_consumption = 0.066 - 0.000032 * RPM + 0.000002005 * RPM^2\\\" and simplified \\\"fuel_consumption ~ 2.0e-6 * RPM^2\\\". RPM^2 term had t=69.94, p<0.001.\"\n    },\n    \"quadratic_noise_columns_not_overinterpreted\": {\n      \"status\": \"hit\",\n      \"justification\": \"The agent correctly dismissed all non-RPM features as noise, supported by ANOVA, Kruskal-Wallis, partial correlations, and model comparison showing <0.001 R\u00b2 improvement from adding them.\",\n      \"evidence\": \"\\\"Octane rating has no effect on fuel consumption\\\" (ANOVA p=0.92, Kruskal-Wallis p=0.91). \\\"Adding all other features to either model yields negligible improvement (< 0.001 in R\u00b2).\\\"\"\n    }\n  },\n  \"forbidden\": {\n    \"quadratic_linear_only_conclusion\": {\n      \"status\": \"miss\",\n      \"justification\": \"The agent explicitly concluded with a quadratic model and stated the relationship is quadratic, not linear.\",\n      \"evidence\": \"\\\"The simplest adequate model is Quadratic RPM only.\\\" Key finding: \\\"The relationship is quadratic, not linear.\\\"\"\n    },\n    \"quadratic_no_residual_checks\": {\n      \"status\": \"miss\",\n      \"justification\": \"The agent performed comprehensive residual diagnostics on both the linear and quadratic models.\",\n      \"evidence\": \"Residual plots (Plots 06, 08, 10), Shapiro-Wilk, Breusch-Pagan, Durbin-Watson tests, Q-Q plot, residuals-vs-fitted plot, outlier detection via IQR.\"\n    }\n  },\n  \"oracle_metric\": {\n    \"agent_value\": 0.9954,\n    \"justification\": \"The agent reported Train R\u00b2 = 0.9954 for the quadratic model and CV R\u00b2 = 0.9952. The polynomial fit yielded R\u00b2 = 0.995411. Using the train R\u00b2 as the best reported value.\"\n  },\n  \"summary\": \"This is an exemplary analysis that comprehensively addresses every aspect of the evaluation contract. The agent correctly identified the quadratic relationship between engine RPM and fuel consumption, fit a polynomial model with R\u00b2 = 0.9954, demonstrated massive improvement over the linear baseline (0.958 \u2192 0.995), performed thorough residual diagnostics on both models, wrote out the explicit quadratic equation, and correctly dismissed all noise features with appropriate statistical tests. No forbidden criteria were triggered. The analysis goes above and beyond with cross-validation, multiple statistical tests, and clear physical interpretation of the quadratic relationship.\"\n}\n```"
+}

@@ -1,0 +1,5 @@
+Completed the analysis and wrote the deliverables to [analysis_report.md](/private/var/folders/j_/dt6mk_nd7tbfpyx2v5z_lv6c0000gn/T/tmp.K7JhFcxUVk/analysis_report.md) and [plots](/private/var/folders/j_/dt6mk_nd7tbfpyx2v5z_lv6c0000gn/T/tmp.K7JhFcxUVk/plots). I also saved the reproducible workflow in [analyze_dataset.py](/private/var/folders/j_/dt6mk_nd7tbfpyx2v5z_lv6c0000gn/T/tmp.K7JhFcxUVk/analyze_dataset.py).
+
+The main result is that the dataset is structurally clean but has very weak statistical structure: no missingness or duplicates, near-zero correlations, no meaningful ANOVA differences across `salary_band`, and no useful categorical association with `remote_pct`. Both modeling tasks I tested were essentially uninformative: predicting `performance_rating` performed worse than or roughly equal to a mean baseline, and predicting `salary_band` stayed near chance for a 5-class problem.
+
+Regression diagnostics did not reveal a hidden recoverable pattern either. `commute_minutes` was the clearest anomaly because of skew and outliers, but it still did not contribute meaningful predictive signal.

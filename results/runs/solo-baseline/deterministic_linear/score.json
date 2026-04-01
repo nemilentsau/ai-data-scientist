@@ -1,0 +1,85 @@
+{
+  "dataset": "deterministic_linear",
+  "config": "solo-baseline",
+  "agent": "claude",
+  "verdict": "solved",
+  "core_insight_pass": true,
+  "required_coverage": 1.0,
+  "supporting_coverage": 1.0,
+  "oracle_attainment": 1.0,
+  "oracle_metric_name": "r2",
+  "oracle_agent_value": 1.0,
+  "fatal_errors": [],
+  "efficiency": {
+    "transcript_chars": 45124.0,
+    "trace_events": 10.0,
+    "report_chars": 7490.0
+  },
+  "criterion_results": [
+    {
+      "criterion_id": "deterministic_linear_linear_relationship_identified",
+      "group": "must_have",
+      "status": "hit",
+      "justification": "The report explicitly identifies the relationship as exact/deterministic and linear.",
+      "evidence": "\"voltage_mv = 2 * temperature_c + 3 holds exactly across all 500 observations (max residual < 10^-14, attributable to floating-point arithmetic)\""
+    },
+    {
+      "criterion_id": "deterministic_linear_slope_recovered",
+      "group": "must_have",
+      "status": "hit",
+      "justification": "The slope of 2 is explicitly stated in the recovered equation.",
+      "evidence": "\"voltage_mv = 2 * temperature_c + 3\""
+    },
+    {
+      "criterion_id": "deterministic_linear_intercept_recovered",
+      "group": "must_have",
+      "status": "hit",
+      "justification": "The intercept of 3 is explicitly stated in the recovered equation.",
+      "evidence": "\"voltage_mv = 2 * temperature_c + 3\""
+    },
+    {
+      "criterion_id": "deterministic_linear_fit_near_perfect",
+      "group": "must_have",
+      "status": "hit",
+      "justification": "The report states R\u00b2=1.0 in the plot title and confirms near-zero residuals, indicating a perfect fit.",
+      "evidence": "\"Perfect Linear Relationship (R\u00b2=1.0)\" and \"max residual < 10^-14\""
+    },
+    {
+      "criterion_id": "deterministic_linear_equation_written",
+      "group": "supporting",
+      "status": "hit",
+      "justification": "The equation is written explicitly and prominently as a bolded code block.",
+      "evidence": "\"**`voltage_mv = 2 * temperature_c + 3`**\""
+    },
+    {
+      "criterion_id": "deterministic_linear_ignores_noise_columns",
+      "group": "supporting",
+      "status": "hit",
+      "justification": "The report identifies humidity, pressure, sensor_id, and timestamp as independent/irrelevant, shows near-zero correlations, and demonstrates that models using these features produce negative R\u00b2.",
+      "evidence": "\"All correlations are near zero. Predictive modeling confirms this: linear regression, random forest, and gradient boosting all produce negative R-squared when predicting temperature from humidity, pressure, sensor ID, and time features.\""
+    },
+    {
+      "criterion_id": "deterministic_linear_avoids_overcomplication",
+      "group": "supporting",
+      "status": "hit",
+      "justification": "The primary finding uses a simple linear regression. RF and GB models were only used to demonstrate that other features are uninformative, not as the main modeling approach for the linear relationship.",
+      "evidence": "The key finding is a simple linear equation; complex models are used only to confirm variable independence, not to model the core relationship."
+    },
+    {
+      "criterion_id": "deterministic_linear_claims_nonlinear_structure",
+      "group": "forbidden",
+      "status": "miss",
+      "justification": "The report never claims a nonlinear relationship. It consistently describes the relationship as perfectly linear.",
+      "evidence": "\"voltage_mv = 2 * temperature_c + 3 holds exactly\" \u2014 no nonlinear claims anywhere."
+    },
+    {
+      "criterion_id": "deterministic_linear_unnecessary_model_complexity",
+      "group": "forbidden",
+      "status": "miss",
+      "justification": "The main approach is a simple linear fit. RF and GB are used as diagnostic tools to show other features are irrelevant, not as the primary model for the linear relationship.",
+      "evidence": "Section 2 identifies the simple linear equation as the key finding; Section 8 uses complex models only to demonstrate why prediction from other features fails."
+    }
+  ],
+  "summary": "The agent delivered an excellent analysis. It correctly identified the deterministic linear relationship voltage_mv = 2 * temperature_c + 3 with slope 2, intercept 3, and R\u00b2 = 1.0. The analysis was thorough yet appropriately simple for the core finding \u2014 the linear equation was stated prominently and verified with residual analysis. Supporting work correctly identified noise columns as irrelevant and avoided overcomplicating the model. No forbidden criteria were triggered. All must-have and supporting criteria are fully met.",
+  "raw_response": "```json\n{\n  \"must_have\": {\n    \"deterministic_linear_linear_relationship_identified\": {\n      \"status\": \"hit\",\n      \"justification\": \"The report explicitly identifies the relationship as exact/deterministic and linear.\",\n      \"evidence\": \"\\\"voltage_mv = 2 * temperature_c + 3 holds exactly across all 500 observations (max residual < 10^-14, attributable to floating-point arithmetic)\\\"\"\n    },\n    \"deterministic_linear_slope_recovered\": {\n      \"status\": \"hit\",\n      \"justification\": \"The slope of 2 is explicitly stated in the recovered equation.\",\n      \"evidence\": \"\\\"voltage_mv = 2 * temperature_c + 3\\\"\"\n    },\n    \"deterministic_linear_intercept_recovered\": {\n      \"status\": \"hit\",\n      \"justification\": \"The intercept of 3 is explicitly stated in the recovered equation.\",\n      \"evidence\": \"\\\"voltage_mv = 2 * temperature_c + 3\\\"\"\n    },\n    \"deterministic_linear_fit_near_perfect\": {\n      \"status\": \"hit\",\n      \"justification\": \"The report states R\u00b2=1.0 in the plot title and confirms near-zero residuals, indicating a perfect fit.\",\n      \"evidence\": \"\\\"Perfect Linear Relationship (R\u00b2=1.0)\\\" and \\\"max residual < 10^-14\\\"\"\n    }\n  },\n  \"supporting\": {\n    \"deterministic_linear_equation_written\": {\n      \"status\": \"hit\",\n      \"justification\": \"The equation is written explicitly and prominently as a bolded code block.\",\n      \"evidence\": \"\\\"**`voltage_mv = 2 * temperature_c + 3`**\\\"\"\n    },\n    \"deterministic_linear_ignores_noise_columns\": {\n      \"status\": \"hit\",\n      \"justification\": \"The report identifies humidity, pressure, sensor_id, and timestamp as independent/irrelevant, shows near-zero correlations, and demonstrates that models using these features produce negative R\u00b2.\",\n      \"evidence\": \"\\\"All correlations are near zero. Predictive modeling confirms this: linear regression, random forest, and gradient boosting all produce negative R-squared when predicting temperature from humidity, pressure, sensor ID, and time features.\\\"\"\n    },\n    \"deterministic_linear_avoids_overcomplication\": {\n      \"status\": \"hit\",\n      \"justification\": \"The primary finding uses a simple linear regression. RF and GB models were only used to demonstrate that other features are uninformative, not as the main modeling approach for the linear relationship.\",\n      \"evidence\": \"The key finding is a simple linear equation; complex models are used only to confirm variable independence, not to model the core relationship.\"\n    }\n  },\n  \"forbidden\": {\n    \"deterministic_linear_claims_nonlinear_structure\": {\n      \"status\": \"miss\",\n      \"justification\": \"The report never claims a nonlinear relationship. It consistently describes the relationship as perfectly linear.\",\n      \"evidence\": \"\\\"voltage_mv = 2 * temperature_c + 3 holds exactly\\\" \u2014 no nonlinear claims anywhere.\"\n    },\n    \"deterministic_linear_unnecessary_model_complexity\": {\n      \"status\": \"miss\",\n      \"justification\": \"The main approach is a simple linear fit. RF and GB are used as diagnostic tools to show other features are irrelevant, not as the primary model for the linear relationship.\",\n      \"evidence\": \"Section 2 identifies the simple linear equation as the key finding; Section 8 uses complex models only to demonstrate why prediction from other features fails.\"\n    }\n  },\n  \"oracle_metric\": {\n    \"agent_value\": 1.0,\n    \"justification\": \"The agent reports R\u00b2=1.0 for the voltage vs temperature linear fit, confirmed by the plot title 'Perfect Linear Relationship (R\u00b2=1.0)' and the session transcript showing scipy linregress R\u00b2=1.0000.\"\n  },\n  \"summary\": \"The agent delivered an excellent analysis. It correctly identified the deterministic linear relationship voltage_mv = 2 * temperature_c + 3 with slope 2, intercept 3, and R\u00b2 = 1.0. The analysis was thorough yet appropriately simple for the core finding \u2014 the linear equation was stated prominently and verified with residual analysis. Supporting work correctly identified noise columns as irrelevant and avoided overcomplicating the model. No forbidden criteria were triggered. All must-have and supporting criteria are fully met.\"\n}\n```"
+}

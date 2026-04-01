@@ -1,0 +1,5 @@
+Created [analysis_report.md](/var/folders/j_/dt6mk_nd7tbfpyx2v5z_lv6c0000gn/T/tmp.pedOdTT9ZP/analysis_report.md) and generated the analysis reproducibly with [analyze_dataset.py](/var/folders/j_/dt6mk_nd7tbfpyx2v5z_lv6c0000gn/T/tmp.pedOdTT9ZP/analyze_dataset.py). Plots were saved in [plots](/var/folders/j_/dt6mk_nd7tbfpyx2v5z_lv6c0000gn/T/tmp.pedOdTT9ZP/plots).
+
+Main findings: the dataset is structurally clean and complete; `pageviews` and `unique_visitors` show strong trend plus weekly seasonality; `new_signups` stays roughly flat over time and is weakly related to the observed traffic/engagement variables. For modeling, an interpretable calendar OLS model for `pageviews` outperformed a 7-day seasonal-naive baseline on the holdout set (`RMSE 76.9` vs `110.0`) and passed residual checks. A Poisson model for `new_signups` did not materially beat a mean baseline, which supports the conclusion that signup variation is mostly unexplained by the available fields.
+
+Verification: I ran the script end to end, confirmed the report was written, and verified that all PNG plots were created successfully.
