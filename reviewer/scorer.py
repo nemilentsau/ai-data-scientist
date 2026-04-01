@@ -420,7 +420,6 @@ def score_analysis(
         ["claude", "-p", prompt, "--output-format", "json", "--max-turns", "1"],
         capture_output=True,
         text=True,
-        timeout=120,
     )
 
     if result.returncode != 0:

@@ -70,13 +70,9 @@ def run_agent(config: dict, config_name: str, dataset_name: str, dataset_csv: Pa
                 model,
                 tools,
             ],
-            timeout=600,  # 10 min timeout per analysis
             check=False,
         )
         return True
-    except subprocess.TimeoutExpired:
-        print(f"  TIMEOUT: {config_name} on {dataset_name} exceeded 10 minutes")
-        return False
     except Exception as e:
         print(f"  ERROR: {config_name} on {dataset_name}: {e}")
         return False

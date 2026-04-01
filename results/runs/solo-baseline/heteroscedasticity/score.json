@@ -2,24 +2,80 @@
   "dataset": "heteroscedasticity",
   "config": "solo-baseline",
   "agent": "claude",
-  "verdict": "run_error",
-  "run_status": "run_error",
-  "rerun_recommended": true,
-  "run_error_reasons": [
-    "missing analysis report (analysis_report.md)"
-  ],
-  "core_insight_pass": false,
-  "required_coverage": 0.0,
-  "supporting_coverage": 0.0,
+  "verdict": "solved",
+  "run_status": "completed",
+  "rerun_recommended": false,
+  "run_error_reasons": [],
+  "core_insight_pass": true,
+  "required_coverage": 1.0,
+  "supporting_coverage": 0.8333333333333334,
   "oracle_attainment": null,
   "oracle_metric_name": null,
-  "oracle_agent_value": null,
+  "oracle_agent_value": 0.85,
   "fatal_errors": [],
   "efficiency": {
-    "transcript_chars": 63279.0,
-    "trace_events": 9.0
+    "transcript_chars": 56652.0,
+    "trace_events": 10.0,
+    "report_chars": 10272.0
   },
-  "criterion_results": [],
-  "summary": "Run did not complete successfully. Missing required output artifacts: missing analysis report (analysis_report.md). This result should be rerun and should not be interpreted as an analytical miss.",
-  "raw_response": ""
+  "criterion_results": [
+    {
+      "criterion_id": "heteroscedasticity_residual_diagnostics_run",
+      "group": "must_have",
+      "status": "hit",
+      "justification": "The agent ran comprehensive residual diagnostics including Breusch-Pagan test, Durbin-Watson test, Shapiro-Wilk test, VIF analysis, and produced a dedicated residual diagnostics plot (07_residual_diagnostics.png with residuals vs fitted, Q-Q, histogram, scale-location).",
+      "evidence": "Section 4.4 Regression Diagnostics table: Breusch-Pagan p < 0.001, Durbin-Watson 2.08, Shapiro-Wilk p < 0.001, VIF analysis. Plot 07: 'OLS residual analysis (residuals vs fitted, Q-Q, histogram, scale-location)'."
+    },
+    {
+      "criterion_id": "heteroscedasticity_non_constant_variance_identified",
+      "group": "must_have",
+      "status": "hit",
+      "justification": "The agent explicitly identified heteroscedasticity and stated that residual variance increases with fitted values.",
+      "evidence": "Section 4.4: 'Breusch-Pagan | p < 0.001 | **Heteroscedasticity present** \u2014 residual variance increases with fitted values'. Also: '**Heteroscedasticity** is the main diagnostic concern.'"
+    },
+    {
+      "criterion_id": "heteroscedasticity_remedy_suggested",
+      "group": "must_have",
+      "status": "hit",
+      "justification": "The agent recommended both robust standard errors (HC3) and a variance-stabilizing transform (log-log model) as remedies.",
+      "evidence": "Section 4.4: 'The log-log model addresses this (R-squared = 0.974). For inference with the linear model, robust standard errors (HC3) would be appropriate.' Section 4.2 further develops the log-log model as addressing heteroscedasticity."
+    },
+    {
+      "criterion_id": "heteroscedasticity_residual_plot_used",
+      "group": "supporting",
+      "status": "hit",
+      "justification": "The agent both produced residual plots (plot 07 with residuals vs fitted, Q-Q, histogram, scale-location) and ran the formal Breusch-Pagan test.",
+      "evidence": "Plot 07: 'OLS residual analysis (residuals vs fitted, Q-Q, histogram, scale-location)'. Breusch-Pagan test: p < 0.001."
+    },
+    {
+      "criterion_id": "heteroscedasticity_inference_risk_noted",
+      "group": "supporting",
+      "status": "partial",
+      "justification": "The agent implicitly acknowledged the inference risk by recommending HC3 robust standard errors, but did not explicitly state that standard OLS standard errors, confidence intervals, and p-values are unreliable under heteroscedasticity. The statement 'practical conclusions are unchanged' actually downplays the inference risk.",
+      "evidence": "Section 4.4: 'For inference with the linear model, robust standard errors (HC3) would be appropriate, though the practical conclusions are unchanged given the overwhelming significance of ad_spend.' The need for HC3 implies OLS inference is problematic, but this is not spelled out."
+    },
+    {
+      "criterion_id": "heteroscedasticity_linear_mean_trend_preserved",
+      "group": "supporting",
+      "status": "hit",
+      "justification": "The agent clearly preserved the linear mean trend (R\u00b2 = 0.946, ~$2.50 per $1 spent) and treated heteroscedasticity as a separate variance problem rather than dismissing the model entirely.",
+      "evidence": "Section 4.4: 'Heteroscedasticity is the main diagnostic concern' (not 'the model is wrong'). Section 5 Key Finding #1: 'Ad spend is the sole meaningful driver of revenue. It explains 94.5% of variance.' The coefficient and mean relationship are reported as valid throughout."
+    },
+    {
+      "criterion_id": "heteroscedasticity_assumes_constant_variance",
+      "group": "forbidden",
+      "status": "miss",
+      "justification": "The agent explicitly tested for and rejected constant variance via the Breusch-Pagan test and residual diagnostics.",
+      "evidence": "Section 4.4: 'Breusch-Pagan | p < 0.001 | Heteroscedasticity present'"
+    },
+    {
+      "criterion_id": "heteroscedasticity_uses_ols_uncritically",
+      "group": "forbidden",
+      "status": "miss",
+      "justification": "While OLS results are reported in Section 4.1 before diagnostics appear in 4.4, the report does caveat OLS inference by recommending HC3 robust standard errors. The heteroscedasticity concern is clearly flagged as the 'main diagnostic concern.'",
+      "evidence": "Section 4.4: 'For inference with the linear model, robust standard errors (HC3) would be appropriate.'"
+    }
+  ],
+  "summary": "The agent delivered a thorough analysis that correctly identifies heteroscedasticity as the key pattern in the dataset. Residual diagnostics were run including a formal Breusch-Pagan test (p < 0.001) and residual plots, non-constant variance increasing with fitted values was explicitly identified, and two remedies were suggested (HC3 robust standard errors and log-log transform). The agent also correctly preserved the linear mean trend rather than discarding the model. The main weakness is that the inference risk under heteroscedasticity is only implicitly acknowledged through the HC3 recommendation rather than explicitly warned about, and is somewhat undermined by the statement that 'practical conclusions are unchanged.' No forbidden criteria were triggered. Overall verdict: solved.",
+  "raw_response": "```json\n{\n  \"must_have\": {\n    \"heteroscedasticity_residual_diagnostics_run\": {\n      \"status\": \"hit\",\n      \"justification\": \"The agent ran comprehensive residual diagnostics including Breusch-Pagan test, Durbin-Watson test, Shapiro-Wilk test, VIF analysis, and produced a dedicated residual diagnostics plot (07_residual_diagnostics.png with residuals vs fitted, Q-Q, histogram, scale-location).\",\n      \"evidence\": \"Section 4.4 Regression Diagnostics table: Breusch-Pagan p < 0.001, Durbin-Watson 2.08, Shapiro-Wilk p < 0.001, VIF analysis. Plot 07: 'OLS residual analysis (residuals vs fitted, Q-Q, histogram, scale-location)'.\"\n    },\n    \"heteroscedasticity_non_constant_variance_identified\": {\n      \"status\": \"hit\",\n      \"justification\": \"The agent explicitly identified heteroscedasticity and stated that residual variance increases with fitted values.\",\n      \"evidence\": \"Section 4.4: 'Breusch-Pagan | p < 0.001 | **Heteroscedasticity present** \u2014 residual variance increases with fitted values'. Also: '**Heteroscedasticity** is the main diagnostic concern.'\"\n    },\n    \"heteroscedasticity_remedy_suggested\": {\n      \"status\": \"hit\",\n      \"justification\": \"The agent recommended both robust standard errors (HC3) and a variance-stabilizing transform (log-log model) as remedies.\",\n      \"evidence\": \"Section 4.4: 'The log-log model addresses this (R-squared = 0.974). For inference with the linear model, robust standard errors (HC3) would be appropriate.' Section 4.2 further develops the log-log model as addressing heteroscedasticity.\"\n    }\n  },\n  \"supporting\": {\n    \"heteroscedasticity_residual_plot_used\": {\n      \"status\": \"hit\",\n      \"justification\": \"The agent both produced residual plots (plot 07 with residuals vs fitted, Q-Q, histogram, scale-location) and ran the formal Breusch-Pagan test.\",\n      \"evidence\": \"Plot 07: 'OLS residual analysis (residuals vs fitted, Q-Q, histogram, scale-location)'. Breusch-Pagan test: p < 0.001.\"\n    },\n    \"heteroscedasticity_inference_risk_noted\": {\n      \"status\": \"partial\",\n      \"justification\": \"The agent implicitly acknowledged the inference risk by recommending HC3 robust standard errors, but did not explicitly state that standard OLS standard errors, confidence intervals, and p-values are unreliable under heteroscedasticity. The statement 'practical conclusions are unchanged' actually downplays the inference risk.\",\n      \"evidence\": \"Section 4.4: 'For inference with the linear model, robust standard errors (HC3) would be appropriate, though the practical conclusions are unchanged given the overwhelming significance of ad_spend.' The need for HC3 implies OLS inference is problematic, but this is not spelled out.\"\n    },\n    \"heteroscedasticity_linear_mean_trend_preserved\": {\n      \"status\": \"hit\",\n      \"justification\": \"The agent clearly preserved the linear mean trend (R\u00b2 = 0.946, ~$2.50 per $1 spent) and treated heteroscedasticity as a separate variance problem rather than dismissing the model entirely.\",\n      \"evidence\": \"Section 4.4: 'Heteroscedasticity is the main diagnostic concern' (not 'the model is wrong'). Section 5 Key Finding #1: 'Ad spend is the sole meaningful driver of revenue. It explains 94.5% of variance.' The coefficient and mean relationship are reported as valid throughout.\"\n    }\n  },\n  \"forbidden\": {\n    \"heteroscedasticity_assumes_constant_variance\": {\n      \"status\": \"miss\",\n      \"justification\": \"The agent explicitly tested for and rejected constant variance via the Breusch-Pagan test and residual diagnostics.\",\n      \"evidence\": \"Section 4.4: 'Breusch-Pagan | p < 0.001 | Heteroscedasticity present'\"\n    },\n    \"heteroscedasticity_uses_ols_uncritically\": {\n      \"status\": \"miss\",\n      \"justification\": \"While OLS results are reported in Section 4.1 before diagnostics appear in 4.4, the report does caveat OLS inference by recommending HC3 robust standard errors. The heteroscedasticity concern is clearly flagged as the 'main diagnostic concern.'\",\n      \"evidence\": \"Section 4.4: 'For inference with the linear model, robust standard errors (HC3) would be appropriate.'\"\n    }\n  },\n  \"oracle_metric\": {\n    \"agent_value\": 0.85,\n    \"justification\": \"Verdict is 'solved': all three must-have criteria are HIT and no forbidden criteria are triggered. The agent ran thorough residual diagnostics, correctly identified heteroscedasticity with increasing variance, and suggested both robust standard errors and a log-log variance-stabilizing transform. Two of three supporting criteria are fully met; the inference risk discussion is only partial because the agent downplays it ('practical conclusions are unchanged') rather than explicitly warning that standard OLS inference is unreliable. Score docked slightly for this partial and for the somewhat buried treatment of heteroscedasticity (Section 4.4) relative to the prominence given to the OLS results (Section 4.1).\"\n  },\n  \"summary\": \"The agent delivered a thorough analysis that correctly identifies heteroscedasticity as the key pattern in the dataset. Residual diagnostics were run including a formal Breusch-Pagan test (p < 0.001) and residual plots, non-constant variance increasing with fitted values was explicitly identified, and two remedies were suggested (HC3 robust standard errors and log-log transform). The agent also correctly preserved the linear mean trend rather than discarding the model. The main weakness is that the inference risk under heteroscedasticity is only implicitly acknowledged through the HC3 recommendation rather than explicitly warned about, and is somewhat undermined by the statement that 'practical conclusions are unchanged.' No forbidden criteria were triggered. Overall verdict: solved.\"\n}\n```"
 }
