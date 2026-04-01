@@ -1,0 +1,81 @@
+{
+  "dataset": "interaction_effects",
+  "config": "solo-codex",
+  "agent": "codex",
+  "verdict": "wrong",
+  "core_insight_pass": false,
+  "required_coverage": 0.16666666666666666,
+  "supporting_coverage": 0.3333333333333333,
+  "oracle_attainment": 0.3879999999999999,
+  "oracle_metric_name": "roc_auc",
+  "oracle_agent_value": 0.694,
+  "fatal_errors": [
+    "Conclude from a purely additive model without checking interactions.",
+    "Explain conversion entirely with separate main effects while missing the interaction."
+  ],
+  "efficiency": {
+    "transcript_chars": 69828.0,
+    "trace_events": 56.0,
+    "report_chars": 9470.0
+  },
+  "criterion_results": [
+    {
+      "criterion_id": "interaction_effects_interaction_tested",
+      "group": "must_have",
+      "status": "partial",
+      "justification": "The agent used a Random Forest, which is technically capable of capturing non-additive effects, but never explicitly tested interaction terms in the logistic model or investigated what interactions the RF was leveraging. The agent then dismissed the RF's value by noting it didn't materially outperform the additive logistic model.",
+      "evidence": "\"the random forest is not materially better than logistic regression. That weak performance gap argues against hidden strong nonlinear structure in the observed variables.\""
+    },
+    {
+      "criterion_id": "interaction_effects_main_effects_only_underperforms",
+      "group": "must_have",
+      "status": "miss",
+      "justification": "The agent concluded the exact opposite of what was expected: that the main-effects-only logistic regression performs comparably to the flexible model, arguing against non-additive structure. No interaction-augmented logistic model was ever compared.",
+      "evidence": "\"Since the flexible model does not beat logistic regression by much, chasing more complex models is hard to justify until richer features are available.\""
+    },
+    {
+      "criterion_id": "interaction_effects_channel_time_interaction_identified",
+      "group": "must_have",
+      "status": "miss",
+      "justification": "The agent identified channel_score and time_of_day_hour as the two most important features individually, but never identified their interaction as the key driver. They were treated as independent, additive effects throughout.",
+      "evidence": "\"channel_score is the dominant effect... time_of_day_hour is also significant. Each additional hour is associated with about 8.2% higher odds of conversion on average in the fitted linear-logit model.\""
+    },
+    {
+      "criterion_id": "interaction_effects_interaction_visualized",
+      "group": "supporting",
+      "status": "miss",
+      "justification": "No visualization or tabulation of conversion rates across channel_score \u00d7 time_of_day_hour combinations was produced. Plots show each variable separately but never their joint effect.",
+      "evidence": "Output files include '05_conversion_rate_by_hour.png' and '06_conversion_by_feature_bins.png' but no cross-tabulation or heatmap of the two variables together."
+    },
+    {
+      "criterion_id": "interaction_effects_secondary_features_not_overstated",
+      "group": "supporting",
+      "status": "hit",
+      "justification": "The agent correctly identified that ad_budget_usd, page_load_time_sec, previous_visits, and device are not statistically significant and contribute little predictive signal.",
+      "evidence": "\"ad_budget_usd, page_load_time_sec, previous_visits, and device indicators are not statistically significant after adjustment.\""
+    },
+    {
+      "criterion_id": "interaction_effects_non_additive_language",
+      "group": "supporting",
+      "status": "miss",
+      "justification": "The agent never described the effect of one variable as depending on the value of the other. The relationship between channel_score and time_of_day_hour was described purely in additive terms.",
+      "evidence": "Conclusions state: \"stronger channel quality and later hours are associated with higher conversion probability\" \u2014 purely additive framing."
+    },
+    {
+      "criterion_id": "interaction_effects_main_effects_only_conclusion",
+      "group": "forbidden",
+      "status": "hit",
+      "justification": "The agent drew its primary conclusions from a purely additive logistic regression without ever testing interaction terms. It explicitly recommended the additive model as the preferred model and dismissed the need for more complex approaches.",
+      "evidence": "\"Because the flexible model does not materially outperform the interpretable one, the logistic model is the better primary model here.\""
+    },
+    {
+      "criterion_id": "interaction_effects_misses_interaction_pattern",
+      "group": "forbidden",
+      "status": "hit",
+      "justification": "The agent explained conversion entirely through separate main effects of channel_score and time_of_day_hour, completely missing the A\u00d7B interaction that is the key pattern in the data.",
+      "evidence": "\"The primary practical story is simple: stronger channel quality and later hours are associated with higher conversion probability in this sample.\""
+    }
+  ],
+  "summary": "The agent produced a technically competent analysis with clean data profiling, proper cross-validation, and correct identification of the two most important features (channel_score and time_of_day_hour). However, it completely missed the core insight: the A\u00d7B interaction between these two features. Despite using a Random Forest capable of capturing interactions, the agent concluded that the additive logistic model was sufficient and that there was no meaningful non-additive structure \u2014 the exact opposite of the ground truth. Both forbidden criteria are triggered: the agent concluded from a purely additive model without checking interactions, and it explained conversion entirely with separate main effects while missing the interaction pattern. This is a textbook example of the 'common trap' of only checking main effects.",
+  "raw_response": "```json\n{\n  \"must_have\": {\n    \"interaction_effects_interaction_tested\": {\n      \"status\": \"partial\",\n      \"justification\": \"The agent used a Random Forest, which is technically capable of capturing non-additive effects, but never explicitly tested interaction terms in the logistic model or investigated what interactions the RF was leveraging. The agent then dismissed the RF's value by noting it didn't materially outperform the additive logistic model.\",\n      \"evidence\": \"\\\"the random forest is not materially better than logistic regression. That weak performance gap argues against hidden strong nonlinear structure in the observed variables.\\\"\"\n    },\n    \"interaction_effects_main_effects_only_underperforms\": {\n      \"status\": \"miss\",\n      \"justification\": \"The agent concluded the exact opposite of what was expected: that the main-effects-only logistic regression performs comparably to the flexible model, arguing against non-additive structure. No interaction-augmented logistic model was ever compared.\",\n      \"evidence\": \"\\\"Since the flexible model does not beat logistic regression by much, chasing more complex models is hard to justify until richer features are available.\\\"\"\n    },\n    \"interaction_effects_channel_time_interaction_identified\": {\n      \"status\": \"miss\",\n      \"justification\": \"The agent identified channel_score and time_of_day_hour as the two most important features individually, but never identified their interaction as the key driver. They were treated as independent, additive effects throughout.\",\n      \"evidence\": \"\\\"channel_score is the dominant effect... time_of_day_hour is also significant. Each additional hour is associated with about 8.2% higher odds of conversion on average in the fitted linear-logit model.\\\"\"\n    }\n  },\n  \"supporting\": {\n    \"interaction_effects_interaction_visualized\": {\n      \"status\": \"miss\",\n      \"justification\": \"No visualization or tabulation of conversion rates across channel_score \u00d7 time_of_day_hour combinations was produced. Plots show each variable separately but never their joint effect.\",\n      \"evidence\": \"Output files include '05_conversion_rate_by_hour.png' and '06_conversion_by_feature_bins.png' but no cross-tabulation or heatmap of the two variables together.\"\n    },\n    \"interaction_effects_secondary_features_not_overstated\": {\n      \"status\": \"hit\",\n      \"justification\": \"The agent correctly identified that ad_budget_usd, page_load_time_sec, previous_visits, and device are not statistically significant and contribute little predictive signal.\",\n      \"evidence\": \"\\\"ad_budget_usd, page_load_time_sec, previous_visits, and device indicators are not statistically significant after adjustment.\\\"\"\n    },\n    \"interaction_effects_non_additive_language\": {\n      \"status\": \"miss\",\n      \"justification\": \"The agent never described the effect of one variable as depending on the value of the other. The relationship between channel_score and time_of_day_hour was described purely in additive terms.\",\n      \"evidence\": \"Conclusions state: \\\"stronger channel quality and later hours are associated with higher conversion probability\\\" \u2014 purely additive framing.\"\n    }\n  },\n  \"forbidden\": {\n    \"interaction_effects_main_effects_only_conclusion\": {\n      \"status\": \"hit\",\n      \"justification\": \"The agent drew its primary conclusions from a purely additive logistic regression without ever testing interaction terms. It explicitly recommended the additive model as the preferred model and dismissed the need for more complex approaches.\",\n      \"evidence\": \"\\\"Because the flexible model does not materially outperform the interpretable one, the logistic model is the better primary model here.\\\"\"\n    },\n    \"interaction_effects_misses_interaction_pattern\": {\n      \"status\": \"hit\",\n      \"justification\": \"The agent explained conversion entirely through separate main effects of channel_score and time_of_day_hour, completely missing the A\u00d7B interaction that is the key pattern in the data.\",\n      \"evidence\": \"\\\"The primary practical story is simple: stronger channel quality and later hours are associated with higher conversion probability in this sample.\\\"\"\n    }\n  },\n  \"oracle_metric\": {\n    \"agent_value\": 0.694,\n    \"justification\": \"The best reported ROC-AUC is 0.694 from the Random Forest, which is the closest to an interaction-aware model the agent used, though the agent did not explicitly leverage it for interaction detection.\"\n  },\n  \"summary\": \"The agent produced a technically competent analysis with clean data profiling, proper cross-validation, and correct identification of the two most important features (channel_score and time_of_day_hour). However, it completely missed the core insight: the A\u00d7B interaction between these two features. Despite using a Random Forest capable of capturing interactions, the agent concluded that the additive logistic model was sufficient and that there was no meaningful non-additive structure \u2014 the exact opposite of the ground truth. Both forbidden criteria are triggered: the agent concluded from a purely additive model without checking interactions, and it explained conversion entirely with separate main effects while missing the interaction pattern. This is a textbook example of the 'common trap' of only checking main effects.\"\n}"
+}

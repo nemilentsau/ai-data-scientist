@@ -2,90 +2,24 @@
   "dataset": "simpsons_paradox",
   "config": "solo-baseline",
   "agent": "claude",
-  "verdict": "partial",
+  "verdict": "run_error",
+  "run_status": "run_error",
+  "rerun_recommended": true,
+  "run_error_reasons": [
+    "missing analysis report (analysis_report.md)"
+  ],
   "core_insight_pass": false,
-  "required_coverage": 0.3,
-  "supporting_coverage": 0.3333333333333333,
+  "required_coverage": 0.0,
+  "supporting_coverage": 0.0,
   "oracle_attainment": null,
   "oracle_metric_name": null,
-  "oracle_agent_value": 0.15,
+  "oracle_agent_value": null,
   "fatal_errors": [],
   "efficiency": {
     "transcript_chars": 52105.0,
     "trace_events": 9.0
   },
-  "criterion_results": [
-    {
-      "criterion_id": "simpsons_paradox_aggregate_effect",
-      "group": "must_have",
-      "status": "partial",
-      "justification": "The agent's code computes aggregate treatment comparisons (groupby treatment for readmission rate, LOS, recovery score) and creates raw comparison plots (plot 5), but no analysis report exists to explicitly state the aggregate effect direction and magnitude.",
-      "evidence": "Code: df.groupby('treatment')['readmitted'].mean(), df.groupby('treatment')['length_of_stay_days'].describe(), plot titled 'Raw Treatment Comparisons (CAUTION: Confounded)'"
-    },
-    {
-      "criterion_id": "simpsons_paradox_within_group_effects",
-      "group": "must_have",
-      "status": "partial",
-      "justification": "The agent computes stratified effects via df.groupby(['department', 'treatment'])['readmitted'].mean().unstack() and creates plot 6 showing treatment outcomes by department. However, no report explicitly states what the within-group effects are.",
-      "evidence": "Plot 6: 'Stratified Treatment Comparisons' with LOS, Recovery, and Readmission by Department & Treatment"
-    },
-    {
-      "criterion_id": "simpsons_paradox_reversal_identified",
-      "group": "must_have",
-      "status": "miss",
-      "justification": "The agent never explicitly states that the treatment effect direction reverses between aggregate and within-group analysis. The word 'confounded' appears in plot titles but the specific reversal phenomenon is not articulated anywhere in the transcript or a report.",
-      "evidence": "No statement of reversal found. Closest is plot title 'CAUTION: Confounded' which implies awareness but does not state reversal."
-    },
-    {
-      "criterion_id": "simpsons_paradox_confounder_identified",
-      "group": "must_have",
-      "status": "partial",
-      "justification": "The agent identifies that treatment is confounded with department in plot titles and chi-squared test output, but this is embedded in code/print statements rather than a proper analytical conclusion in a report.",
-      "evidence": "Plot 3 title: 'Department Characteristics \u2014 Treatment is Confounded with Department'; Chi-squared output: 'Treatment IS confounded with department (p < 0.001)'"
-    },
-    {
-      "criterion_id": "simpsons_paradox_correct_conclusion",
-      "group": "must_have",
-      "status": "miss",
-      "justification": "The session appears to have been cut short during step 3 (statistical tests). No analysis report was produced and no practical conclusion based on stratified analysis exists.",
-      "evidence": "[No analysis report found]; transcript ends mid-sentence during step3_statistical_tests.py"
-    },
-    {
-      "criterion_id": "simpsons_paradox_named_simpsons_paradox",
-      "group": "supporting",
-      "status": "miss",
-      "justification": "Simpson's paradox is never named or described in equivalent language anywhere in the transcript.",
-      "evidence": "No mention of 'Simpson's paradox' or equivalent explanation found in any code output, plot title, or report."
-    },
-    {
-      "criterion_id": "simpsons_paradox_effect_sizes_quantified",
-      "group": "supporting",
-      "status": "partial",
-      "justification": "The code computes means and group statistics that would produce effect sizes, but the truncated output and missing report mean we cannot confirm the numbers were explicitly reported.",
-      "evidence": "Code computes groupby means for treatment and department\u00d7treatment, but output is truncated and no report synthesizes the values."
-    },
-    {
-      "criterion_id": "simpsons_paradox_visualized_reversal",
-      "group": "supporting",
-      "status": "partial",
-      "justification": "Plot 6 shows stratified treatment comparisons by department which would visually display reversal if present, but there is no explicit reversal visualization (e.g., slope reversal chart) and no report interpreting the plots.",
-      "evidence": "Plot 6: 'Stratified Treatment Comparisons' created with boxplots and grouped bar charts by department and treatment."
-    },
-    {
-      "criterion_id": "simpsons_paradox_aggregate_only_conclusion",
-      "group": "forbidden",
-      "status": "miss",
-      "justification": "No final conclusion was reached at all (the session was incomplete), so no aggregate-only conclusion was made.",
-      "evidence": "No analysis report found; no conclusion statements in transcript."
-    },
-    {
-      "criterion_id": "simpsons_paradox_ignores_grouping_variable",
-      "group": "forbidden",
-      "status": "miss",
-      "justification": "The agent clearly considers department as a grouping/confounding variable throughout the analysis, with dedicated plots and statistical tests.",
-      "evidence": "Plot 3 and 6 stratify by department; chi-squared test explicitly tests treatment~department confounding."
-    }
-  ],
-  "summary": "The agent demonstrated methodical EDA skills and correctly identified department as confounded with treatment through code and plot titles, but the session terminated prematurely during statistical testing. No analysis report was generated. The core requirement\u2014explicitly identifying that the aggregate treatment effect reverses within each department group (Simpson's paradox)\u2014was never stated. Without a report articulating the reversal and providing a stratified conclusion, the analysis fails to meet most must-have criteria beyond partial computation of the relevant statistics. Verdict: partial.",
-  "raw_response": "```json\n{\n  \"must_have\": {\n    \"simpsons_paradox_aggregate_effect\": {\n      \"status\": \"partial\",\n      \"justification\": \"The agent's code computes aggregate treatment comparisons (groupby treatment for readmission rate, LOS, recovery score) and creates raw comparison plots (plot 5), but no analysis report exists to explicitly state the aggregate effect direction and magnitude.\",\n      \"evidence\": \"Code: df.groupby('treatment')['readmitted'].mean(), df.groupby('treatment')['length_of_stay_days'].describe(), plot titled 'Raw Treatment Comparisons (CAUTION: Confounded)'\"\n    },\n    \"simpsons_paradox_within_group_effects\": {\n      \"status\": \"partial\",\n      \"justification\": \"The agent computes stratified effects via df.groupby(['department', 'treatment'])['readmitted'].mean().unstack() and creates plot 6 showing treatment outcomes by department. However, no report explicitly states what the within-group effects are.\",\n      \"evidence\": \"Plot 6: 'Stratified Treatment Comparisons' with LOS, Recovery, and Readmission by Department & Treatment\"\n    },\n    \"simpsons_paradox_reversal_identified\": {\n      \"status\": \"miss\",\n      \"justification\": \"The agent never explicitly states that the treatment effect direction reverses between aggregate and within-group analysis. The word 'confounded' appears in plot titles but the specific reversal phenomenon is not articulated anywhere in the transcript or a report.\",\n      \"evidence\": \"No statement of reversal found. Closest is plot title 'CAUTION: Confounded' which implies awareness but does not state reversal.\"\n    },\n    \"simpsons_paradox_confounder_identified\": {\n      \"status\": \"partial\",\n      \"justification\": \"The agent identifies that treatment is confounded with department in plot titles and chi-squared test output, but this is embedded in code/print statements rather than a proper analytical conclusion in a report.\",\n      \"evidence\": \"Plot 3 title: 'Department Characteristics \u2014 Treatment is Confounded with Department'; Chi-squared output: 'Treatment IS confounded with department (p < 0.001)'\"\n    },\n    \"simpsons_paradox_correct_conclusion\": {\n      \"status\": \"miss\",\n      \"justification\": \"The session appears to have been cut short during step 3 (statistical tests). No analysis report was produced and no practical conclusion based on stratified analysis exists.\",\n      \"evidence\": \"[No analysis report found]; transcript ends mid-sentence during step3_statistical_tests.py\"\n    }\n  },\n  \"supporting\": {\n    \"simpsons_paradox_named_simpsons_paradox\": {\n      \"status\": \"miss\",\n      \"justification\": \"Simpson's paradox is never named or described in equivalent language anywhere in the transcript.\",\n      \"evidence\": \"No mention of 'Simpson's paradox' or equivalent explanation found in any code output, plot title, or report.\"\n    },\n    \"simpsons_paradox_effect_sizes_quantified\": {\n      \"status\": \"partial\",\n      \"justification\": \"The code computes means and group statistics that would produce effect sizes, but the truncated output and missing report mean we cannot confirm the numbers were explicitly reported.\",\n      \"evidence\": \"Code computes groupby means for treatment and department\u00d7treatment, but output is truncated and no report synthesizes the values.\"\n    },\n    \"simpsons_paradox_visualized_reversal\": {\n      \"status\": \"partial\",\n      \"justification\": \"Plot 6 shows stratified treatment comparisons by department which would visually display reversal if present, but there is no explicit reversal visualization (e.g., slope reversal chart) and no report interpreting the plots.\",\n      \"evidence\": \"Plot 6: 'Stratified Treatment Comparisons' created with boxplots and grouped bar charts by department and treatment.\"\n    }\n  },\n  \"forbidden\": {\n    \"simpsons_paradox_aggregate_only_conclusion\": {\n      \"status\": \"miss\",\n      \"justification\": \"No final conclusion was reached at all (the session was incomplete), so no aggregate-only conclusion was made.\",\n      \"evidence\": \"No analysis report found; no conclusion statements in transcript.\"\n    },\n    \"simpsons_paradox_ignores_grouping_variable\": {\n      \"status\": \"miss\",\n      \"justification\": \"The agent clearly considers department as a grouping/confounding variable throughout the analysis, with dedicated plots and statistical tests.\",\n      \"evidence\": \"Plot 3 and 6 stratify by department; chi-squared test explicitly tests treatment~department confounding.\"\n    }\n  },\n  \"oracle_metric\": {\n    \"agent_value\": 0.15,\n    \"justification\": \"The agent started a reasonable analytical approach\u2014computing aggregate and stratified statistics, creating relevant plots, and beginning statistical tests\u2014but the session was cut short before completion. No analysis report was produced. The key insight (Simpson's paradox / trend reversal) was never explicitly stated, Simpson's paradox was never named, and no practical conclusion was drawn. Only partial credit for computing the right quantities without articulating findings.\"\n  },\n  \"summary\": \"The agent demonstrated methodical EDA skills and correctly identified department as confounded with treatment through code and plot titles, but the session terminated prematurely during statistical testing. No analysis report was generated. The core requirement\u2014explicitly identifying that the aggregate treatment effect reverses within each department group (Simpson's paradox)\u2014was never stated. Without a report articulating the reversal and providing a stratified conclusion, the analysis fails to meet most must-have criteria beyond partial computation of the relevant statistics. Verdict: partial.\"\n}\n```"
+  "criterion_results": [],
+  "summary": "Run did not complete successfully. Missing required output artifacts: missing analysis report (analysis_report.md). This result should be rerun and should not be interpreted as an analytical miss.",
+  "raw_response": ""
 }

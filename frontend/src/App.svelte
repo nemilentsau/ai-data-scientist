@@ -1,31 +1,41 @@
 <script>
-  import manifest from "virtual:manifest";
   import { parseTrace, computeStats } from "./lib/parse.js";
   import ComparisonMatrix from "./lib/ComparisonMatrix.svelte";
   import RunDetail from "./lib/RunDetail.svelte";
 
   let selectedRun = $state(null);
   let search = $state("");
+  let rawManifest = $state({ configs: {}, runs: [] });
+  let loading = $state(true);
+  let lastFetch = $state(0);
 
-  // Pre-process runs: parse traces, attach computed stats
+  async function fetchManifest() {
+    const res = await fetch("/api/manifest");
+    rawManifest = await res.json();
+    lastFetch = Date.now();
+    loading = false;
+  }
+
+  // Initial fetch + poll every 10s
+  fetchManifest();
+  const interval = setInterval(fetchManifest, 10_000);
+
+  // Pre-process runs
   let runs = $derived.by(() => {
-    return manifest.runs.map((run) => {
+    return rawManifest.runs.map((run) => {
       const parsed = run.trace ? parseTrace(run.trace) : { events: [], meta: null };
       const stats = computeStats(parsed.events, parsed.meta, run.session);
       return { ...run, parsedTrace: parsed, stats };
     });
   });
 
-  let configs = $derived(manifest.configs);
+  let configs = $derived(rawManifest.configs);
   let configNames = $derived(Object.keys(configs).sort());
   let datasets = $derived([...new Set(runs.map((r) => r.dataset))].sort());
 
-  // Build lookup: { "config/dataset": run }
   let runMap = $derived.by(() => {
     const map = {};
-    for (const run of runs) {
-      map[run.id] = run;
-    }
+    for (const run of runs) map[run.id] = run;
     return map;
   });
 
@@ -33,9 +43,7 @@
     if (!search.trim()) return datasets;
     const q = search.toLowerCase();
     return datasets.filter((ds) => {
-      // Search dataset name
       if (ds.toLowerCase().includes(q)) return true;
-      // Search across all config runs for this dataset
       for (const cfg of configNames) {
         const run = runMap[`${cfg}/${ds}`];
         if (!run) continue;
@@ -72,6 +80,9 @@
         <button class="back-btn" onclick={goBack}>&larr;</button>
       {/if}
       <h1>Benchmark Dashboard</h1>
+      {#if !loading}
+        <span class="live-dot" title="Auto-refreshing every 10s"></span>
+      {/if}
     </div>
     {#if runs.length > 0 && !selectedRun}
       <div class="header-stats">
@@ -82,13 +93,17 @@
     {/if}
   </header>
 
-  {#if selectedRun}
+  {#if loading}
+    <div class="empty">
+      <p>Loading...</p>
+    </div>
+  {:else if selectedRun}
     <RunDetail run={selectedRun} config={configs[selectedRun.config]} />
   {:else if runs.length === 0}
     <div class="empty">
       <div class="empty-icon">&#128202;</div>
       <p>No benchmark results found</p>
-      <p class="hint">Run benchmarks with <code>--config solo-baseline</code> or <code>--config solo-codex</code> to populate results</p>
+      <p class="hint">Run benchmarks with <code>--config solo-baseline</code> to populate results</p>
     </div>
   {:else}
     <div class="controls">
@@ -143,6 +158,19 @@
     font-size: 1.3rem;
     font-weight: 600;
     color: var(--text);
+  }
+
+  .live-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--green);
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
   }
 
   .back-btn {

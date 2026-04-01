@@ -5,14 +5,20 @@
     solved: "var(--green)",
     partial: "var(--orange)",
     wrong: "var(--red)",
-    fail: "var(--red)",
+    failed: "var(--red)",
+    run_error: "var(--red)",
   };
+
+  function displayVerdict(verdict) {
+    return verdict === "run_error" ? "run error" : verdict;
+  }
 
   function getAggregates(configName) {
     let total = 0;
     let solved = 0;
     let partial = 0;
     let wrong = 0;
+    let runError = 0;
     let totalCost = 0;
     for (const ds of datasets) {
       const run = runMap[`${configName}/${ds}`];
@@ -20,10 +26,11 @@
       total++;
       if (run.score.verdict === "solved") solved++;
       else if (run.score.verdict === "partial") partial++;
+      else if (run.score.verdict === "run_error") runError++;
       else wrong++;
       totalCost += run.stats?.costUsd ?? 0;
     }
-    return { total, solved, partial, wrong, totalCost };
+    return { total, solved, partial, wrong, runError, totalCost };
   }
 </script>
 
@@ -38,11 +45,10 @@
             <div class="config-name">{cfg}</div>
             <div class="config-desc">{configs[cfg]?.description ?? ""}</div>
             <div class="config-agg">
-              <span class="agg-item" style="color: var(--green)">{agg.solved}</span>
-              <span class="agg-sep">/</span>
-              <span class="agg-item" style="color: var(--orange)">{agg.partial}</span>
-              <span class="agg-sep">/</span>
-              <span class="agg-item" style="color: var(--red)">{agg.wrong}</span>
+              <span class="agg-pill agg-solved" title="Solved">{agg.solved} solved</span>
+              <span class="agg-pill agg-partial" title="Partial">{agg.partial} partial</span>
+              <span class="agg-pill agg-wrong" title="Wrong">{agg.wrong} wrong</span>
+              <span class="agg-pill agg-run-error" title="Run errors">{agg.runError} run errors</span>
               {#if agg.totalCost > 0}
                 <span class="agg-cost">${agg.totalCost.toFixed(2)}</span>
               {/if}
@@ -61,18 +67,23 @@
               <td class="run-cell">
                 <button
                   class="cell-btn"
+                  class:run-error-cell={run.score.verdict === "run_error"}
                   onclick={() => onSelect(run)}
-                  title="{cfg} / {ds}: {run.score.verdict}"
+                  title="{cfg} / {ds}: {displayVerdict(run.score.verdict)}"
                 >
                   <span
                     class="verdict-tag"
                     style="color: {verdictColors[run.score.verdict] ?? 'var(--text-muted)'}; border-color: {verdictColors[run.score.verdict] ?? 'var(--border)'}"
                   >
-                    {run.score.verdict}
+                    {displayVerdict(run.score.verdict)}
                   </span>
-                  <span class="coverage">
-                    {Math.round((run.score.required_coverage ?? 0) * 100)}%
-                  </span>
+                  {#if run.score.verdict === "run_error"}
+                    <span class="coverage">execution failed</span>
+                  {:else}
+                    <span class="coverage">
+                      {Math.round((run.score.required_coverage ?? 0) * 100)}%
+                    </span>
+                  {/if}
                   {#if run.stats?.costUsd != null}
                     <span class="cost">${run.stats.costUsd.toFixed(2)}</span>
                   {/if}
@@ -146,18 +157,44 @@
 
   .config-agg {
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
     justify-content: center;
-    gap: 3px;
+    gap: 6px;
     margin-top: 6px;
-    font-family: var(--font-mono);
-    font-size: 0.75rem;
-    font-weight: 600;
+    font-size: 0.7rem;
   }
 
-  .agg-sep {
-    color: var(--text-muted);
-    opacity: 0.4;
+  .agg-pill {
+    padding: 2px 8px;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    font-weight: 600;
+    line-height: 1.2;
+  }
+
+  .agg-solved {
+    color: var(--green);
+    border-color: color-mix(in srgb, var(--green) 45%, var(--border));
+    background: color-mix(in srgb, var(--green) 10%, transparent);
+  }
+
+  .agg-partial {
+    color: var(--orange);
+    border-color: color-mix(in srgb, var(--orange) 45%, var(--border));
+    background: color-mix(in srgb, var(--orange) 10%, transparent);
+  }
+
+  .agg-wrong {
+    color: var(--red);
+    border-color: color-mix(in srgb, var(--red) 45%, var(--border));
+    background: color-mix(in srgb, var(--red) 10%, transparent);
+  }
+
+  .agg-run-error {
+    color: var(--red);
+    border-color: color-mix(in srgb, var(--red) 45%, var(--border));
+    background: color-mix(in srgb, var(--red) 18%, transparent);
   }
 
   .agg-cost {
@@ -206,6 +243,16 @@
   .cell-btn:hover {
     border-color: var(--accent);
     background: var(--bg-tertiary);
+  }
+
+  .run-error-cell {
+    border-color: color-mix(in srgb, var(--red) 45%, var(--border));
+    background: color-mix(in srgb, var(--red) 10%, transparent);
+  }
+
+  .run-error-cell:hover {
+    border-color: var(--red);
+    background: color-mix(in srgb, var(--red) 14%, transparent);
   }
 
   .verdict-tag {

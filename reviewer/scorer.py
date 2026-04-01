@@ -19,7 +19,8 @@ from datasets.registry import (
 from .rubric import TRANSCRIPT_CHAR_LIMIT, format_rubric_for_prompt
 
 CriterionStatus = Literal["hit", "partial", "miss"]
-Verdict = Literal["solved", "partial", "failed", "wrong"]
+RunStatus = Literal["completed", "run_error"]
+Verdict = Literal["solved", "partial", "failed", "wrong", "run_error"]
 
 
 @dataclass(frozen=True)
@@ -46,6 +47,9 @@ class ScoreResult:
     oracle_attainment: float | None
     oracle_metric_name: str | None
     oracle_agent_value: float | None
+    run_status: RunStatus = "completed"
+    rerun_recommended: bool = False
+    run_error_reasons: list[str] = field(default_factory=list)
     fatal_errors: list[str] = field(default_factory=list)
     efficiency: dict[str, float] = field(default_factory=dict)
     criterion_results: list[CriterionResult] = field(default_factory=list)
@@ -104,6 +108,19 @@ def normalize_oracle_attainment(
         normalized = (baseline - agent_value) / (baseline - oracle)
 
     return max(0.0, min(1.0, normalized))
+
+
+def assess_run_state(results_dir: Path) -> tuple[RunStatus, list[str]]:
+    """Determine whether a run completed enough to score analytically."""
+    missing_artifacts: list[str] = []
+
+    report_path = results_dir / "analysis_report.md"
+    if not report_path.exists():
+        missing_artifacts.append("missing analysis report (analysis_report.md)")
+
+    if missing_artifacts:
+        return "run_error", missing_artifacts
+    return "completed", []
 
 
 def build_reviewer_prompt(
@@ -340,6 +357,7 @@ def score_analysis(
     results_dir: Path,
 ) -> ScoreResult:
     """Score an agent's analysis using Claude CLI as the structured reviewer."""
+    evaluation_spec = get_evaluation_spec(dataset_metadata)
     report_path = results_dir / "analysis_report.md"
     analysis_report = (
         report_path.read_text() if report_path.exists() else "[No analysis report found]"
@@ -363,6 +381,39 @@ def score_analysis(
             else "[No session transcript found]"
         )
 
+    run_status, run_error_reasons = assess_run_state(results_dir)
+    if run_status == "run_error":
+        reason_text = "; ".join(run_error_reasons)
+        summary = (
+            "Run did not complete successfully. "
+            f"Missing required output artifacts: {reason_text}. "
+            "This result should be rerun and should not be interpreted as an "
+            "analytical miss."
+        )
+        return ScoreResult(
+            dataset_name=dataset_name,
+            agent=agent,
+            verdict="run_error",
+            run_status=run_status,
+            rerun_recommended=True,
+            run_error_reasons=run_error_reasons,
+            core_insight_pass=False,
+            required_coverage=0.0,
+            supporting_coverage=0.0,
+            oracle_attainment=None,
+            oracle_metric_name=(
+                evaluation_spec.oracle_metric.name
+                if evaluation_spec.oracle_metric is not None
+                else None
+            ),
+            oracle_agent_value=None,
+            fatal_errors=[],
+            efficiency=_collect_efficiency_metrics(results_dir, session_transcript),
+            criterion_results=[],
+            summary=summary,
+            raw_response="",
+        )
+
     prompt = build_reviewer_prompt(dataset_metadata, analysis_report, session_transcript)
 
     result = subprocess.run(
@@ -378,7 +429,6 @@ def score_analysis(
     cli_output = json.loads(result.stdout)
     raw_response = cli_output.get("result", result.stdout)
 
-    evaluation_spec = get_evaluation_spec(dataset_metadata)
     criterion_results, oracle_agent_value, summary = _parse_reviewer_response(
         raw_response,
         evaluation_spec,
@@ -420,6 +470,9 @@ def score_analysis(
         dataset_name=dataset_name,
         agent=agent,
         verdict=verdict,
+        run_status=run_status,
+        rerun_recommended=False,
+        run_error_reasons=[],
         core_insight_pass=core_insight_pass,
         required_coverage=required_coverage,
         supporting_coverage=supporting_coverage,

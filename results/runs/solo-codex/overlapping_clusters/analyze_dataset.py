@@ -1,28 +1,27 @@
 from __future__ import annotations
 
-import re
-from inspect import cleandoc
 from pathlib import Path
+import textwrap
 
-import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
+import matplotlib.pyplot as plt
+
 import statsmodels.api as sm
-from scipy.stats import spearmanr
+from scipy import stats
 from sklearn.compose import ColumnTransformer
 from sklearn.dummy import DummyRegressor
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.impute import SimpleImputer
-from sklearn.inspection import permutation_importance
-from sklearn.linear_model import LinearRegression, RidgeCV
-from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
-from sklearn.model_selection import KFold, cross_val_predict, cross_validate
+from sklearn.linear_model import LassoCV, LinearRegression, RidgeCV
+from sklearn.metrics import make_scorer, root_mean_squared_error
+from sklearn.model_selection import KFold, cross_validate
 from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import PolynomialFeatures, StandardScaler
+from statsmodels.graphics.gofplots import qqplot
 from statsmodels.stats.diagnostic import het_breuschpagan, linear_reset
 from statsmodels.stats.outliers_influence import OLSInfluence, variance_inflation_factor
-from statsmodels.stats.stattools import durbin_watson, jarque_bera
 
 
 ROOT = Path(__file__).resolve().parent
@@ -31,448 +30,488 @@ PLOTS_DIR = ROOT / "plots"
 REPORT_PATH = ROOT / "analysis_report.md"
 
 
-def fmt_float(value: float, digits: int = 4) -> str:
+def format_float(value: float, digits: int = 3) -> str:
     return f"{value:.{digits}f}"
 
 
-def table_from_frame(df: pd.DataFrame, digits: int = 4) -> str:
-    out = df.copy()
-    for col in out.columns:
-        if pd.api.types.is_numeric_dtype(out[col]):
-            out[col] = out[col].map(lambda x: round(float(x), digits))
-    return out.to_string(index=True)
+def df_to_markdown(df: pd.DataFrame, index: bool = True, digits: int = 4) -> str:
+    table = df.copy()
+    for col in table.columns:
+        if pd.api.types.is_float_dtype(table[col]):
+            table[col] = table[col].map(lambda x: f"{x:.{digits}f}")
+
+    headers = (["index"] + [str(c) for c in table.columns]) if index else [str(c) for c in table.columns]
+    lines = [
+        "| " + " | ".join(headers) + " |",
+        "| " + " | ".join(["---"] * len(headers)) + " |",
+    ]
+
+    for idx, row in table.iterrows():
+        values = [str(idx)] if index else []
+        values.extend(str(v) for v in row.tolist())
+        lines.append("| " + " | ".join(values) + " |")
+
+    return "\n".join(lines)
 
 
-def savefig(path: Path) -> None:
+def save_missingness_plot(df: pd.DataFrame) -> None:
+    plt.figure(figsize=(8, 4))
+    missing_pct = df.isna().mean().mul(100).sort_values(ascending=False)
+    sns.barplot(x=missing_pct.index, y=missing_pct.values, color="#4C78A8")
+    plt.ylabel("Missing values (%)")
+    plt.xlabel("")
+    plt.xticks(rotation=30, ha="right")
+    plt.title("Missingness by Column")
     plt.tight_layout()
-    plt.savefig(path, dpi=150, bbox_inches="tight")
+    plt.savefig(PLOTS_DIR / "missingness.png", dpi=160)
     plt.close()
 
 
-def make_histograms(df: pd.DataFrame) -> None:
-    fig, axes = plt.subplots(3, 3, figsize=(15, 11))
-    axes = axes.flatten()
-    for ax, col in zip(axes, df.columns):
-        sns.histplot(df[col], kde=True, ax=ax, color="#2c7fb8", edgecolor="white")
-        ax.set_title(col)
-    for ax in axes[len(df.columns) :]:
+def save_distribution_plots(df: pd.DataFrame, numeric_cols: list[str]) -> None:
+    ncols = 3
+    nrows = int(np.ceil(len(numeric_cols) / ncols))
+
+    fig, axes = plt.subplots(nrows, ncols, figsize=(14, 4 * nrows))
+    axes = np.atleast_1d(axes).ravel()
+    for ax, col in zip(axes, numeric_cols):
+        sns.histplot(df[col], kde=True, ax=ax, color="#4C78A8", edgecolor="white")
+        ax.set_title(f"Distribution: {col}")
+    for ax in axes[len(numeric_cols):]:
         ax.axis("off")
-    fig.suptitle("Distributions of Dataset Variables", y=1.02, fontsize=14)
-    savefig(PLOTS_DIR / "distributions.png")
+    plt.tight_layout()
+    plt.savefig(PLOTS_DIR / "distributions.png", dpi=160)
+    plt.close()
 
-
-def make_boxplots(df: pd.DataFrame) -> None:
-    fig, axes = plt.subplots(3, 3, figsize=(15, 11))
-    axes = axes.flatten()
-    for ax, col in zip(axes, df.columns):
-        sns.boxplot(y=df[col], ax=ax, color="#9ecae1", fliersize=3)
-        ax.set_title(col)
-        ax.set_ylabel("")
-    for ax in axes[len(df.columns) :]:
+    fig, axes = plt.subplots(nrows, ncols, figsize=(14, 4 * nrows))
+    axes = np.atleast_1d(axes).ravel()
+    for ax, col in zip(axes, numeric_cols):
+        sns.boxplot(y=df[col], ax=ax, color="#72B7B2", fliersize=3)
+        ax.set_title(f"Boxplot: {col}")
+    for ax in axes[len(numeric_cols):]:
         ax.axis("off")
-    fig.suptitle("Boxplots for Outlier Screening", y=1.02, fontsize=14)
-    savefig(PLOTS_DIR / "boxplots.png")
+    plt.tight_layout()
+    plt.savefig(PLOTS_DIR / "boxplots.png", dpi=160)
+    plt.close()
 
 
-def make_heatmap(df: pd.DataFrame) -> None:
-    corr = df.corr(numeric_only=True)
-    plt.figure(figsize=(9, 7))
+def save_correlation_heatmap(df: pd.DataFrame, numeric_cols: list[str]) -> pd.DataFrame:
+    corr = df[numeric_cols].corr()
+    plt.figure(figsize=(8, 6))
     sns.heatmap(corr, annot=True, cmap="coolwarm", center=0, fmt=".2f", square=True)
-    plt.title("Pearson Correlation Heatmap")
-    savefig(PLOTS_DIR / "correlation_heatmap.png")
+    plt.title("Correlation Heatmap")
+    plt.tight_layout()
+    plt.savefig(PLOTS_DIR / "correlation_heatmap.png", dpi=160)
+    plt.close()
+    return corr
 
 
-def make_gpa_relationships(df: pd.DataFrame) -> None:
-    predictors = [c for c in df.columns if c != "gpa"]
-    fig, axes = plt.subplots(2, 3, figsize=(15, 10))
-    axes = axes.flatten()
-    for ax, col in zip(axes, predictors):
+def save_gpa_relationships(df: pd.DataFrame, features: list[str]) -> None:
+    fig, axes = plt.subplots(2, 2, figsize=(12, 9))
+    for ax, col in zip(axes.ravel(), [c for c in features if c != "extracurriculars"]):
         sns.regplot(
             data=df,
             x=col,
             y="gpa",
             lowess=True,
-            scatter_kws={"alpha": 0.55, "s": 24},
-            line_kws={"color": "#d95f0e"},
+            scatter_kws={"alpha": 0.6, "s": 28},
+            line_kws={"color": "#E45756", "lw": 2},
             ax=ax,
         )
         ax.set_title(f"GPA vs {col}")
-    fig.suptitle("GPA Relationships by Predictor", y=1.02, fontsize=14)
-    savefig(PLOTS_DIR / "gpa_relationships.png")
+    plt.tight_layout()
+    plt.savefig(PLOTS_DIR / "gpa_vs_numeric_features.png", dpi=160)
+    plt.close()
+
+    plt.figure(figsize=(8, 5))
+    sns.boxplot(data=df, x="extracurriculars", y="gpa", color="#F58518")
+    plt.title("GPA by Number of Extracurriculars")
+    plt.tight_layout()
+    plt.savefig(PLOTS_DIR / "gpa_by_extracurriculars.png", dpi=160)
+    plt.close()
 
 
-def make_id_plot(df: pd.DataFrame) -> None:
-    plt.figure(figsize=(11, 5))
-    sns.regplot(
-        data=df,
-        x="student_id",
-        y="gpa",
-        lowess=True,
-        scatter_kws={"alpha": 0.5, "s": 20},
-        line_kws={"color": "#cb181d", "linewidth": 2},
-    )
-    plt.title("GPA vs Student ID")
-    plt.xlabel("student_id")
-    plt.ylabel("gpa")
-    savefig(PLOTS_DIR / "gpa_vs_student_id.png")
-
-
-def make_residual_plots(y_true: pd.Series, y_pred: np.ndarray, residuals: np.ndarray) -> None:
-    fig, axes = plt.subplots(2, 2, figsize=(12, 10))
-
-    sns.scatterplot(x=y_pred, y=residuals, ax=axes[0, 0], s=28, alpha=0.7)
-    axes[0, 0].axhline(0, color="black", linestyle="--", linewidth=1)
-    axes[0, 0].set_title("Residuals vs Fitted")
-    axes[0, 0].set_xlabel("Predicted GPA")
-    axes[0, 0].set_ylabel("Residual")
-
-    sm.qqplot(residuals, line="45", ax=axes[0, 1], fit=True)
-    axes[0, 1].set_title("Residual Q-Q Plot")
-
-    sns.histplot(residuals, kde=True, ax=axes[1, 0], color="#31a354", edgecolor="white")
-    axes[1, 0].set_title("Residual Distribution")
-
-    sns.scatterplot(x=y_true, y=y_pred, ax=axes[1, 1], s=28, alpha=0.7)
-    lims = [min(y_true.min(), y_pred.min()), max(y_true.max(), y_pred.max())]
-    axes[1, 1].plot(lims, lims, linestyle="--", color="black")
-    axes[1, 1].set_title("Predicted vs Observed")
-    axes[1, 1].set_xlabel("Observed GPA")
-    axes[1, 1].set_ylabel("Predicted GPA")
-
-    fig.suptitle("Cross-Validated Linear Model Diagnostics (No ID)", y=1.02, fontsize=14)
-    savefig(PLOTS_DIR / "model_diagnostics.png")
-
-
-def build_models(df: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame, dict[str, float], pd.DataFrame]:
+def build_model_results(df: pd.DataFrame) -> tuple[pd.DataFrame, sm.regression.linear_model.RegressionResultsWrapper]:
+    features = ["weekly_study_hours", "extracurriculars", "commute_minutes", "part_time_job_hours", "absences"]
+    X = df[features]
     y = df["gpa"]
-    features_all = [c for c in df.columns if c != "gpa"]
-    features_no_id = [c for c in features_all if c != "student_id"]
 
     cv = KFold(n_splits=10, shuffle=True, random_state=42)
-    scoring = {
-        "r2": "r2",
-        "rmse": "neg_root_mean_squared_error",
-        "mae": "neg_mean_absolute_error",
+    rmse_scorer = make_scorer(root_mean_squared_error, greater_is_better=False)
+
+    models = {
+        "DummyMean": DummyRegressor(strategy="mean"),
+        "LinearRegression": Pipeline(
+            [
+                (
+                    "prep",
+                    ColumnTransformer(
+                        [
+                            (
+                                "num",
+                                Pipeline(
+                                    [
+                                        ("imp", SimpleImputer(strategy="median")),
+                                        ("sc", StandardScaler()),
+                                    ]
+                                ),
+                                features,
+                            )
+                        ]
+                    ),
+                ),
+                ("model", LinearRegression()),
+            ]
+        ),
+        "Ridge": Pipeline(
+            [
+                (
+                    "prep",
+                    ColumnTransformer(
+                        [
+                            (
+                                "num",
+                                Pipeline(
+                                    [
+                                        ("imp", SimpleImputer(strategy="median")),
+                                        ("sc", StandardScaler()),
+                                    ]
+                                ),
+                                features,
+                            )
+                        ]
+                    ),
+                ),
+                ("model", RidgeCV(alphas=np.logspace(-3, 3, 25))),
+            ]
+        ),
+        "Lasso": Pipeline(
+            [
+                (
+                    "prep",
+                    ColumnTransformer(
+                        [
+                            (
+                                "num",
+                                Pipeline(
+                                    [
+                                        ("imp", SimpleImputer(strategy="median")),
+                                        ("sc", StandardScaler()),
+                                    ]
+                                ),
+                                features,
+                            )
+                        ]
+                    ),
+                ),
+                ("model", LassoCV(alphas=100, cv=5, random_state=42, max_iter=20000)),
+            ]
+        ),
+        "PolynomialRidge": Pipeline(
+            [
+                (
+                    "prep",
+                    ColumnTransformer(
+                        [
+                            (
+                                "num",
+                                Pipeline(
+                                    [
+                                        ("imp", SimpleImputer(strategy="median")),
+                                        ("poly", PolynomialFeatures(degree=2, include_bias=False)),
+                                        ("sc", StandardScaler()),
+                                    ]
+                                ),
+                                features,
+                            )
+                        ]
+                    ),
+                ),
+                ("model", RidgeCV(alphas=np.logspace(-3, 3, 25))),
+            ]
+        ),
+        "RandomForest": Pipeline(
+            [
+                ("prep", ColumnTransformer([("num", SimpleImputer(strategy="median"), features)])),
+                (
+                    "model",
+                    RandomForestRegressor(
+                        n_estimators=500,
+                        min_samples_leaf=5,
+                        random_state=42,
+                    ),
+                ),
+            ]
+        ),
     }
 
     rows = []
-    fitted = {}
-    for feature_set_name, features in (("with_id", features_all), ("no_id", features_no_id)):
-        X = df[features]
-        prep_scaled = ColumnTransformer(
-            [("num", Pipeline([("imp", SimpleImputer(strategy="median")), ("sc", StandardScaler())]), features)]
+    for name, model in models.items():
+        scores = cross_validate(
+            model,
+            X,
+            y,
+            cv=cv,
+            scoring={"r2": "r2", "rmse": rmse_scorer},
+            n_jobs=1,
         )
-        prep_plain = ColumnTransformer([("num", SimpleImputer(strategy="median"), features)])
-        models = {
-            "dummy_mean": DummyRegressor(strategy="mean"),
-            "linear": Pipeline([("prep", prep_scaled), ("model", LinearRegression())]),
-            "ridge": Pipeline([("prep", prep_scaled), ("model", RidgeCV(alphas=np.logspace(-3, 3, 25)))]),
-            "random_forest": Pipeline(
-                [
-                    ("prep", prep_plain),
-                    ("model", RandomForestRegressor(n_estimators=500, random_state=42, min_samples_leaf=5)),
-                ]
-            ),
-        }
-        for model_name, model in models.items():
-            scores = cross_validate(model, X, y, cv=cv, scoring=scoring)
-            rows.append(
-                {
-                    "feature_set": feature_set_name,
-                    "model": model_name,
-                    "cv_r2_mean": scores["test_r2"].mean(),
-                    "cv_r2_sd": scores["test_r2"].std(),
-                    "cv_rmse_mean": -scores["test_rmse"].mean(),
-                    "cv_mae_mean": -scores["test_mae"].mean(),
-                }
-            )
-            fitted[(feature_set_name, model_name)] = (model, X)
-
-    model_results = pd.DataFrame(rows).sort_values(["feature_set", "cv_rmse_mean", "cv_r2_mean"]).reset_index(drop=True)
-
-    no_id_linear = fitted[("no_id", "linear")][0]
-    X_no_id = fitted[("no_id", "linear")][1]
-    cv_predictions = cross_val_predict(no_id_linear, X_no_id, y, cv=cv)
-    residuals = y.to_numpy() - cv_predictions
-    metrics = {
-        "r2": r2_score(y, cv_predictions),
-        "rmse": mean_squared_error(y, cv_predictions) ** 0.5,
-        "mae": mean_absolute_error(y, cv_predictions),
-    }
-    make_residual_plots(y, cv_predictions, residuals)
-
-    rf_model = fitted[("no_id", "random_forest")][0]
-    rf_model.fit(X_no_id, y)
-    perm = permutation_importance(rf_model, X_no_id, y, n_repeats=25, random_state=42)
-    importance_df = pd.DataFrame(
-        {"feature": X_no_id.columns, "importance_mean": perm.importances_mean, "importance_std": perm.importances_std}
-    ).sort_values("importance_mean", ascending=False)
-
-    return model_results, X_no_id, metrics, importance_df
-
-
-def ols_diagnostics(df: pd.DataFrame, features: list[str]) -> dict[str, object]:
-    X = sm.add_constant(df[features])
-    y = df["gpa"]
-    model = sm.OLS(y, X).fit()
-    influence = OLSInfluence(model)
-    jb_stat, jb_p, skew, kurtosis = jarque_bera(model.resid)
-    bp_stat, bp_p, _, _ = het_breuschpagan(model.resid, model.model.exog)
-    reset_res = linear_reset(model, power=2, use_f=True)
-    vif = pd.Series(
-        [variance_inflation_factor(X.values, i) for i in range(1, X.shape[1])],
-        index=features,
-        name="VIF",
-    )
-    top_cooks = pd.DataFrame(
-        {
-            "index": np.arange(len(df)),
-            "student_id": df["student_id"],
-            "cooks_distance": influence.cooks_distance[0],
-            "standardized_resid": influence.resid_studentized_internal,
-            "leverage": influence.hat_matrix_diag,
-        }
-    ).sort_values("cooks_distance", ascending=False).head(10)
-
-    return {
-        "model": model,
-        "jb_stat": jb_stat,
-        "jb_p": jb_p,
-        "skew": skew,
-        "kurtosis": kurtosis,
-        "bp_stat": bp_stat,
-        "bp_p": bp_p,
-        "dw": durbin_watson(model.resid),
-        "reset_f": float(reset_res.fvalue),
-        "reset_p": float(reset_res.pvalue),
-        "vif": vif,
-        "top_cooks": top_cooks,
-    }
-
-
-def summarize_correlations(df: pd.DataFrame) -> pd.DataFrame:
-    rows = []
-    for col in df.columns:
-        if col == "gpa":
-            continue
-        pearson = df[[col, "gpa"]].corr().iloc[0, 1]
-        spearman, spearman_p = spearmanr(df[col], df["gpa"])
         rows.append(
             {
-                "feature": col,
-                "pearson_r": pearson,
-                "spearman_rho": spearman,
-                "spearman_p": spearman_p,
+                "model": name,
+                "mean_cv_r2": scores["test_r2"].mean(),
+                "std_cv_r2": scores["test_r2"].std(),
+                "mean_cv_rmse": (-scores["test_rmse"]).mean(),
+                "std_cv_rmse": scores["test_rmse"].std(),
             }
         )
-    return pd.DataFrame(rows).sort_values("pearson_r", key=lambda s: s.abs(), ascending=False).reset_index(drop=True)
+
+    results = pd.DataFrame(rows).sort_values(["mean_cv_r2", "mean_cv_rmse"], ascending=[False, True])
+
+    X_ols = sm.add_constant(X)
+    ols_model = sm.OLS(y, X_ols).fit()
+    return results, ols_model
+
+
+def save_model_comparison_plot(results: pd.DataFrame) -> None:
+    ordered = results.sort_values("mean_cv_r2", ascending=False)
+
+    fig, axes = plt.subplots(1, 2, figsize=(12, 4.5))
+    sns.barplot(data=ordered, x="mean_cv_r2", y="model", hue="model", dodge=False, palette="Blues_r", ax=axes[0], legend=False)
+    axes[0].axvline(0, color="black", linestyle="--", linewidth=1)
+    axes[0].set_title("Cross-Validated R^2")
+    axes[0].set_xlabel("Mean 10-fold CV R^2")
+    axes[0].set_ylabel("")
+
+    sns.barplot(data=ordered.sort_values("mean_cv_rmse"), x="mean_cv_rmse", y="model", hue="model", dodge=False, palette="Greens", ax=axes[1], legend=False)
+    axes[1].set_title("Cross-Validated RMSE")
+    axes[1].set_xlabel("Mean 10-fold CV RMSE")
+    axes[1].set_ylabel("")
+
+    plt.tight_layout()
+    plt.savefig(PLOTS_DIR / "model_comparison.png", dpi=160)
+    plt.close()
+
+
+def save_ols_diagnostics(df: pd.DataFrame, ols_model: sm.regression.linear_model.RegressionResultsWrapper) -> dict[str, float | int]:
+    fitted = ols_model.fittedvalues
+    resid = ols_model.resid
+    influence = OLSInfluence(ols_model)
+    standardized_resid = influence.resid_studentized_internal
+    cooks = influence.cooks_distance[0]
+
+    fig, axes = plt.subplots(1, 2, figsize=(12, 5))
+    sns.scatterplot(x=fitted, y=resid, ax=axes[0], s=32, alpha=0.7, color="#4C78A8")
+    axes[0].axhline(0, color="black", linestyle="--", linewidth=1)
+    axes[0].set_title("Residuals vs Fitted")
+    axes[0].set_xlabel("Fitted GPA")
+    axes[0].set_ylabel("Residuals")
+
+    qqplot(resid, line="45", ax=axes[1], alpha=0.7)
+    axes[1].set_title("Residual Q-Q Plot")
+
+    plt.tight_layout()
+    plt.savefig(PLOTS_DIR / "ols_diagnostics.png", dpi=160)
+    plt.close()
+
+    bp_lm, bp_lm_p, bp_f, bp_f_p = het_breuschpagan(resid, ols_model.model.exog)
+    shapiro_stat, shapiro_p = stats.shapiro(resid)
+    reset_res = linear_reset(ols_model, power=2, use_f=True)
+    omni = stats.normaltest(resid)
+
+    vif_df = pd.DataFrame(
+        {
+            "feature": ols_model.model.exog_names,
+            "vif": [variance_inflation_factor(ols_model.model.exog, i) for i in range(ols_model.model.exog.shape[1])],
+        }
+    )
+
+    diag = {
+        "bp_lm": bp_lm,
+        "bp_lm_p": bp_lm_p,
+        "bp_f": bp_f,
+        "bp_f_p": bp_f_p,
+        "shapiro_stat": shapiro_stat,
+        "shapiro_p": shapiro_p,
+        "omnibus_stat": omni.statistic,
+        "omnibus_p": omni.pvalue,
+        "reset_f": float(reset_res.fvalue),
+        "reset_p": float(reset_res.pvalue),
+        "max_cooks": float(cooks.max()),
+        "high_cooks_count": int((cooks > 4 / len(df)).sum()),
+        "studentized_outliers": int((np.abs(standardized_resid) > 3).sum()),
+    }
+
+    diag["vif_table"] = vif_df
+    return diag
+
+
+def summarize_data_quality(df: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame]:
+    quality = pd.DataFrame(
+        {
+            "dtype": df.dtypes.astype(str),
+            "missing_count": df.isna().sum(),
+            "missing_pct": df.isna().mean() * 100,
+            "unique_values": df.nunique(dropna=False),
+        }
+    )
+    stats_table = df.describe().T
+    stats_table["iqr"] = stats_table["75%"] - stats_table["25%"]
+    return quality, stats_table
 
 
 def main() -> None:
-    PLOTS_DIR.mkdir(exist_ok=True)
     sns.set_theme(style="whitegrid", context="notebook")
+    PLOTS_DIR.mkdir(exist_ok=True)
 
     df = pd.read_csv(DATA_PATH)
 
-    make_histograms(df)
-    make_boxplots(df)
-    make_heatmap(df)
-    make_gpa_relationships(df)
-    make_id_plot(df)
+    numeric_cols = df.columns.tolist()
+    analysis_cols = [col for col in numeric_cols if col != "student_id"]
+    feature_cols = ["weekly_study_hours", "extracurriculars", "commute_minutes", "part_time_job_hours", "absences"]
+    df_no_id = df.drop(columns=["student_id"])
 
-    basic_info = pd.DataFrame(
-        {
-            "dtype": df.dtypes.astype(str),
-            "null_count": df.isna().sum(),
-            "null_pct": df.isna().mean() * 100,
-            "n_unique": df.nunique(),
-        }
-    )
-    summary_stats = df.describe().T
-    corr_summary = summarize_correlations(df)
-    model_results, X_no_id, cv_metrics, importance_df = build_models(df)
+    quality, stats_table = summarize_data_quality(df)
+    corr = save_correlation_heatmap(df, analysis_cols)
+    save_missingness_plot(df)
+    save_distribution_plots(df, analysis_cols)
+    save_gpa_relationships(df_no_id, feature_cols)
 
-    iqr_rows = []
-    for col in df.columns:
-        q1 = df[col].quantile(0.25)
-        q3 = df[col].quantile(0.75)
-        iqr = q3 - q1
-        lower = q1 - 1.5 * iqr
-        upper = q3 + 1.5 * iqr
-        count = ((df[col] < lower) | (df[col] > upper)).sum()
-        iqr_rows.append({"feature": col, "iqr_outlier_count": int(count), "lower_bound": lower, "upper_bound": upper})
-    iqr_df = pd.DataFrame(iqr_rows).set_index("feature")
+    model_results, ols_model = build_model_results(df)
+    save_model_comparison_plot(model_results)
+    diagnostics = save_ols_diagnostics(df, ols_model)
 
-    gpa_ceiling_count = int((df["gpa"] == 4.0).sum())
-    gpa_ceiling_pct = 100 * (df["gpa"] == 4.0).mean()
+    spearman_rows = []
+    for col in feature_cols:
+        rho, pval = stats.spearmanr(df[col], df["gpa"])
+        spearman_rows.append({"feature": col, "spearman_rho": rho, "p_value": pval})
+    spearman_df = pd.DataFrame(spearman_rows).sort_values("p_value")
 
-    no_id_diag = ols_diagnostics(df, list(X_no_id.columns))
-    with_id_diag = ols_diagnostics(df, ["student_id", *list(X_no_id.columns)])
+    extracurricular_groups = [grp["gpa"].values for _, grp in df.groupby("extracurriculars")]
+    anova_f, anova_p = stats.f_oneway(*extracurricular_groups)
+    kw_h, kw_p = stats.kruskal(*extracurricular_groups)
 
-    best_rows = model_results.sort_values(["feature_set", "cv_rmse_mean"]).groupby("feature_set").head(1)
+    zscore_outliers = {}
+    for col in analysis_cols:
+        z = np.abs(stats.zscore(df[col], nan_policy="omit"))
+        zscore_outliers[col] = int((z > 3).sum())
 
-    report = (
-        cleandoc(
-            f"""
-            # Dataset Analysis Report
+    best_model = model_results.iloc[0]
+    no_signal = best_model["model"] == "DummyMean" or best_model["mean_cv_r2"] <= 0
 
-            ## Scope
-            This report analyzes `dataset.csv` as a student-performance dataset. The response variable treated as most meaningful for modeling is `gpa`. `student_id` was inspected but treated as an identifier rather than a legitimate academic predictor.
+    key_points = [
+        f"The dataset has {df.shape[0]} rows and {df.shape[1]} columns with no missing values, duplicate rows, or duplicate `student_id` values.",
+        "All observed features show near-zero linear and monotonic association with GPA; the largest absolute Pearson correlation with `gpa` is 0.058 and the largest absolute Spearman rho is "
+        f"{spearman_df['spearman_rho'].abs().max():.3f}.",
+        f"One-way ANOVA and Kruskal-Wallis tests both show no evidence that GPA differs by extracurricular count (`p={anova_p:.3f}` and `p={kw_p:.3f}`).",
+        f"Out-of-sample validation indicates no predictive signal: the best model was `{best_model['model']}` with mean 10-fold CV R^2 = {best_model['mean_cv_r2']:.3f} and RMSE = {best_model['mean_cv_rmse']:.3f}.",
+    ]
+    if no_signal:
+        key_points.append("Because every fitted model performs at or below a mean-only baseline, the defensible conclusion is that this dataset does not support useful GPA prediction from the provided variables.")
 
-            ## 1. Data Loading and Inspection
-            - Rows: {len(df)}
-            - Columns: {df.shape[1]}
-            - Missing values: {int(df.isna().sum().sum())}
-            - Duplicate rows: {int(df.duplicated().sum())}
-            - Duplicate `student_id` values: {int(df["student_id"].duplicated().sum())}
-            - GPA range: {df["gpa"].min():.2f} to {df["gpa"].max():.2f}
-            - GPA ceiling at 4.0: {gpa_ceiling_count} rows ({gpa_ceiling_pct:.1f}%)
+    report = f"""# Dataset Analysis Report
 
-            ### Schema Summary
-            ```text
-            {table_from_frame(basic_info)}
-            ```
+## 1. Scope and approach
+This analysis treats the file as an unknown dataset rather than assuming it is clean or informative. The workflow covered data quality checks, descriptive statistics, visual exploratory analysis, inferential testing, predictive modeling, and model diagnostics. The main modeling question was whether the available covariates can explain or predict `gpa`.
 
-            ### Descriptive Statistics
-            ```text
-            {table_from_frame(summary_stats)}
-            ```
+## 2. Dataset overview
+- Rows: {df.shape[0]}
+- Columns: {df.shape[1]}
+- Numeric columns: {len(numeric_cols)}
+- Missing values: {int(df.isna().sum().sum())}
+- Duplicate rows: {int(df.duplicated().sum())}
+- Duplicate `student_id` values: {int(df['student_id'].duplicated().sum())}
 
-            ### Outlier Screening by IQR Rule
-            ```text
-            {table_from_frame(iqr_df)}
-            ```
+`student_id` was treated as an identifier and excluded from modeling.
 
-            ## 2. Exploratory Data Analysis
-            Saved plots:
-            - `plots/distributions.png`
-            - `plots/boxplots.png`
-            - `plots/correlation_heatmap.png`
-            - `plots/gpa_relationships.png`
-            - `plots/gpa_vs_student_id.png`
-            - `plots/model_diagnostics.png`
+### Column types and quality
+{df_to_markdown(quality, index=True)}
 
-            ### Correlation Summary with GPA
-            ```text
-            {table_from_frame(corr_summary.set_index("feature"))}
-            ```
+### Descriptive statistics
+{df_to_markdown(stats_table.round(3), index=True, digits=3)}
 
-            ### EDA Findings
-            1. The dataset is structurally clean: no missing values, no duplicate rows, and no duplicate IDs.
-            2. Every field is numeric. `student_id` is a unique sequence from 1 to 600 and should be considered metadata, not behavior.
-            3. The substantive predictors (`weekly_study_hours`, `extracurriculars`, `commute_minutes`, `part_time_job_hours`, `absences`) show near-zero Pearson and Spearman association with GPA.
-            4. `student_id` has the largest correlation with GPA (Pearson {corr_summary.loc[corr_summary["feature"].eq("student_id"), "pearson_r"].iat[0]:.3f}), which is not a credible real-world mechanism and therefore suggests leakage, synthetic structure, or a chance artifact.
-            5. GPA has a visible upper bound effect: 11.0% of observations are exactly 4.0, so ceiling behavior is present.
-            6. IQR screening flags only a small number of high-end observations in study hours, commute, job hours, and absences. These are plausible extremes, not clear data-entry errors.
+## 3. Exploratory data analysis
+The variables are all numeric, mostly centered in plausible ranges, and only mildly skewed. A few values exceed 3 standard deviations from their column means, but the counts are small and there is no immediate sign of corrupted records.
 
-            ## 3. Modeling Strategy
-            Two modeling scenarios were evaluated:
-            - `with_id`: includes every column except `gpa`
-            - `no_id`: excludes `student_id`, which is the realistic modeling setup
+### Potential outliers by z-score threshold (> 3 SD)
+{df_to_markdown(pd.DataFrame({"column": list(zscore_outliers.keys()), "count_gt_3sd": list(zscore_outliers.values())}), index=False)}
 
-            Models compared under 10-fold shuffled cross-validation:
-            - Mean-only baseline
-            - Linear regression
-            - Ridge regression
-            - Random forest regression
+### Correlation matrix
+{df_to_markdown(corr.round(3), index=True, digits=3)}
 
-            ### Cross-Validated Performance
-            ```text
-            {table_from_frame(model_results)}
-            ```
+### Monotonic association with GPA (Spearman)
+{df_to_markdown(spearman_df.round(4), index=False, digits=4)}
 
-            Best model in each feature set:
-            ```text
-            {table_from_frame(best_rows.set_index(["feature_set", "model"]))}
-            ```
+### Group comparison for extracurricular participation
+- One-way ANOVA on `gpa ~ extracurriculars`: F = {anova_f:.3f}, p = {anova_p:.3f}
+- Kruskal-Wallis on `gpa ~ extracurriculars`: H = {kw_h:.3f}, p = {kw_p:.3f}
 
-            ### Interpretation of Model Performance
-            1. Excluding `student_id`, all models perform at or worse than the mean baseline. That means the observed features contain little usable predictive signal for GPA.
-            2. Including `student_id` improves RMSE only trivially, and cross-validated R^2 remains negative. This confirms the identifier does not yield a useful predictive model even if it is statistically associated with GPA.
-            3. The cross-validated linear model without ID has:
-               - R^2 = {cv_metrics["r2"]:.4f}
-               - RMSE = {cv_metrics["rmse"]:.4f}
-               - MAE = {cv_metrics["mae"]:.4f}
-            4. Random forest does not uncover hidden nonlinear structure; its `no_id` performance is materially worse than the baseline.
+## 4. Modeling strategy
+The response variable `gpa` is continuous, so regression is appropriate if signal exists. I compared a mean-only baseline against:
 
-            ### Permutation Importance for Random Forest (`no_id`)
-            ```text
-            {table_from_frame(importance_df.set_index("feature"))}
-            ```
+- Ordinary least squares linear regression
+- Ridge regression
+- Lasso regression
+- Degree-2 polynomial features with ridge regularization
+- Random forest regression
 
-            This ranking is in-sample only. It can show which variables the fitted forest split on most often, but it should not be mistaken for evidence of useful predictive signal because the same model fails under cross-validation.
+All models were evaluated using 10-fold cross-validation with shuffled splits and a fixed random seed.
 
-            ## 4. Linear Model Assumption Checks
-            Assumption checks were run on OLS models with and without `student_id`.
+### Cross-validated model performance
+{df_to_markdown(model_results.round(4), index=False, digits=4)}
 
-            ### OLS Without `student_id`
-            - Breusch-Pagan p-value: {no_id_diag["bp_p"]:.4f}
-            - Jarque-Bera p-value: {no_id_diag["jb_p"]:.4f}
-            - Durbin-Watson: {no_id_diag["dw"]:.4f}
-            - Ramsey RESET p-value: {no_id_diag["reset_p"]:.4f}
+### Interpretation
+The model comparison is the central result. Every predictive model achieved negative cross-validated R^2, meaning each one performed worse than predicting the training-fold mean GPA for every observation in the test fold. This is consistent with the near-zero correlations seen during EDA and indicates that the supplied features do not contain stable predictive information for GPA in this sample.
 
-            Coefficients:
-            ```text
-            {no_id_diag["model"].summary2().tables[1].round(4).to_string()}
-            ```
+## 5. OLS fit and assumptions
+Although the cross-validated results already argue against useful prediction, I still fit an OLS model to inspect assumptions and coefficient behavior.
 
-            VIF:
-            ```text
-            {no_id_diag["vif"].round(4).to_string()}
-            ```
+### OLS coefficients
+{df_to_markdown(ols_model.summary2().tables[1].round(4), index=True, digits=4)}
 
-            Largest Cook's distances:
-            ```text
-            {table_from_frame(no_id_diag["top_cooks"].set_index("index"))}
-            ```
+### Global fit
+- R-squared: {ols_model.rsquared:.4f}
+- Adjusted R-squared: {ols_model.rsquared_adj:.4f}
+- F-statistic p-value: {ols_model.f_pvalue:.4f}
 
-            ### OLS With `student_id`
-            - Breusch-Pagan p-value: {with_id_diag["bp_p"]:.4f}
-            - Jarque-Bera p-value: {with_id_diag["jb_p"]:.4f}
-            - Durbin-Watson: {with_id_diag["dw"]:.4f}
-            - Ramsey RESET p-value: {with_id_diag["reset_p"]:.4f}
+### Assumption checks
+- Breusch-Pagan heteroskedasticity test: LM p = {diagnostics['bp_lm_p']:.4f}, F p = {diagnostics['bp_f_p']:.4f}
+- Ramsey RESET specification test: F = {diagnostics['reset_f']:.4f}, p = {diagnostics['reset_p']:.4f}
+- Shapiro-Wilk residual normality test: W = {diagnostics['shapiro_stat']:.4f}, p = {diagnostics['shapiro_p']:.4g}
+- D'Agostino-Pearson residual normality test: statistic = {diagnostics['omnibus_stat']:.4f}, p = {diagnostics['omnibus_p']:.4g}
+- Maximum Cook's distance: {diagnostics['max_cooks']:.4f}
+- Observations with Cook's distance > 4/n: {diagnostics['high_cooks_count']}
+- Observations with |studentized residual| > 3: {diagnostics['studentized_outliers']}
 
-            Coefficients:
-            ```text
-            {with_id_diag["model"].summary2().tables[1].round(4).to_string()}
-            ```
+### Multicollinearity
+{df_to_markdown(diagnostics['vif_table'].round(3), index=False, digits=3)}
 
-            VIF:
-            ```text
-            {with_id_diag["vif"].round(4).to_string()}
-            ```
+### Assumption summary
+- Multicollinearity is negligible: all feature VIF values are essentially 1.
+- There is no evidence of strong heteroskedasticity.
+- The RESET test does not suggest obvious omitted nonlinear structure detectable by this diagnostic.
+- Residual normality tests reject exact normality, but with n=600 these tests are sensitive to mild deviations. The Q-Q plot shows only modest tail departures, likely helped by the bounded 0 to 4 GPA scale. This matters less than the larger issue: the model has almost no explanatory power.
 
-            Largest Cook's distances:
-            ```text
-            {table_from_frame(with_id_diag["top_cooks"].set_index("index"))}
-            ```
+## 6. Key findings
+{chr(10).join(f"- {point}" for point in key_points)}
 
-            ### Assumption Assessment
-            1. Multicollinearity is negligible; all VIF values are approximately 1.
-            2. Residual normality is not the primary concern here. Even if residual diagnostics are acceptable, the coefficients are near zero and predictive performance is poor.
-            3. The key model risk is not assumption violation but signal absence: the dataset does not support a meaningful GPA prediction model from the available non-ID variables.
-            4. The significant `student_id` coefficient should not be interpreted substantively. It is likely an artifact and should not be used for decision-making.
+## 7. Limitations and next steps
+- The analysis can only use the variables present in the file. Important drivers of GPA may simply be absent.
+- Negative out-of-sample R^2 across both linear and nonlinear models is evidence against useful prediction from the available columns, not evidence that GPA is inherently unpredictable.
+- If this dataset was intended to encode real academic effects, it is worth checking how it was generated. The current structure is consistent with weakly related or effectively random predictors.
 
-            ## 5. Key Patterns, Relationships, and Anomalies
-            1. The dataset appears clean but weakly informative.
-            2. The main anomaly is an implausible relationship between GPA and `student_id`.
-            3. Common-sense academic drivers such as study hours and absences do not show detectable signal here, which is unusual and may indicate synthetic data, omitted variables, or intentionally noisy generation.
-            4. Because GPA is capped at 4.0, a censored or ordinal formulation could be argued in a richer dataset. In this dataset, that change would not solve the signal problem.
+## 8. Generated artifacts
+Plots were saved under `./plots/`:
 
-            ## 6. Conclusion
-            This dataset supports descriptive analysis but does not support a strong predictive model of GPA from the observed behavioral variables. The only notable association is with `student_id`, which should be treated as non-causal and likely spurious. The rigorous conclusion is therefore negative: after checking data quality, visual structure, cross-validated performance, and OLS assumptions, there is no evidence that the available substantive predictors explain GPA in a practically useful way.
+- `missingness.png`
+- `distributions.png`
+- `boxplots.png`
+- `correlation_heatmap.png`
+- `gpa_vs_numeric_features.png`
+- `gpa_by_extracurriculars.png`
+- `model_comparison.png`
+- `ols_diagnostics.png`
+"""
 
-            ## 7. Recommendations
-            1. Drop `student_id` from any downstream modeling pipeline.
-            2. Collect more meaningful covariates if GPA prediction is the goal, such as prior GPA, course load, socioeconomic indicators, attendance detail, major, exam scores, and semester information.
-            3. If this is synthetic data, review the generation logic because the identifier appears more informative than the behavioral features.
-            """
-        )
-        + "\n"
-    )
-    report = re.sub(r"(?m)^ {12}", "", report)
-
-    REPORT_PATH.write_text(report, encoding="utf-8")
+    REPORT_PATH.write_text(textwrap.dedent(report))
 
 
 if __name__ == "__main__":

@@ -3,12 +3,13 @@ import path from "path";
 import { parse as parseYaml } from "yaml";
 
 /**
- * Vite plugin that scans ../results/ at build time and exposes a virtual module
- * `virtual:manifest` containing all benchmark configs and run data.
+ * Vite plugin that serves benchmark data as a live API endpoint
+ * instead of baking it into the bundle.
  *
- * Directory structure:
- *   results/configs/{config}.yaml
- *   results/runs/{config}/{dataset}/score.json, trace.jsonl, ...
+ * Dev mode:  GET /api/manifest — live-reads results/ on every request
+ * Build:    Generates a static manifest.json in dist/
+ *
+ * Plot images served at /plots/{config}/{dataset}/{file}
  */
 export default function benchmarkManifest() {
   const resultsDir = path.resolve(import.meta.dirname, "../results");
@@ -27,17 +28,14 @@ export default function benchmarkManifest() {
     const configs = {};
     const runs = [];
 
-    // Load configs
     if (fs.existsSync(configsDir)) {
       for (const file of fs.readdirSync(configsDir)) {
         if (!file.endsWith(".yaml") && !file.endsWith(".yml")) continue;
         const name = file.replace(/\.ya?ml$/, "");
-        const content = fs.readFileSync(path.join(configsDir, file), "utf-8");
-        configs[name] = parseYaml(content);
+        configs[name] = parseYaml(fs.readFileSync(path.join(configsDir, file), "utf-8"));
       }
     }
 
-    // Load runs
     if (fs.existsSync(runsDir)) {
       for (const configName of fs.readdirSync(runsDir)) {
         const configDir = path.join(runsDir, configName);
@@ -49,35 +47,21 @@ export default function benchmarkManifest() {
 
           const run = { config: configName, dataset, id: `${configName}/${dataset}` };
 
-          // score.json
           const scorePath = path.join(runDir, "score.json");
-          if (fs.existsSync(scorePath)) {
-            run.score = readJsonIfValid(scorePath);
-          }
+          if (fs.existsSync(scorePath)) run.score = readJsonIfValid(scorePath);
 
-          // session.json
           const sessionPath = path.join(runDir, "session.json");
-          if (fs.existsSync(sessionPath)) {
-            run.session = readJsonIfValid(sessionPath);
-          }
+          if (fs.existsSync(sessionPath)) run.session = readJsonIfValid(sessionPath);
 
-          // analysis_report.md
           const reportPath = path.join(runDir, "analysis_report.md");
-          if (fs.existsSync(reportPath)) {
-            run.report = fs.readFileSync(reportPath, "utf-8");
-          }
+          if (fs.existsSync(reportPath)) run.report = fs.readFileSync(reportPath, "utf-8");
 
-          // trace.jsonl
           const tracePath = path.join(runDir, "trace.jsonl");
-          if (fs.existsSync(tracePath)) {
-            run.trace = fs.readFileSync(tracePath, "utf-8");
-          }
+          if (fs.existsSync(tracePath)) run.trace = fs.readFileSync(tracePath, "utf-8");
 
-          // plots
           const plotsDir = path.join(runDir, "plots");
           if (fs.existsSync(plotsDir)) {
-            run.plots = fs
-              .readdirSync(plotsDir)
+            run.plots = fs.readdirSync(plotsDir)
               .filter((f) => /\.(png|jpg|jpeg|svg|gif)$/i.test(f))
               .sort()
               .map((f) => `/plots/${configName}/${dataset}/${f}`);
@@ -94,19 +78,14 @@ export default function benchmarkManifest() {
   return {
     name: "benchmark-manifest",
 
-    resolveId(id) {
-      if (id === "virtual:manifest") return "\0virtual:manifest";
-    },
-
-    load(id) {
-      if (id === "\0virtual:manifest") {
-        return `export default ${JSON.stringify(buildManifest())};`;
-      }
-    },
-
-    // Serve plot images from results/runs/ in dev mode
-    // URL: /plots/{config}/{dataset}/{file} → results/runs/{config}/{dataset}/plots/{file}
     configureServer(server) {
+      // Live API — reads from disk on every request
+      server.middlewares.use("/api/manifest", (_req, res) => {
+        res.setHeader("Content-Type", "application/json");
+        res.end(JSON.stringify(buildManifest()));
+      });
+
+      // Serve plot images
       server.middlewares.use("/plots", (req, res, next) => {
         const parts = req.url.replace(/^\//, "").split("/");
         if (parts.length < 3) return next();
@@ -129,38 +108,31 @@ export default function benchmarkManifest() {
       });
     },
 
-    // Copy plot images to dist at build time
+    // At build time, write manifest.json into dist/ so the built app can fetch it
     writeBundle(options) {
       const outDir = options.dir || path.resolve(import.meta.dirname, "dist");
-      if (!fs.existsSync(runsDir)) return;
+      const apiDir = path.join(outDir, "api");
+      fs.mkdirSync(apiDir, { recursive: true });
+      fs.writeFileSync(
+        path.join(apiDir, "manifest"),
+        JSON.stringify(buildManifest()),
+      );
 
+      // Copy plot images
+      if (!fs.existsSync(runsDir)) return;
       for (const configName of fs.readdirSync(runsDir)) {
         const configDir = path.join(runsDir, configName);
         if (!fs.statSync(configDir).isDirectory()) continue;
-
         for (const dataset of fs.readdirSync(configDir)) {
           const plotsDir = path.join(configDir, dataset, "plots");
           if (!fs.existsSync(plotsDir)) continue;
-
           const destDir = path.join(outDir, "plots", configName, dataset);
           fs.mkdirSync(destDir, { recursive: true });
-
           for (const file of fs.readdirSync(plotsDir)) {
             if (/\.(png|jpg|jpeg|svg|gif)$/i.test(file)) {
               fs.copyFileSync(path.join(plotsDir, file), path.join(destDir, file));
             }
           }
-        }
-      }
-    },
-
-    // Hot-reload when results change in dev
-    handleHotUpdate({ file, server }) {
-      if (file.startsWith(resultsDir)) {
-        const mod = server.moduleGraph.getModuleById("\0virtual:manifest");
-        if (mod) {
-          server.moduleGraph.invalidateModule(mod);
-          server.ws.send({ type: "full-reload" });
         }
       }
     },

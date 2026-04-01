@@ -39,8 +39,13 @@
     pass: "var(--green)",
     partial: "var(--orange)",
     wrong: "var(--red)",
-    fail: "var(--red)",
+    failed: "var(--red)",
+    run_error: "var(--red)",
   };
+
+  function displayVerdict(verdict) {
+    return verdict === "run_error" ? "run error" : verdict;
+  }
 </script>
 
 <div class="detail">
@@ -55,8 +60,8 @@
         class="verdict-badge"
         style="color: {verdictColors[score.verdict] ?? 'var(--text-muted)'}; border-color: {verdictColors[score.verdict] ?? 'var(--border)'}"
       >
-        {score.verdict}
-        {#if score.core_insight_pass !== undefined}
+        {displayVerdict(score.verdict)}
+        {#if score.verdict !== "run_error" && score.core_insight_pass !== undefined}
           &mdash; core insight {score.core_insight_pass ? "pass" : "fail"}
         {/if}
       </span>
@@ -65,14 +70,25 @@
 
   {#if score}
     <div class="summary-bar">
-      <div class="summary-stat">
-        <span class="summary-label">Required Coverage</span>
-        <span class="summary-value">{Math.round((score.required_coverage ?? 0) * 100)}%</span>
-      </div>
-      <div class="summary-stat">
-        <span class="summary-label">Supporting Coverage</span>
-        <span class="summary-value">{Math.round((score.supporting_coverage ?? 0) * 100)}%</span>
-      </div>
+      {#if score.verdict === "run_error"}
+        <div class="summary-stat">
+          <span class="summary-label">Run Status</span>
+          <span class="summary-value">run error</span>
+        </div>
+        <div class="summary-stat">
+          <span class="summary-label">Rerun Recommended</span>
+          <span class="summary-value">{score.rerun_recommended ? "yes" : "no"}</span>
+        </div>
+      {:else}
+        <div class="summary-stat">
+          <span class="summary-label">Required Coverage</span>
+          <span class="summary-value">{Math.round((score.required_coverage ?? 0) * 100)}%</span>
+        </div>
+        <div class="summary-stat">
+          <span class="summary-label">Supporting Coverage</span>
+          <span class="summary-value">{Math.round((score.supporting_coverage ?? 0) * 100)}%</span>
+        </div>
+      {/if}
       {#if run.stats?.costUsd !== null}
         <div class="summary-stat">
           <span class="summary-label">Cost</span>
@@ -119,9 +135,20 @@
 
   {#if activeTab === "score" && score}
     {#if score.summary}
-      <div class="score-summary">{score.summary}</div>
+      <div class="score-summary" class:run-error-summary={score.verdict === "run_error"}>
+        {score.summary}
+      </div>
     {/if}
-    <CriteriaTable criteria={score.criterion_results ?? []} />
+    {#if score.run_error_reasons?.length}
+      <div class="run-errors">
+        {#each score.run_error_reasons as reason}
+          <div>{reason}</div>
+        {/each}
+      </div>
+    {/if}
+    {#if score.criterion_results?.length}
+      <CriteriaTable criteria={score.criterion_results ?? []} />
+    {/if}
   {:else if activeTab === "report" && run.report}
     <ReportView text={run.report} />
   {:else if activeTab === "plots"}
@@ -278,6 +305,25 @@
     font-size: 0.9rem;
     line-height: 1.7;
     color: var(--text-muted);
+  }
+
+  .run-errors {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 14px 16px;
+    background: color-mix(in srgb, var(--red) 8%, var(--bg-secondary));
+    border: 1px solid color-mix(in srgb, var(--red) 40%, var(--border));
+    border-radius: var(--radius-lg);
+    color: var(--red);
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+  }
+
+  .run-error-summary {
+    background: color-mix(in srgb, var(--red) 8%, var(--bg-secondary));
+    border: 1px solid color-mix(in srgb, var(--red) 35%, var(--border));
+    color: var(--text);
   }
 
   .plots-grid {

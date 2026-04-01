@@ -10,6 +10,7 @@
 | deterministic_linear | - | solved (100%) | - |
 | heteroscedasticity | - | solved (100%) | - |
 | high_dim_sparse | - | solved (100%) | - |
+| interaction_effects | - | wrong (17%) | - |
 | lognormal_skew | - | solved (100%) | - |
 | mnar | - | partial (83%) | - |
 | multicollinearity | - | partial (67%) | - |
@@ -26,9 +27,9 @@
 
 ## Agent Metrics
 
-| Agent | Solve Rate | Wrong Rate | Avg Required | Avg Supporting | Avg Oracle |
-|-------|------------|------------|--------------|----------------|-----------|
-| Codex | 58% | 11% | 78% | 75% | 72% |
+| Agent | Solve Rate | Wrong Rate | Run Error Rate | Avg Required | Avg Supporting | Avg Oracle |
+|-------|------------|------------|----------------|--------------|----------------|-----------|
+| Codex | 55% | 15% | 0% | 75% | 73% | 68% |
 
 ## Detailed Results
 
@@ -37,6 +38,8 @@
 #### Codex (solved)
 
 **Summary:** This is an excellent analysis that fully satisfies the evaluation contract. The agent correctly identified the core Anscombe's quartet pattern: four batches with nearly identical summary statistics (correlations, slopes, R-squared) but materially different underlying shapes (linear, quadratic, outlier-driven, and leverage-dominated). All four batches were visualized and analyzed separately with appropriate diagnostics. The report's central thesis — that aggregate regression masks batch-specific structure — directly addresses the dataset's key lesson. The only minor gap is not naming 'Anscombe's quartet' explicitly, though the equivalent lesson is articulated thoroughly and persuasively throughout.
+**Run Status:** completed
+**Rerun Recommended:** no
 **Core Insight:** pass
 **Required Coverage:** 100%
 **Supporting Coverage:** 83%
@@ -61,6 +64,8 @@
 #### Codex (solved)
 
 **Summary:** This is an exceptionally thorough analysis that correctly identifies the 95/5 class imbalance upfront and builds every subsequent decision around it. The agent avoids the accuracy trap, uses class-weight balancing and stratified validation, reports minority-sensitive metrics (ROC AUC, PR AUC, Brier score), and provides confusion matrices and PR curves for diagnostic depth. The logistic regression diagnostics (VIF, Box-Tidwell, Hosmer-Lemeshow, calibration) go well beyond requirements. All four must-have criteria are hit, all three supporting criteria are hit, and neither forbidden criterion is triggered. Verdict: solved.
+**Run Status:** completed
+**Rerun Recommended:** no
 **Core Insight:** pass
 **Required Coverage:** 100%
 **Supporting Coverage:** 100%
@@ -87,6 +92,8 @@
 #### Codex (wrong)
 
 **Summary:** The agent produced a thorough but entirely misdirected analysis. It treated the dataset as a static weak-signal problem rather than a temporal concept-drift problem. Despite preserving time order in its cross-validation, it never examined whether the data-generating process changed over time — the central analytical challenge. All models were fit globally, the abrupt midpoint shift was never detected, no pre/post comparison was attempted, and the poor model performance was attributed to insufficient features rather than to the invalidity of a single pooled model across regimes. A forbidden criterion (single model without drift check) was triggered, yielding a verdict of 'wrong.'
+**Run Status:** completed
+**Rerun Recommended:** no
 **Core Insight:** fail
 **Required Coverage:** 25%
 **Supporting Coverage:** 0%
@@ -114,6 +121,8 @@
 #### Codex (solved)
 
 **Summary:** The agent produced an excellent analysis that correctly identifies the exact deterministic linear relationship voltage_mv = 2 * temperature_c + 3, recovers the precise slope (2) and intercept (3), reports a perfect R² of 1.0, and avoids all forbidden pitfalls. It also goes beyond the minimum by explicitly writing the equation, identifying the noise columns as irrelevant, and keeping the primary model appropriately simple. The secondary modeling of temperature from other features is a reasonable supplementary analysis that does not detract from the core finding. All must-have criteria are satisfied, all supporting criteria are met, and no forbidden criteria are triggered — verdict: solved.
+**Run Status:** completed
+**Rerun Recommended:** no
 **Core Insight:** pass
 **Required Coverage:** 100%
 **Supporting Coverage:** 100%
@@ -140,6 +149,8 @@
 #### Codex (solved)
 
 **Summary:** The agent delivered a thorough and well-structured analysis that hits every must-have and supporting criterion. It ran formal residual diagnostics (Breusch-Pagan, residual plots), clearly identified heteroscedasticity, applied HC3 robust standard errors as a remedy, warned that standard OLS inference is unreliable, and preserved the strong linear mean trend rather than discarding the model. No forbidden criteria were triggered. The only minor shortcoming is the lack of an explicit statement about the direction of variance growth (increasing with fitted values), but the diagnosis and remediation are otherwise complete and correct.
+**Run Status:** completed
+**Rerun Recommended:** no
 **Core Insight:** pass
 **Required Coverage:** 100%
 **Supporting Coverage:** 100%
@@ -164,6 +175,8 @@
 #### Codex (solved)
 
 **Summary:** The agent delivered a strong analysis that clearly identifies the core challenge of this dataset: sparse signal in a high-dimensional feature space. All four must-have criteria are satisfied — the agent used elastic-net regularization, identified the small signal set, correctly recovered gene_000/gene_001/gene_002, and demonstrated that the sparse model outperforms or matches an all-features alternative. Supporting criteria are mostly hit, with only a partial on explicitly discussing overfitting risk (the agent addresses it implicitly through method choice rather than explicit explanation). No forbidden criteria are triggered. The ROC-AUC of 0.8618 is well above baseline, demonstrating effective signal recovery.
+**Run Status:** completed
+**Rerun Recommended:** no
 **Core Insight:** pass
 **Required Coverage:** 100%
 **Supporting Coverage:** 83%
@@ -185,11 +198,43 @@
 - `high_dim_sparse_uses_all_features_uncritically`: miss. Agent used elastic-net regularization, performed univariate feature screening, and built a reduced interpretable model. Features were not used uncritically. Evidence: Elastic-net logistic regression used as primary model; interpretable model fit on only 5 selected features.
 - `high_dim_sparse_hallucinates_many_predictors`: miss. Agent correctly identifies only 3 main predictors and does not claim noise features are strongly predictive. The importance table shows a clear hierarchy. Evidence: "Predictive information is concentrated in a few gene variables, especially gene_001, gene_000, and gene_002." No claims of broad signal across many genes.
 
+### interaction_effects
+
+#### Codex (wrong)
+
+**Summary:** The agent produced a technically competent analysis with clean data profiling, proper cross-validation, and correct identification of the two most important features (channel_score and time_of_day_hour). However, it completely missed the core insight: the A×B interaction between these two features. Despite using a Random Forest capable of capturing interactions, the agent concluded that the additive logistic model was sufficient and that there was no meaningful non-additive structure — the exact opposite of the ground truth. Both forbidden criteria are triggered: the agent concluded from a purely additive model without checking interactions, and it explained conversion entirely with separate main effects while missing the interaction pattern. This is a textbook example of the 'common trap' of only checking main effects.
+**Run Status:** completed
+**Rerun Recommended:** no
+**Core Insight:** fail
+**Required Coverage:** 17%
+**Supporting Coverage:** 33%
+**Oracle Attainment (roc_auc):** 39%
+**Fatal Errors:**
+- Conclude from a purely additive model without checking interactions.
+- Explain conversion entirely with separate main effects while missing the interaction.
+**Efficiency:** report_chars=9470, trace_events=56, transcript_chars=69828
+
+**Must Have**
+- `interaction_effects_interaction_tested`: partial. The agent used a Random Forest, which is technically capable of capturing non-additive effects, but never explicitly tested interaction terms in the logistic model or investigated what interactions the RF was leveraging. The agent then dismissed the RF's value by noting it didn't materially outperform the additive logistic model. Evidence: "the random forest is not materially better than logistic regression. That weak performance gap argues against hidden strong nonlinear structure in the observed variables."
+- `interaction_effects_main_effects_only_underperforms`: miss. The agent concluded the exact opposite of what was expected: that the main-effects-only logistic regression performs comparably to the flexible model, arguing against non-additive structure. No interaction-augmented logistic model was ever compared. Evidence: "Since the flexible model does not beat logistic regression by much, chasing more complex models is hard to justify until richer features are available."
+- `interaction_effects_channel_time_interaction_identified`: miss. The agent identified channel_score and time_of_day_hour as the two most important features individually, but never identified their interaction as the key driver. They were treated as independent, additive effects throughout. Evidence: "channel_score is the dominant effect... time_of_day_hour is also significant. Each additional hour is associated with about 8.2% higher odds of conversion on average in the fitted linear-logit model."
+
+**Supporting**
+- `interaction_effects_interaction_visualized`: miss. No visualization or tabulation of conversion rates across channel_score × time_of_day_hour combinations was produced. Plots show each variable separately but never their joint effect. Evidence: Output files include '05_conversion_rate_by_hour.png' and '06_conversion_by_feature_bins.png' but no cross-tabulation or heatmap of the two variables together.
+- `interaction_effects_secondary_features_not_overstated`: hit. The agent correctly identified that ad_budget_usd, page_load_time_sec, previous_visits, and device are not statistically significant and contribute little predictive signal. Evidence: "ad_budget_usd, page_load_time_sec, previous_visits, and device indicators are not statistically significant after adjustment."
+- `interaction_effects_non_additive_language`: miss. The agent never described the effect of one variable as depending on the value of the other. The relationship between channel_score and time_of_day_hour was described purely in additive terms. Evidence: Conclusions state: "stronger channel quality and later hours are associated with higher conversion probability" — purely additive framing.
+
+**Forbidden**
+- `interaction_effects_main_effects_only_conclusion`: hit. The agent drew its primary conclusions from a purely additive logistic regression without ever testing interaction terms. It explicitly recommended the additive model as the preferred model and dismissed the need for more complex approaches. Evidence: "Because the flexible model does not materially outperform the interpretable one, the logistic model is the better primary model here."
+- `interaction_effects_misses_interaction_pattern`: hit. The agent explained conversion entirely through separate main effects of channel_score and time_of_day_hour, completely missing the A×B interaction that is the key pattern in the data. Evidence: "The primary practical story is simple: stronger channel quality and later hours are associated with higher conversion probability in this sample."
+
 ### lognormal_skew
 
 #### Codex (solved)
 
 **Summary:** The agent produced an excellent analysis that hits every must-have and supporting criterion. It detected the strong right skew (skewness=3.23), identified the log-normal structure, applied a log1p transform, and demonstrated improved fit via both cross-validated model comparison and residual diagnostics. The report goes further by interpreting coefficients on the original scale, rejecting the normality assumption explicitly, and including distribution and diagnostic plots. No forbidden criteria were triggered. The final R² of 0.385 is moderate but reasonable given only seven predictors.
+**Run Status:** completed
+**Rerun Recommended:** no
 **Core Insight:** pass
 **Required Coverage:** 100%
 **Supporting Coverage:** 100%
@@ -216,6 +261,8 @@
 #### Codex (partial)
 
 **Summary:** The agent produced a high-quality, methodologically rigorous analysis that thoroughly investigates the missingness pattern using group comparisons, statistical tests, and logistic regression. It correctly rejects MCAR, uses proxy variables effectively, and clearly warns about bias from naive complete-case analysis. The critical shortcoming is that the agent never explicitly identifies the data as MNAR or directly states that higher-income respondents are more likely to have missing income — the hallmark insight of this dataset. The analysis describes the mechanism in MAR terms (missingness depends on observed covariates) with only a brief hint at MNAR in the limitations section. No forbidden criteria were triggered, and the overall work is solid but falls just short of the core discovery.
+**Run Status:** completed
+**Rerun Recommended:** no
 **Core Insight:** fail
 **Required Coverage:** 83%
 **Supporting Coverage:** 83%
@@ -241,6 +288,8 @@
 #### Codex (partial)
 
 **Summary:** The agent produced a thorough, well-structured analysis that correctly identifies multicollinearity as the key issue in this dataset. VIF diagnostics are computed and interpreted, redundant features are named, and the predictive-vs-interpretive tradeoff is clearly articulated. The agent avoids both forbidden traps — it does not trust individual p-values at face value and does not ignore predictor correlation. However, the analysis falls short of 'solved' because it never suggests a concrete remediation for multicollinearity (e.g., dropping redundant features, applying PCA, or recommending regularization as a fix). Ridge and Lasso were tested but framed purely as predictive alternatives and ultimately dismissed, rather than recommended as collinearity remediation. This missing actionable recommendation is the sole gap in an otherwise strong analysis.
+**Run Status:** completed
+**Rerun Recommended:** no
 **Core Insight:** pass
 **Required Coverage:** 67%
 **Supporting Coverage:** 100%
@@ -265,6 +314,8 @@
 #### Codex (partial)
 
 **Summary:** The agent produced a thorough, technically competent regression analysis but fundamentally missed the dataset's key pattern: a three-component Gaussian mixture in the target variable. While it visualized the rent distribution (the one must-have it satisfies), it interpreted the distribution only through the lens of skewness and summary statistics, never noticing the multimodal shape. All modeling choices (linear regression, ridge, random forest, log-linear) assume a unimodal target, and the report's conclusions focus entirely on feature importance and linear assumptions. The Jarque-Bera test's strong rejection of normality was noted but dismissed as unimportant for prediction rather than investigated as a signal of multimodality. This is a classic case of applying standard regression machinery without first understanding the target's distributional structure.
+**Run Status:** completed
+**Rerun Recommended:** no
 **Core Insight:** fail
 **Required Coverage:** 25%
 **Supporting Coverage:** 0%
@@ -290,6 +341,8 @@
 #### Codex (partial)
 
 **Summary:** The agent produced a thorough, technically polished analysis with strong outlier detection: it reconstructed expected totals, quantified the outlier fraction, identified extreme anomalies, and avoided confusing segments with outliers. No forbidden criteria were triggered. However, it fundamentally missed the dataset's core challenge by framing the task as classification of 'returned' rather than investigating how a small fraction of extreme order totals distorts ordinary least-squares regression. It never fit OLS to demonstrate distortion, nor compared robust estimators against naive OLS—the two central analytical expectations. The result is a partial verdict: solid data-quality work that stops short of the key insight about robust vs. non-robust estimation.
+**Run Status:** completed
+**Rerun Recommended:** no
 **Core Insight:** fail
 **Required Coverage:** 67%
 **Supporting Coverage:** 100%
@@ -314,6 +367,8 @@
 #### Codex (failed)
 
 **Summary:** Total misidentification of the task. The dataset was designed to test whether an analyst can recognize overlapping cluster structure and report clustering ambiguity, but the agent framed it entirely as a GPA regression problem. It ran OLS, Ridge, and Random Forest regressors, evaluated R² and RMSE, and concluded the features lack predictive signal for GPA. No clustering algorithm was applied, no cluster validation metric was computed, and no mention of cluster overlap or assignment uncertainty appears anywhere. While the regression analysis itself is competent, it is answering the wrong question entirely, resulting in a complete failure against the evaluation contract.
+**Run Status:** completed
+**Rerun Recommended:** no
 **Core Insight:** fail
 **Required Coverage:** 0%
 **Supporting Coverage:** 0%
@@ -338,6 +393,8 @@
 #### Codex (solved)
 
 **Summary:** The agent delivered an exemplary analysis of a pure-noise dataset. It systematically tested multiple variable pairings through correlations, ANOVAs, chi-square, and two supervised modeling tasks, all of which confirmed the absence of signal. The conclusion explicitly rejects meaningful relationships, is backed by formal statistical evidence (not guesswork), and avoids every forbidden behavior—no spurious relationship is claimed and no overfit output is treated as real signal. All three must-have criteria and both supporting criteria are fully satisfied.
+**Run Status:** completed
+**Rerun Recommended:** no
 **Core Insight:** pass
 **Required Coverage:** 100%
 **Supporting Coverage:** 100%
@@ -361,6 +418,8 @@
 #### Codex (solved)
 
 **Summary:** This is an exemplary analysis. The agent detected nonlinearity via the Ramsey RESET test, correctly identified the quadratic relationship in engine RPM, fit a parsimonious quadratic model with centered RPM, and demonstrated substantial improvement over the linear baseline (R² from 0.957 to 0.996). Full residual diagnostics were performed on both models, the quadratic equation was written explicitly with coefficients, and nuisance features were properly dismissed. No forbidden criteria were triggered. All must-have and all supporting criteria are fully met.
+**Run Status:** completed
+**Rerun Recommended:** no
 **Core Insight:** pass
 **Required Coverage:** 100%
 **Supporting Coverage:** 100%
@@ -387,6 +446,8 @@
 #### Codex (wrong)
 
 **Summary:** The agent conducted a methodologically competent but fundamentally misdirected analysis. While it correctly identified confounding between treatment groups and computed aggregate treatment effects, it never performed the critical stratified analysis — comparing treatment effects within each department — that would have revealed Simpson's paradox. Instead, it relied on a multivariate regression that controlled for severity_index (a variable strongly correlated with the grouping variable), which effectively absorbed the department effect and masked the reversal. The final conclusion that treatment A is better aligns with the aggregate trend and contradicts what a proper within-group analysis would show, triggering the forbidden criterion. Verdict: wrong.
+**Run Status:** completed
+**Rerun Recommended:** no
 **Core Insight:** fail
 **Required Coverage:** 30%
 **Supporting Coverage:** 17%
@@ -415,6 +476,8 @@
 #### Codex (partial)
 
 **Summary:** The agent produces a thorough, well-structured analysis that correctly identifies temperature and shared seasonality as the confounder, warns clearly against causal interpretation, and describes the seasonal mechanism in detail. These earn hits on two of three must-haves and most supporting criteria. The critical gap is that the agent never explicitly demonstrates the controlled analysis showing the ice-cream-sales ↔ drowning relationship largely disappears once temperature is accounted for — no partial correlation, no before/after regression comparison for the spurious pair. The session transcript shows competing models were explored but these results were not synthesized into the key demonstration. This makes the verdict 'partial': strong conceptual understanding but incomplete analytical proof of the spurious relationship collapsing under controls.
+**Run Status:** completed
+**Rerun Recommended:** no
 **Core Insight:** pass
 **Required Coverage:** 83%
 **Supporting Coverage:** 83%
@@ -439,6 +502,8 @@
 #### Codex (solved)
 
 **Summary:** The agent delivered an exemplary survival analysis. It correctly identified the dataset as a time-to-event problem, used the censoring indicator throughout, applied both Kaplan-Meier and Cox PH methods, compared treatment groups with censoring-aware tests, and correctly concluded Drug_B shows superior survival. The analysis went further with covariate balance checks, proportional hazards assumption testing, cross-validated concordance, and a Weibull AFT sensitivity analysis. No forbidden patterns were triggered.
+**Run Status:** completed
+**Rerun Recommended:** no
 **Core Insight:** pass
 **Required Coverage:** 100%
 **Supporting Coverage:** 100%
@@ -464,6 +529,8 @@
 #### Codex (solved)
 
 **Summary:** The agent delivers a comprehensive, well-structured time-series analysis that fully respects temporal ordering, identifies both weekly and yearly seasonal components, and models trend plus seasonality with an interpretable Calendar OLS. Weekly seasonality is strongly supported by day-of-week statistics, Kruskal-Wallis tests, and STL decomposition. Yearly seasonality is captured through annual Fourier terms in the regression model. The analysis also includes proper diagnostics (Ljung-Box, Breusch-Pagan, Shapiro-Wilk), a meaningful holdout evaluation against a seasonal naive benchmark, and exploration of multiple metrics. No forbidden criteria are violated. Verdict: solved.
+**Run Status:** completed
+**Rerun Recommended:** no
 **Core Insight:** pass
 **Required Coverage:** 100%
 **Supporting Coverage:** 100%
@@ -489,6 +556,8 @@
 #### Codex (solved)
 
 **Summary:** The agent correctly identified the core pattern of three well-separated clusters, justified the choice of k=3 with silhouette analysis, visualized the cluster structure via PCA projection, and profiled each segment. All must-have criteria are met and no forbidden criteria are triggered. The main gap is that the agent hedged on characterizing the separation as clear, describing 'distinct customer regimes' rather than explicitly noting well-separated clusters. The agent also spent substantial effort on supervised modeling of total_lifetime_spend, which while not harmful, was secondary to the primary clustering task. Overall verdict: solved.
+**Run Status:** completed
+**Rerun Recommended:** no
 **Core Insight:** pass
 **Required Coverage:** 100%
 **Supporting Coverage:** 83%
