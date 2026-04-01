@@ -1,0 +1,85 @@
+{
+  "dataset": "quadratic",
+  "config": "solo-codex",
+  "agent": "codex",
+  "verdict": "solved",
+  "core_insight_pass": true,
+  "required_coverage": 1.0,
+  "supporting_coverage": 1.0,
+  "oracle_attainment": 0.996,
+  "oracle_metric_name": "r2",
+  "oracle_agent_value": 0.996,
+  "fatal_errors": [],
+  "efficiency": {
+    "transcript_chars": 69042.0,
+    "trace_events": 55.0,
+    "report_chars": 15372.0
+  },
+  "criterion_results": [
+    {
+      "criterion_id": "quadratic_nonlinearity_detected",
+      "group": "must_have",
+      "status": "hit",
+      "justification": "The agent explicitly ran a Ramsey RESET test on the linear model, which strongly rejected linearity, and noted residual normality failure under the linear specification.",
+      "evidence": "Ramsey RESET rejects linear functional form (F = 4883.6, p = 1.91e-288), and its residuals fail normality."
+    },
+    {
+      "criterion_id": "quadratic_quadratic_relationship_identified",
+      "group": "must_have",
+      "status": "hit",
+      "justification": "The agent explicitly identifies the core relationship as quadratic/convex and builds the entire modeling strategy around a second-order polynomial in RPM.",
+      "evidence": "The relationship is clearly nonlinear and convex; fuel consumption rises faster at higher RPM. \u2026 Adding only a quadratic term in centered RPM materially improves fit."
+    },
+    {
+      "criterion_id": "quadratic_nonlinear_model_fit",
+      "group": "must_have",
+      "status": "hit",
+      "justification": "A quadratic OLS model was fit using centered RPM and its square, achieving R\u00b2 = 0.9954 in-sample and 0.9960 on test data.",
+      "evidence": "fuel_consumption_lph ~ engine_rpm_kc + I(engine_rpm_kc**2) \u2026 R-squared: 0.995"
+    },
+    {
+      "criterion_id": "quadratic_improvement_over_linear_shown",
+      "group": "must_have",
+      "status": "hit",
+      "justification": "A direct side-by-side comparison table shows the quadratic model dramatically outperforms the linear baseline on R\u00b2, RMSE, and MAE.",
+      "evidence": "Linear regression: test_r2=0.9572, test_rmse=4.6008 vs Quadratic RPM regression: test_r2=0.9960, test_rmse=1.4108"
+    },
+    {
+      "criterion_id": "quadratic_residuals_compared",
+      "group": "supporting",
+      "status": "hit",
+      "justification": "The agent performed full residual diagnostics on both the linear baseline and the quadratic model, showing the linear model fails RESET and normality while the quadratic passes all checks.",
+      "evidence": "Baseline: Jarque-Bera p=3.88e-08, RESET p=1.91e-288. Quadratic: Breusch-Pagan p=0.228, Jarque-Bera p=0.626, Durbin-Watson=2.035."
+    },
+    {
+      "criterion_id": "quadratic_equation_or_feature_transform",
+      "group": "supporting",
+      "status": "hit",
+      "justification": "The quadratic form is written explicitly with centered RPM, and coefficients are fully reported.",
+      "evidence": "Intercept=23.3487, engine_rpm_kc=13.6648, I(engine_rpm_kc ** 2)=2.0050"
+    },
+    {
+      "criterion_id": "quadratic_noise_columns_not_overinterpreted",
+      "group": "supporting",
+      "status": "hit",
+      "justification": "The agent correctly identifies that ambient_temp_c, humidity_pct, octane_rating, and vehicle_age_years are not meaningfully predictive and excludes them from the final model.",
+      "evidence": "Extending the quadratic model with temperature, humidity, octane, and vehicle age does not add meaningful explanatory power; their coefficients remain statistically weak."
+    },
+    {
+      "criterion_id": "quadratic_linear_only_conclusion",
+      "group": "forbidden",
+      "status": "miss",
+      "justification": "The agent explicitly concludes with a quadratic model as the recommended final model, not a linear-only model.",
+      "evidence": "A simple quadratic RPM model is both accurate and easier to justify than a black-box alternative here."
+    },
+    {
+      "criterion_id": "quadratic_no_residual_checks",
+      "group": "forbidden",
+      "status": "miss",
+      "justification": "Extensive residual diagnostics were performed on both models including Breusch-Pagan, Jarque-Bera, RESET, Durbin-Watson, Cook's distance, and residual plots.",
+      "evidence": "Breusch-Pagan test, Jarque-Bera test, Ramsey RESET test, Durbin-Watson, residual skew/kurtosis, Cook's distance all reported for both models."
+    }
+  ],
+  "summary": "This is an exemplary analysis. The agent detected nonlinearity via the Ramsey RESET test, correctly identified the quadratic relationship in engine RPM, fit a parsimonious quadratic model with centered RPM, and demonstrated substantial improvement over the linear baseline (R\u00b2 from 0.957 to 0.996). Full residual diagnostics were performed on both models, the quadratic equation was written explicitly with coefficients, and nuisance features were properly dismissed. No forbidden criteria were triggered. All must-have and all supporting criteria are fully met.",
+  "raw_response": "```json\n{\n  \"must_have\": {\n    \"quadratic_nonlinearity_detected\": {\n      \"status\": \"hit\",\n      \"justification\": \"The agent explicitly ran a Ramsey RESET test on the linear model, which strongly rejected linearity, and noted residual normality failure under the linear specification.\",\n      \"evidence\": \"Ramsey RESET rejects linear functional form (F = 4883.6, p = 1.91e-288), and its residuals fail normality.\"\n    },\n    \"quadratic_quadratic_relationship_identified\": {\n      \"status\": \"hit\",\n      \"justification\": \"The agent explicitly identifies the core relationship as quadratic/convex and builds the entire modeling strategy around a second-order polynomial in RPM.\",\n      \"evidence\": \"The relationship is clearly nonlinear and convex; fuel consumption rises faster at higher RPM. \u2026 Adding only a quadratic term in centered RPM materially improves fit.\"\n    },\n    \"quadratic_nonlinear_model_fit\": {\n      \"status\": \"hit\",\n      \"justification\": \"A quadratic OLS model was fit using centered RPM and its square, achieving R\u00b2 = 0.9954 in-sample and 0.9960 on test data.\",\n      \"evidence\": \"fuel_consumption_lph ~ engine_rpm_kc + I(engine_rpm_kc**2) \u2026 R-squared: 0.995\"\n    },\n    \"quadratic_improvement_over_linear_shown\": {\n      \"status\": \"hit\",\n      \"justification\": \"A direct side-by-side comparison table shows the quadratic model dramatically outperforms the linear baseline on R\u00b2, RMSE, and MAE.\",\n      \"evidence\": \"Linear regression: test_r2=0.9572, test_rmse=4.6008 vs Quadratic RPM regression: test_r2=0.9960, test_rmse=1.4108\"\n    }\n  },\n  \"supporting\": {\n    \"quadratic_residuals_compared\": {\n      \"status\": \"hit\",\n      \"justification\": \"The agent performed full residual diagnostics on both the linear baseline and the quadratic model, showing the linear model fails RESET and normality while the quadratic passes all checks.\",\n      \"evidence\": \"Baseline: Jarque-Bera p=3.88e-08, RESET p=1.91e-288. Quadratic: Breusch-Pagan p=0.228, Jarque-Bera p=0.626, Durbin-Watson=2.035.\"\n    },\n    \"quadratic_equation_or_feature_transform\": {\n      \"status\": \"hit\",\n      \"justification\": \"The quadratic form is written explicitly with centered RPM, and coefficients are fully reported.\",\n      \"evidence\": \"Intercept=23.3487, engine_rpm_kc=13.6648, I(engine_rpm_kc ** 2)=2.0050\"\n    },\n    \"quadratic_noise_columns_not_overinterpreted\": {\n      \"status\": \"hit\",\n      \"justification\": \"The agent correctly identifies that ambient_temp_c, humidity_pct, octane_rating, and vehicle_age_years are not meaningfully predictive and excludes them from the final model.\",\n      \"evidence\": \"Extending the quadratic model with temperature, humidity, octane, and vehicle age does not add meaningful explanatory power; their coefficients remain statistically weak.\"\n    }\n  },\n  \"forbidden\": {\n    \"quadratic_linear_only_conclusion\": {\n      \"status\": \"miss\",\n      \"justification\": \"The agent explicitly concludes with a quadratic model as the recommended final model, not a linear-only model.\",\n      \"evidence\": \"A simple quadratic RPM model is both accurate and easier to justify than a black-box alternative here.\"\n    },\n    \"quadratic_no_residual_checks\": {\n      \"status\": \"miss\",\n      \"justification\": \"Extensive residual diagnostics were performed on both models including Breusch-Pagan, Jarque-Bera, RESET, Durbin-Watson, Cook's distance, and residual plots.\",\n      \"evidence\": \"Breusch-Pagan test, Jarque-Bera test, Ramsey RESET test, Durbin-Watson, residual skew/kurtosis, Cook's distance all reported for both models.\"\n    }\n  },\n  \"oracle_metric\": {\n    \"agent_value\": 0.9960,\n    \"justification\": \"The best reported R\u00b2 for the nonlinear (quadratic) model is the test-set R\u00b2 of 0.9960, with in-sample R\u00b2 of 0.9954 also reported.\"\n  },\n  \"summary\": \"This is an exemplary analysis. The agent detected nonlinearity via the Ramsey RESET test, correctly identified the quadratic relationship in engine RPM, fit a parsimonious quadratic model with centered RPM, and demonstrated substantial improvement over the linear baseline (R\u00b2 from 0.957 to 0.996). Full residual diagnostics were performed on both models, the quadratic equation was written explicitly with coefficients, and nuisance features were properly dismissed. No forbidden criteria were triggered. All must-have and all supporting criteria are fully met.\"\n}"
+}

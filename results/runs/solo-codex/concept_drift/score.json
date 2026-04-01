@@ -1,0 +1,87 @@
+{
+  "dataset": "concept_drift",
+  "config": "solo-codex",
+  "agent": "codex",
+  "verdict": "wrong",
+  "core_insight_pass": false,
+  "required_coverage": 0.25,
+  "supporting_coverage": 0.0,
+  "oracle_attainment": null,
+  "oracle_metric_name": null,
+  "oracle_agent_value": 0.0,
+  "fatal_errors": [
+    "Fit a single pooled model without checking for drift."
+  ],
+  "efficiency": {
+    "transcript_chars": 74231.0,
+    "trace_events": 76.0,
+    "report_chars": 11679.0
+  },
+  "criterion_results": [
+    {
+      "criterion_id": "concept_drift_temporal_order_respected",
+      "group": "must_have",
+      "status": "hit",
+      "justification": "The agent sorted by timestamp, used TimeSeriesSplit for cross-validation, and computed autocorrelation on the ordered series. Temporal order was preserved throughout.",
+      "evidence": "Time order was preserved using 5-fold TimeSeriesSplit to avoid leakage from future observations into past folds."
+    },
+    {
+      "criterion_id": "concept_drift_drift_detected",
+      "group": "must_have",
+      "status": "miss",
+      "justification": "The agent completely failed to detect the abrupt distribution shift at the midpoint. Instead, it concluded the signal was weak and stable, describing the rolling average as 'fairly stable' with 'near-zero autocorrelation.'",
+      "evidence": "The target time series is noisy with a fairly stable rolling average and near-zero autocorrelation at short and daily lags."
+    },
+    {
+      "criterion_id": "concept_drift_pre_post_segments_compared",
+      "group": "must_have",
+      "status": "miss",
+      "justification": "The agent never split the data into pre-drift and post-drift halves for comparison. It examined daily and hourly aggregations but never compared the first half of the series against the second half.",
+      "evidence": "No pre/post segment comparison appears anywhere in the report or session transcript."
+    },
+    {
+      "criterion_id": "concept_drift_single_global_model_problem_noted",
+      "group": "must_have",
+      "status": "miss",
+      "justification": "While the agent noted that models had negative R\u00b2 and poor performance, it attributed this to 'weak explanatory signal' and insufficient features \u2014 not to the fundamental problem that a single global model is misleading when the underlying relationship shifts midway through the series.",
+      "evidence": "The practical conclusion is that, with the variables present in dataset.csv, there is no strong evidence of a controllable, stable driver of defect_rate. Better prediction likely requires additional features."
+    },
+    {
+      "criterion_id": "concept_drift_relationship_flip_described",
+      "group": "supporting",
+      "status": "miss",
+      "justification": "The agent reported a single pooled correlation of 0.025 between temperature and defect_rate without ever examining whether this relationship changes sign between the first and second halves of the data.",
+      "evidence": "temperature_c correlation with defect_rate: 0.0247 (pooled across entire series)."
+    },
+    {
+      "criterion_id": "concept_drift_changepoint_or_rolling_diagnostic",
+      "group": "supporting",
+      "status": "miss",
+      "justification": "The agent computed a 48-point rolling mean and autocorrelation lags but did not apply any changepoint detection algorithm, CUSUM, or rolling-window model comparison that would have revealed the structural break.",
+      "evidence": "Rolling mean head/tail values shown but no changepoint or structural break test applied."
+    },
+    {
+      "criterion_id": "concept_drift_adaptation_strategy_suggested",
+      "group": "supporting",
+      "status": "miss",
+      "justification": "Recommendations focused on adding features (lagged sensors, batch IDs, maintenance events) and trying beta-regression. No drift-aware strategies such as segmented modeling, online retraining, or monitoring for distribution shifts were suggested.",
+      "evidence": "Add lagged sensor features and rolling statistics... Add contextual variables... consider a two-part or zero/one-inflated beta-style model."
+    },
+    {
+      "criterion_id": "concept_drift_single_model_without_drift_check",
+      "group": "forbidden",
+      "status": "hit",
+      "justification": "The agent fit Linear, Ridge, and Random Forest regressors plus Logistic and RF classifiers on the full pooled dataset without ever checking for distributional drift, changepoints, or regime changes over time.",
+      "evidence": "Models dict includes linear, ridge, rf all trained via TimeSeriesSplit on the full series with no drift diagnostic step."
+    },
+    {
+      "criterion_id": "concept_drift_ignores_time_order",
+      "group": "forbidden",
+      "status": "miss",
+      "justification": "The agent preserved temporal ordering by sorting by timestamp and using TimeSeriesSplit rather than random k-fold. Time order was not destroyed.",
+      "evidence": "df = pd.read_csv('dataset.csv', parse_dates=['timestamp']).sort_values('timestamp'); cv = TimeSeriesSplit(n_splits=5)"
+    }
+  ],
+  "summary": "The agent produced a thorough but entirely misdirected analysis. It treated the dataset as a static weak-signal problem rather than a temporal concept-drift problem. Despite preserving time order in its cross-validation, it never examined whether the data-generating process changed over time \u2014 the central analytical challenge. All models were fit globally, the abrupt midpoint shift was never detected, no pre/post comparison was attempted, and the poor model performance was attributed to insufficient features rather than to the invalidity of a single pooled model across regimes. A forbidden criterion (single model without drift check) was triggered, yielding a verdict of 'wrong.'",
+  "raw_response": "```json\n{\n  \"must_have\": {\n    \"concept_drift_temporal_order_respected\": {\n      \"status\": \"hit\",\n      \"justification\": \"The agent sorted by timestamp, used TimeSeriesSplit for cross-validation, and computed autocorrelation on the ordered series. Temporal order was preserved throughout.\",\n      \"evidence\": \"Time order was preserved using 5-fold TimeSeriesSplit to avoid leakage from future observations into past folds.\"\n    },\n    \"concept_drift_drift_detected\": {\n      \"status\": \"miss\",\n      \"justification\": \"The agent completely failed to detect the abrupt distribution shift at the midpoint. Instead, it concluded the signal was weak and stable, describing the rolling average as 'fairly stable' with 'near-zero autocorrelation.'\",\n      \"evidence\": \"The target time series is noisy with a fairly stable rolling average and near-zero autocorrelation at short and daily lags.\"\n    },\n    \"concept_drift_pre_post_segments_compared\": {\n      \"status\": \"miss\",\n      \"justification\": \"The agent never split the data into pre-drift and post-drift halves for comparison. It examined daily and hourly aggregations but never compared the first half of the series against the second half.\",\n      \"evidence\": \"No pre/post segment comparison appears anywhere in the report or session transcript.\"\n    },\n    \"concept_drift_single_global_model_problem_noted\": {\n      \"status\": \"miss\",\n      \"justification\": \"While the agent noted that models had negative R\u00b2 and poor performance, it attributed this to 'weak explanatory signal' and insufficient features \u2014 not to the fundamental problem that a single global model is misleading when the underlying relationship shifts midway through the series.\",\n      \"evidence\": \"The practical conclusion is that, with the variables present in dataset.csv, there is no strong evidence of a controllable, stable driver of defect_rate. Better prediction likely requires additional features.\"\n    }\n  },\n  \"supporting\": {\n    \"concept_drift_relationship_flip_described\": {\n      \"status\": \"miss\",\n      \"justification\": \"The agent reported a single pooled correlation of 0.025 between temperature and defect_rate without ever examining whether this relationship changes sign between the first and second halves of the data.\",\n      \"evidence\": \"temperature_c correlation with defect_rate: 0.0247 (pooled across entire series).\"\n    },\n    \"concept_drift_changepoint_or_rolling_diagnostic\": {\n      \"status\": \"miss\",\n      \"justification\": \"The agent computed a 48-point rolling mean and autocorrelation lags but did not apply any changepoint detection algorithm, CUSUM, or rolling-window model comparison that would have revealed the structural break.\",\n      \"evidence\": \"Rolling mean head/tail values shown but no changepoint or structural break test applied.\"\n    },\n    \"concept_drift_adaptation_strategy_suggested\": {\n      \"status\": \"miss\",\n      \"justification\": \"Recommendations focused on adding features (lagged sensors, batch IDs, maintenance events) and trying beta-regression. No drift-aware strategies such as segmented modeling, online retraining, or monitoring for distribution shifts were suggested.\",\n      \"evidence\": \"Add lagged sensor features and rolling statistics... Add contextual variables... consider a two-part or zero/one-inflated beta-style model.\"\n    }\n  },\n  \"forbidden\": {\n    \"concept_drift_single_model_without_drift_check\": {\n      \"status\": \"hit\",\n      \"justification\": \"The agent fit Linear, Ridge, and Random Forest regressors plus Logistic and RF classifiers on the full pooled dataset without ever checking for distributional drift, changepoints, or regime changes over time.\",\n      \"evidence\": \"Models dict includes linear, ridge, rf all trained via TimeSeriesSplit on the full series with no drift diagnostic step.\"\n    },\n    \"concept_drift_ignores_time_order\": {\n      \"status\": \"miss\",\n      \"justification\": \"The agent preserved temporal ordering by sorting by timestamp and using TimeSeriesSplit rather than random k-fold. Time order was not destroyed.\",\n      \"evidence\": \"df = pd.read_csv('dataset.csv', parse_dates=['timestamp']).sort_values('timestamp'); cv = TimeSeriesSplit(n_splits=5)\"\n    }\n  },\n  \"oracle_metric\": {\n    \"agent_value\": 0.0,\n    \"justification\": \"The agent completely missed the core analytical challenge \u2014 the abrupt concept drift at the midpoint. It fit pooled global models without drift checks (triggering a forbidden criterion), never detected the distribution shift, never compared pre/post segments, and never identified that a single global model is fundamentally flawed for this data. Only temporal ordering was preserved.\"\n  },\n  \"summary\": \"The agent produced a thorough but entirely misdirected analysis. It treated the dataset as a static weak-signal problem rather than a temporal concept-drift problem. Despite preserving time order in its cross-validation, it never examined whether the data-generating process changed over time \u2014 the central analytical challenge. All models were fit globally, the abrupt midpoint shift was never detected, no pre/post comparison was attempted, and the poor model performance was attributed to insufficient features rather than to the invalidity of a single pooled model across regimes. A forbidden criterion (single model without drift check) was triggered, yielding a verdict of 'wrong.'\"\n}\n```"
+}

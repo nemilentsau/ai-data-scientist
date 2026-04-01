@@ -1,0 +1,78 @@
+{
+  "dataset": "well_separated_clusters",
+  "config": "solo-codex",
+  "agent": "codex",
+  "verdict": "solved",
+  "core_insight_pass": true,
+  "required_coverage": 1.0,
+  "supporting_coverage": 0.8333333333333334,
+  "oracle_attainment": 0.453,
+  "oracle_metric_name": "silhouette_score",
+  "oracle_agent_value": 0.453,
+  "fatal_errors": [],
+  "efficiency": {
+    "transcript_chars": 50228.0,
+    "trace_events": 51.0,
+    "report_chars": 10090.0
+  },
+  "criterion_results": [
+    {
+      "criterion_id": "well_separated_clusters_k_equals_three_identified",
+      "group": "must_have",
+      "status": "hit",
+      "justification": "The agent explicitly identified k=3 as optimal after testing k=2 through k=6.",
+      "evidence": "\"The best silhouette score occurs at **k = 3**, which supports a three-segment solution.\""
+    },
+    {
+      "criterion_id": "well_separated_clusters_cluster_count_justified",
+      "group": "must_have",
+      "status": "hit",
+      "justification": "The agent justified k=3 using silhouette scores across five candidate values and also reported inertia (elbow) values.",
+      "evidence": "Silhouette scores table: k=2 (0.392), k=3 (0.453), k=4 (0.393), k=5 (0.360), k=6 (0.313) \u2014 k=3 clearly the peak."
+    },
+    {
+      "criterion_id": "well_separated_clusters_clusters_visualized",
+      "group": "must_have",
+      "status": "hit",
+      "justification": "The agent produced a PCA projection of the clusters and a silhouette score chart.",
+      "evidence": "Supporting plots: `cluster_silhouette_scores.png`, `cluster_pca_projection.png`"
+    },
+    {
+      "criterion_id": "well_separated_clusters_high_separation_noted",
+      "group": "supporting",
+      "status": "partial",
+      "justification": "The agent describes 'distinct customer regimes' but hedges with 'may encode' rather than explicitly noting clear/high separation. The strong geometric structure is mentioned in a different context (EDA) but not directly tied to cluster separation quality.",
+      "evidence": "\"the data may encode distinct customer regimes rather than one smooth population\""
+    },
+    {
+      "criterion_id": "well_separated_clusters_cluster_profiles_described",
+      "group": "supporting",
+      "status": "hit",
+      "justification": "The agent provides a mean-profile table by cluster and gives qualitative interpretations of each segment's characteristics.",
+      "evidence": "Cluster 2: high spend/high order value; Cluster 1: lower-value/high frequency; Cluster 0: high order value/low frequency/long recency."
+    },
+    {
+      "criterion_id": "well_separated_clusters_quality_metric_reported",
+      "group": "supporting",
+      "status": "hit",
+      "justification": "Silhouette scores are reported for all tested k values, and the best score (0.453 at k=3) is clearly highlighted.",
+      "evidence": "\"k = 3, silhouette_score = 0.453\""
+    },
+    {
+      "criterion_id": "well_separated_clusters_arbitrary_k_choice",
+      "group": "forbidden",
+      "status": "miss",
+      "justification": "The agent systematically evaluated k=2 through k=6 using silhouette scores before selecting k=3. The choice is data-driven, not arbitrary.",
+      "evidence": "Full silhouette comparison table provided; k=3 selected as the peak."
+    },
+    {
+      "criterion_id": "well_separated_clusters_no_cluster_visualization",
+      "group": "forbidden",
+      "status": "miss",
+      "justification": "The agent produced cluster visualizations including a PCA projection plot.",
+      "evidence": "`cluster_pca_projection.png` and `cluster_silhouette_scores.png` listed as supporting plots."
+    }
+  ],
+  "summary": "The agent correctly identified the core pattern of three well-separated clusters, justified the choice of k=3 with silhouette analysis, visualized the cluster structure via PCA projection, and profiled each segment. All must-have criteria are met and no forbidden criteria are triggered. The main gap is that the agent hedged on characterizing the separation as clear, describing 'distinct customer regimes' rather than explicitly noting well-separated clusters. The agent also spent substantial effort on supervised modeling of total_lifetime_spend, which while not harmful, was secondary to the primary clustering task. Overall verdict: solved.",
+  "raw_response": "```json\n{\n  \"must_have\": {\n    \"well_separated_clusters_k_equals_three_identified\": {\n      \"status\": \"hit\",\n      \"justification\": \"The agent explicitly identified k=3 as optimal after testing k=2 through k=6.\",\n      \"evidence\": \"\\\"The best silhouette score occurs at **k = 3**, which supports a three-segment solution.\\\"\"\n    },\n    \"well_separated_clusters_cluster_count_justified\": {\n      \"status\": \"hit\",\n      \"justification\": \"The agent justified k=3 using silhouette scores across five candidate values and also reported inertia (elbow) values.\",\n      \"evidence\": \"Silhouette scores table: k=2 (0.392), k=3 (0.453), k=4 (0.393), k=5 (0.360), k=6 (0.313) \u2014 k=3 clearly the peak.\"\n    },\n    \"well_separated_clusters_clusters_visualized\": {\n      \"status\": \"hit\",\n      \"justification\": \"The agent produced a PCA projection of the clusters and a silhouette score chart.\",\n      \"evidence\": \"Supporting plots: `cluster_silhouette_scores.png`, `cluster_pca_projection.png`\"\n    }\n  },\n  \"supporting\": {\n    \"well_separated_clusters_high_separation_noted\": {\n      \"status\": \"partial\",\n      \"justification\": \"The agent describes 'distinct customer regimes' but hedges with 'may encode' rather than explicitly noting clear/high separation. The strong geometric structure is mentioned in a different context (EDA) but not directly tied to cluster separation quality.\",\n      \"evidence\": \"\\\"the data may encode distinct customer regimes rather than one smooth population\\\"\"\n    },\n    \"well_separated_clusters_cluster_profiles_described\": {\n      \"status\": \"hit\",\n      \"justification\": \"The agent provides a mean-profile table by cluster and gives qualitative interpretations of each segment's characteristics.\",\n      \"evidence\": \"Cluster 2: high spend/high order value; Cluster 1: lower-value/high frequency; Cluster 0: high order value/low frequency/long recency.\"\n    },\n    \"well_separated_clusters_quality_metric_reported\": {\n      \"status\": \"hit\",\n      \"justification\": \"Silhouette scores are reported for all tested k values, and the best score (0.453 at k=3) is clearly highlighted.\",\n      \"evidence\": \"\\\"k = 3, silhouette_score = 0.453\\\"\"\n    }\n  },\n  \"forbidden\": {\n    \"well_separated_clusters_arbitrary_k_choice\": {\n      \"status\": \"miss\",\n      \"justification\": \"The agent systematically evaluated k=2 through k=6 using silhouette scores before selecting k=3. The choice is data-driven, not arbitrary.\",\n      \"evidence\": \"Full silhouette comparison table provided; k=3 selected as the peak.\"\n    },\n    \"well_separated_clusters_no_cluster_visualization\": {\n      \"status\": \"miss\",\n      \"justification\": \"The agent produced cluster visualizations including a PCA projection plot.\",\n      \"evidence\": \"`cluster_pca_projection.png` and `cluster_silhouette_scores.png` listed as supporting plots.\"\n    }\n  },\n  \"oracle_metric\": {\n    \"agent_value\": 0.453,\n    \"justification\": \"The agent reports the best silhouette score at k=3 as 0.453 (shown as 0.4528 in the session transcript, rounded to 0.453 in the report table).\"\n  },\n  \"summary\": \"The agent correctly identified the core pattern of three well-separated clusters, justified the choice of k=3 with silhouette analysis, visualized the cluster structure via PCA projection, and profiled each segment. All must-have criteria are met and no forbidden criteria are triggered. The main gap is that the agent hedged on characterizing the separation as clear, describing 'distinct customer regimes' rather than explicitly noting well-separated clusters. The agent also spent substantial effort on supervised modeling of total_lifetime_spend, which while not harmful, was secondary to the primary clustering task. Overall verdict: solved.\"\n}\n```"
+}

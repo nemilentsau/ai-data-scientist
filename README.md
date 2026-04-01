@@ -1,6 +1,6 @@
 # AI Data Scientist Benchmark
 
-Benchmark harness that compares Claude Code and OpenAI Codex CLI as autonomous data scientists. Both agents run headless against 20 curated datasets, each hiding a specific statistical pattern. An LLM reviewer scores each agent's analysis against a ground-truth rubric.
+Benchmark harness that compares Claude Code and OpenAI Codex CLI as autonomous data scientists. Each agent runs headless against 20 curated datasets, each hiding a specific statistical pattern. An LLM reviewer scores each agent's analysis against a ground-truth rubric.
 
 ## What it measures
 
@@ -19,6 +19,15 @@ uv venv --python 3.14
 uv sync
 ```
 
+Authenticate the CLIs you plan to benchmark:
+
+```bash
+claude login
+codex login
+```
+
+For unattended Codex runs, OpenAI also documents `CODEX_API_KEY` support for `codex exec`.
+
 ## Quick start
 
 ### Generate datasets
@@ -32,36 +41,37 @@ Produces 20 CSVs in `datasets/generated/` with opaque filenames.
 ### Run the full benchmark
 
 ```bash
-uv run python run_benchmark.py
+uv run python run_benchmark.py --config solo-baseline
+uv run python run_benchmark.py --config solo-codex
 ```
 
 This will:
 1. Generate all 20 datasets
-2. Run both agents (Claude Code + Codex CLI) on each dataset in isolated temp directories
+2. Run the selected agent config in an isolated temp directory per dataset
 3. Score each agent's output using the LLM reviewer
-4. Produce a comparison report at `results/benchmark_report.md`
+4. Produce a per-config report at `results/runs/<config>/benchmark_report.md`
 
 ### Run a single agent on a single dataset
 
 ```bash
 # Run Claude on simpsons_paradox only (skip dataset generation if CSVs exist)
-uv run python run_benchmark.py --agents claude --datasets simpsons_paradox --skip-generate
+uv run python run_benchmark.py --config solo-baseline --datasets simpsons_paradox --skip-generate
 
 # Run Codex on two specific datasets
-uv run python run_benchmark.py --agents codex --datasets pure_noise quadratic --skip-generate
+uv run python run_benchmark.py --config solo-codex --datasets pure_noise quadratic --skip-generate
 
 # Run agent only, skip scoring
-uv run python run_benchmark.py --agents claude --datasets mnar --skip-generate --skip-score
+uv run python run_benchmark.py --config solo-baseline --datasets mnar --skip-generate --skip-score
 ```
 
 ### Other subset options
 
 ```bash
 # All datasets, single agent
-uv run python run_benchmark.py --agents claude
+uv run python run_benchmark.py --config solo-baseline
 
 # Re-score existing results without re-running agents
-uv run python run_benchmark.py --skip-generate --skip-run
+uv run python run_benchmark.py --config solo-codex --skip-generate --skip-run
 ```
 
 ## Tracing
@@ -74,7 +84,7 @@ Every agent run produces a detailed `trace.jsonl` in its results directory, logg
 {"timestamp":"2026-03-15T12:00:00Z","event":"PostToolUse","tool":"Bash","tool_input":{"command":"python analysis.py"},"tool_response":"...","cwd":"/tmp/work"}
 ```
 
-**Codex CLI** — Uses `codex exec --json` which natively streams JSONL events (thread starts, tool executions, completions) to `trace.jsonl`.
+**Codex CLI** — Uses `codex -a never exec -s workspace-write --json --skip-git-repo-check`, which natively streams JSONL events (thread starts, tool executions, completions) to `trace.jsonl`. The harness also saves Codex stderr to `session.log` and the final agent message to `final_message.md`.
 
 The reviewer reads `trace.jsonl` (when available) instead of the raw session log, giving it full visibility into the agent's step-by-step reasoning.
 
@@ -86,6 +96,9 @@ ai-data-scientist/
 │   ├── settings.json         # Hook config (PostToolUse → trace.sh)
 │   └── hooks/
 │       └── trace.sh          # Logs every tool call to trace.jsonl
+├── .codex/
+│   └── testing/
+│       └── SKILL.md          # Test-writing guidance for Codex agents
 ├── datasets/
 │   ├── generator.py          # 20 dataset generators + filename mapping
 │   ├── registry.py           # Ground-truth metadata per dataset

@@ -21,24 +21,29 @@ def generate_simpsons_paradox(save_path=None):
     rng = np.random.RandomState(42)
     rows = []
     departments = ["Cardiology", "Neurology", "Orthopedics"]
-    # Each department: treatment A looks worse overall but better within dept
+    treatment_a_probs = [0.10, 0.45, 0.90]
+    # Treatment A is better within each department, but it is concentrated in
+    # the worse departments overall, so the aggregate comparison reverses.
     for dept_i, dept in enumerate(departments):
-        n = rng.randint(300, 500)
+        n = 400
         severity = rng.normal(3 + dept_i * 2, 1, n).clip(1, 10)
-        treatment = rng.choice(["A", "B"], n, p=[0.4 + dept_i * 0.15, 0.6 - dept_i * 0.15])
-        # Within each dept, treatment A has better outcome, but A is assigned
-        # to more severe cases overall → aggregate paradox
+        treatment = rng.choice(
+            ["A", "B"],
+            n,
+            p=[treatment_a_probs[dept_i], 1 - treatment_a_probs[dept_i]],
+        )
         base = 80 - 3 * severity + rng.normal(0, 5, n)
         effect = np.where(treatment == "A", 5, 0)
         recovery_score = (base + effect).clip(0, 100)
         age = (40 + severity * 3 + rng.normal(0, 5, n)).clip(20, 90).astype(int)
+        length_of_stay = 5 + severity * 2 + rng.normal(0, 2, n) - np.where(treatment == "A", 1.5, 0)
         for i in range(n):
             rows.append({
                 "department": dept,
                 "age": age[i],
                 "severity_index": round(severity[i], 2),
                 "treatment": treatment[i],
-                "length_of_stay_days": int(max(1, 5 + severity[i] * 2 + rng.normal(0, 2))),
+                "length_of_stay_days": int(max(1, length_of_stay[i])),
                 "recovery_score": round(recovery_score[i], 1),
                 "readmitted": int(rng.random() < 0.1),
             })

@@ -8,10 +8,11 @@ from pathlib import Path
 from .scorer import CriterionResult, ScoreResult
 
 VERDICT_RANK = {
-    "wrong": 0,
-    "failed": 1,
-    "partial": 2,
-    "solved": 3,
+    "run_error": 0,
+    "wrong": 1,
+    "failed": 2,
+    "partial": 3,
+    "solved": 4,
 }
 
 
@@ -29,7 +30,13 @@ def _comparison_key(result: ScoreResult) -> tuple[float, ...]:
 def _format_result_cell(result: ScoreResult | None) -> str:
     if result is None:
         return "-"
+    if result.verdict == "run_error":
+        return "run error"
     return f"{result.verdict} ({result.required_coverage:.0%})"
+
+
+def _format_verdict_label(verdict: str) -> str:
+    return verdict.replace("_", " ")
 
 
 def _winner_label(claude_result: ScoreResult | None, codex_result: ScoreResult | None) -> str:
@@ -100,23 +107,30 @@ def generate_report(results: list[ScoreResult], output_path: Path) -> str:
 
     lines.append("## Agent Metrics\n")
     lines.append(
-        "| Agent | Solve Rate | Wrong Rate | Avg Required | Avg Supporting | Avg Oracle |"
+        "| Agent | Solve Rate | Wrong Rate | Run Error Rate | Avg Required | Avg Supporting | Avg Oracle |"
     )
-    lines.append("|-------|------------|------------|--------------|----------------|-----------|")
+    lines.append("|-------|------------|------------|----------------|--------------|----------------|-----------|")
     for agent_name in sorted(by_agent):
         agent_results = by_agent[agent_name]
+        completed_results = [
+            result for result in agent_results if result.verdict != "run_error"
+        ]
         solve_rate = _mean([1.0 if result.verdict == "solved" else 0.0 for result in agent_results])
         wrong_rate = _mean([1.0 if result.verdict == "wrong" else 0.0 for result in agent_results])
-        avg_required = _mean([result.required_coverage for result in agent_results])
-        avg_supporting = _mean([result.supporting_coverage for result in agent_results])
+        run_error_rate = _mean(
+            [1.0 if result.verdict == "run_error" else 0.0 for result in agent_results]
+        )
+        avg_required = _mean([result.required_coverage for result in completed_results])
+        avg_supporting = _mean([result.supporting_coverage for result in completed_results])
         oracle_values = [
             result.oracle_attainment
-            for result in agent_results
+            for result in completed_results
             if result.oracle_attainment is not None
         ]
         avg_oracle = _mean(oracle_values)
         lines.append(
             f"| {agent_name.title()} | {solve_rate:.0%} | {wrong_rate:.0%} | "
+            f"{run_error_rate:.0%} | "
             f"{avg_required:.0%} | {avg_supporting:.0%} | {avg_oracle:.0%} |"
         )
     lines.append("")
@@ -125,17 +139,28 @@ def generate_report(results: list[ScoreResult], output_path: Path) -> str:
     for dataset_name, agents in sorted(by_dataset.items()):
         lines.append(f"### {dataset_name}\n")
         for agent_name, result in sorted(agents.items()):
-            lines.append(f"#### {agent_name.title()} ({result.verdict})\n")
+            lines.append(
+                f"#### {agent_name.title()} ({_format_verdict_label(result.verdict)})\n"
+            )
             lines.append(f"**Summary:** {result.summary or 'No summary provided.'}")
-            lines.append(f"**Core Insight:** {'pass' if result.core_insight_pass else 'fail'}")
-            lines.append(f"**Required Coverage:** {result.required_coverage:.0%}")
-            lines.append(f"**Supporting Coverage:** {result.supporting_coverage:.0%}")
-            if result.oracle_metric_name is not None:
-                if result.oracle_attainment is None:
-                    oracle_text = "not available"
-                else:
-                    oracle_text = f"{result.oracle_attainment:.0%}"
-                lines.append(f"**Oracle Attainment ({result.oracle_metric_name}):** {oracle_text}")
+            lines.append(f"**Run Status:** {_format_verdict_label(result.run_status)}")
+            lines.append(f"**Rerun Recommended:** {'yes' if result.rerun_recommended else 'no'}")
+            if result.run_error_reasons:
+                lines.append("**Run Errors:**")
+                for reason in result.run_error_reasons:
+                    lines.append(f"- {reason}")
+            if result.verdict != "run_error":
+                lines.append(f"**Core Insight:** {'pass' if result.core_insight_pass else 'fail'}")
+                lines.append(f"**Required Coverage:** {result.required_coverage:.0%}")
+                lines.append(f"**Supporting Coverage:** {result.supporting_coverage:.0%}")
+                if result.oracle_metric_name is not None:
+                    if result.oracle_attainment is None:
+                        oracle_text = "not available"
+                    else:
+                        oracle_text = f"{result.oracle_attainment:.0%}"
+                    lines.append(
+                        f"**Oracle Attainment ({result.oracle_metric_name}):** {oracle_text}"
+                    )
             if result.fatal_errors:
                 lines.append("**Fatal Errors:**")
                 for error in result.fatal_errors:

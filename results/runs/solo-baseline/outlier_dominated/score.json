@@ -1,0 +1,78 @@
+{
+  "dataset": "outlier_dominated",
+  "config": "solo-baseline",
+  "agent": "claude",
+  "verdict": "partial",
+  "core_insight_pass": true,
+  "required_coverage": 0.6666666666666666,
+  "supporting_coverage": 1.0,
+  "oracle_attainment": null,
+  "oracle_metric_name": null,
+  "oracle_agent_value": 0.45,
+  "fatal_errors": [],
+  "efficiency": {
+    "transcript_chars": 70887.0,
+    "trace_events": 11.0,
+    "report_chars": 10586.0
+  },
+  "criterion_results": [
+    {
+      "criterion_id": "outlier_dominated_outliers_detected",
+      "group": "must_have",
+      "status": "hit",
+      "justification": "The agent clearly detects extreme order-total outliers using IQR, formula reconstruction, and inspection of negative values.",
+      "evidence": "\"28 orders have negative totals (as low as -$19,241), which is commercially impossible\"; \"67 orders are IQR outliers in order total\"; \"The difference between actual and expected totals ranges from -$19,792 to +$19,868\""
+    },
+    {
+      "criterion_id": "outlier_dominated_influence_on_fit_explained",
+      "group": "must_have",
+      "status": "hit",
+      "justification": "The agent fits OLS and explicitly explains that the outliers make it unreliable: R\u00b2=0.070, kurtosis=28.3, severe normality violations, and concludes the model is unfit for inference.",
+      "evidence": "\"An OLS regression of order_total_usd on the available features yields R-squared = 0.070\"; \"Residuals are heavily leptokurtic (kurtosis = 28.3), indicating extreme non-normality\"; \"The model is unreliable for inference on order totals\""
+    },
+    {
+      "criterion_id": "outlier_dominated_robust_or_justified_handling",
+      "group": "must_have",
+      "status": "miss",
+      "justification": "The agent never compares a robust estimator (Huber, RANSAC, Theil-Sen, median regression) against the naive OLS fit. It only diagnoses that OLS is bad and recommends investigating the data, but does not actually implement or compare any robust alternative for the order-total relationship.",
+      "evidence": "No mention of robust regression anywhere in the report. The only recommendation is \"Investigate the order_total_usd column\" which is not a robust handling strategy."
+    },
+    {
+      "criterion_id": "outlier_dominated_reconstructs_expected_total",
+      "group": "supporting",
+      "status": "hit",
+      "justification": "The agent explicitly reconstructs the expected total from component variables and shows the extreme totals are inconsistent.",
+      "evidence": "\"expected = items_qty * unit_price_usd * (1 - discount_pct/100) + shipping_usd\"; \"Only 6 out of 1,200 rows (0.5%) match this formula within $0.05\"; session transcript shows detailed computation of expected_total and total_diff"
+    },
+    {
+      "criterion_id": "outlier_dominated_outlier_fraction_quantified",
+      "group": "supporting",
+      "status": "hit",
+      "justification": "The agent quantifies the outlier fraction in multiple ways: count of negative totals, IQR outliers, and formula-matching fraction.",
+      "evidence": "\"28 orders have negative totals\"; \"67 orders are IQR outliers in order total\"; \"Only 6 out of 1,200 rows (0.5%) match this formula\""
+    },
+    {
+      "criterion_id": "outlier_dominated_segment_not_confused",
+      "group": "supporting",
+      "status": "hit",
+      "justification": "The agent treats customer segments and the outlier problem as separate issues. Segments are analyzed in their own section with chi-squared tests showing no significance, and the outlier problem is covered independently.",
+      "evidence": "\"Return rates are nearly identical across segments. Chi-squared test: p = 0.595 (no significant difference).\" Outlier analysis in Section 2.1 is fully separate from segment analysis in Section 3.2."
+    },
+    {
+      "criterion_id": "outlier_dominated_trusts_ols_without_diagnostics",
+      "group": "forbidden",
+      "status": "miss",
+      "justification": "The agent fits OLS but immediately diagnoses its failures: reports R\u00b2=0.070, kurtosis=28.3, Shapiro-Wilk p<0.001, produces Q-Q plots, and explicitly declares the model unreliable.",
+      "evidence": "\"Residuals violate normality severely (kurtosis 28.3, Shapiro-Wilk p < 0.001). The Q-Q plot shows extreme departures in both tails. The model is unreliable for inference on order totals.\""
+    },
+    {
+      "criterion_id": "outlier_dominated_drops_rows_without_justification",
+      "group": "forbidden",
+      "status": "miss",
+      "justification": "The agent identifies outliers but never removes any rows from the analysis. All 1,200 rows are retained throughout.",
+      "evidence": "No mention of dropping, removing, or filtering outlier rows anywhere in the report or session transcript."
+    }
+  ],
+  "summary": "The agent demonstrates competent outlier detection and data quality analysis \u2014 it reconstructs expected totals, identifies 67 IQR outliers and 28 negative totals, quantifies the outlier fraction, and correctly diagnoses that OLS is unreliable due to extreme values. However, it fails to complete the analysis by never comparing a robust regression approach against the naive OLS fit, which is the key analytical step for an outlier-dominated dataset. Instead, the agent spends substantial effort on return prediction (a dead end in this dataset) rather than addressing the core problem of how to model the order-total relationship robustly in the presence of extreme values. No forbidden criteria are triggered. Overall verdict: partial.",
+  "raw_response": "```json\n{\n  \"must_have\": {\n    \"outlier_dominated_outliers_detected\": {\n      \"status\": \"hit\",\n      \"justification\": \"The agent clearly detects extreme order-total outliers using IQR, formula reconstruction, and inspection of negative values.\",\n      \"evidence\": \"\\\"28 orders have negative totals (as low as -$19,241), which is commercially impossible\\\"; \\\"67 orders are IQR outliers in order total\\\"; \\\"The difference between actual and expected totals ranges from -$19,792 to +$19,868\\\"\"\n    },\n    \"outlier_dominated_influence_on_fit_explained\": {\n      \"status\": \"hit\",\n      \"justification\": \"The agent fits OLS and explicitly explains that the outliers make it unreliable: R\u00b2=0.070, kurtosis=28.3, severe normality violations, and concludes the model is unfit for inference.\",\n      \"evidence\": \"\\\"An OLS regression of order_total_usd on the available features yields R-squared = 0.070\\\"; \\\"Residuals are heavily leptokurtic (kurtosis = 28.3), indicating extreme non-normality\\\"; \\\"The model is unreliable for inference on order totals\\\"\"\n    },\n    \"outlier_dominated_robust_or_justified_handling\": {\n      \"status\": \"miss\",\n      \"justification\": \"The agent never compares a robust estimator (Huber, RANSAC, Theil-Sen, median regression) against the naive OLS fit. It only diagnoses that OLS is bad and recommends investigating the data, but does not actually implement or compare any robust alternative for the order-total relationship.\",\n      \"evidence\": \"No mention of robust regression anywhere in the report. The only recommendation is \\\"Investigate the order_total_usd column\\\" which is not a robust handling strategy.\"\n    }\n  },\n  \"supporting\": {\n    \"outlier_dominated_reconstructs_expected_total\": {\n      \"status\": \"hit\",\n      \"justification\": \"The agent explicitly reconstructs the expected total from component variables and shows the extreme totals are inconsistent.\",\n      \"evidence\": \"\\\"expected = items_qty * unit_price_usd * (1 - discount_pct/100) + shipping_usd\\\"; \\\"Only 6 out of 1,200 rows (0.5%) match this formula within $0.05\\\"; session transcript shows detailed computation of expected_total and total_diff\"\n    },\n    \"outlier_dominated_outlier_fraction_quantified\": {\n      \"status\": \"hit\",\n      \"justification\": \"The agent quantifies the outlier fraction in multiple ways: count of negative totals, IQR outliers, and formula-matching fraction.\",\n      \"evidence\": \"\\\"28 orders have negative totals\\\"; \\\"67 orders are IQR outliers in order total\\\"; \\\"Only 6 out of 1,200 rows (0.5%) match this formula\\\"\"\n    },\n    \"outlier_dominated_segment_not_confused\": {\n      \"status\": \"hit\",\n      \"justification\": \"The agent treats customer segments and the outlier problem as separate issues. Segments are analyzed in their own section with chi-squared tests showing no significance, and the outlier problem is covered independently.\",\n      \"evidence\": \"\\\"Return rates are nearly identical across segments. Chi-squared test: p = 0.595 (no significant difference).\\\" Outlier analysis in Section 2.1 is fully separate from segment analysis in Section 3.2.\"\n    }\n  },\n  \"forbidden\": {\n    \"outlier_dominated_trusts_ols_without_diagnostics\": {\n      \"status\": \"miss\",\n      \"justification\": \"The agent fits OLS but immediately diagnoses its failures: reports R\u00b2=0.070, kurtosis=28.3, Shapiro-Wilk p<0.001, produces Q-Q plots, and explicitly declares the model unreliable.\",\n      \"evidence\": \"\\\"Residuals violate normality severely (kurtosis 28.3, Shapiro-Wilk p < 0.001). The Q-Q plot shows extreme departures in both tails. The model is unreliable for inference on order totals.\\\"\"\n    },\n    \"outlier_dominated_drops_rows_without_justification\": {\n      \"status\": \"miss\",\n      \"justification\": \"The agent identifies outliers but never removes any rows from the analysis. All 1,200 rows are retained throughout.\",\n      \"evidence\": \"No mention of dropping, removing, or filtering outlier rows anywhere in the report or session transcript.\"\n    }\n  },\n  \"oracle_metric\": {\n    \"agent_value\": 0.45,\n    \"justification\": \"The agent does strong outlier detection, reconstructs expected totals, quantifies the outlier fraction, and properly diagnoses OLS failure \u2014 hitting 2 of 3 must-haves and all 3 supporting criteria with no forbidden triggers. However, it critically misses comparing robust estimators against OLS, which is a core must-have for this dataset. The agent also diverts significant effort to predicting returns (which is essentially noise in this dataset) rather than focusing on the central outlier-dominated regression problem. Verdict: partial.\"\n  },\n  \"summary\": \"The agent demonstrates competent outlier detection and data quality analysis \u2014 it reconstructs expected totals, identifies 67 IQR outliers and 28 negative totals, quantifies the outlier fraction, and correctly diagnoses that OLS is unreliable due to extreme values. However, it fails to complete the analysis by never comparing a robust regression approach against the naive OLS fit, which is the key analytical step for an outlier-dominated dataset. Instead, the agent spends substantial effort on return prediction (a dead end in this dataset) rather than addressing the core problem of how to model the order-total relationship robustly in the presence of extreme values. No forbidden criteria are triggered. Overall verdict: partial.\"\n}\n```"
+}

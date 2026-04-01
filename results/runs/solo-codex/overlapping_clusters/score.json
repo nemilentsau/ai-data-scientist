@@ -1,0 +1,78 @@
+{
+  "dataset": "overlapping_clusters",
+  "config": "solo-codex",
+  "agent": "codex",
+  "verdict": "failed",
+  "core_insight_pass": false,
+  "required_coverage": 0.0,
+  "supporting_coverage": 0.0,
+  "oracle_attainment": null,
+  "oracle_metric_name": null,
+  "oracle_agent_value": 0.0,
+  "fatal_errors": [],
+  "efficiency": {
+    "transcript_chars": 193114.0,
+    "trace_events": 50.0,
+    "report_chars": 12320.0
+  },
+  "criterion_results": [
+    {
+      "criterion_id": "overlapping_clusters_ambiguity_noted",
+      "group": "must_have",
+      "status": "miss",
+      "justification": "The agent never performed any clustering analysis. It misidentified this as a regression/prediction task for GPA and never mentioned cluster structure, overlap, or ambiguity.",
+      "evidence": "Report is framed as 'student-performance dataset' with 'gpa' as 'the natural response variable'. No clustering terminology appears anywhere."
+    },
+    {
+      "criterion_id": "overlapping_clusters_validation_metric_used",
+      "group": "must_have",
+      "status": "miss",
+      "justification": "No silhouette score, gap statistic, or any clustering validation metric was computed. The agent used only regression metrics (R\u00b2, RMSE, MAE).",
+      "evidence": "Models compared: 'Mean-only baseline, Linear regression, Ridge regression, Random forest regression' with 'cv_r2_mean' and 'cv_rmse_mean'."
+    },
+    {
+      "criterion_id": "overlapping_clusters_uncertainty_reported",
+      "group": "must_have",
+      "status": "miss",
+      "justification": "No cluster assignments were made, so no uncertainty in assignments was reported. The agent never discussed clustering uncertainty at all.",
+      "evidence": "Conclusion states: 'there is no evidence that the available substantive predictors explain GPA in a practically useful way' \u2014 entirely a regression framing."
+    },
+    {
+      "criterion_id": "overlapping_clusters_low_quality_metric_interpreted",
+      "group": "supporting",
+      "status": "miss",
+      "justification": "No silhouette-like metric was computed or interpreted.",
+      "evidence": "No clustering validation metrics appear anywhere in the report or session trace."
+    },
+    {
+      "criterion_id": "overlapping_clusters_multiple_k_considered",
+      "group": "supporting",
+      "status": "miss",
+      "justification": "No candidate cluster counts were evaluated. The agent did not attempt any clustering.",
+      "evidence": "The entire analysis pipeline is regression-based: OLS, Ridge, Random Forest regressors."
+    },
+    {
+      "criterion_id": "overlapping_clusters_soft_or_qualitative_alternative",
+      "group": "supporting",
+      "status": "miss",
+      "justification": "No soft clustering, mixture models, or qualitative segmentation was suggested.",
+      "evidence": "Recommendations focus on collecting better predictors for GPA regression, not on clustering approaches."
+    },
+    {
+      "criterion_id": "overlapping_clusters_forces_clean_clusters",
+      "group": "forbidden",
+      "status": "miss",
+      "justification": "The agent never performed clustering, so it did not claim clean separation.",
+      "evidence": "No clustering claims of any kind appear in the report."
+    },
+    {
+      "criterion_id": "overlapping_clusters_forces_k_three_without_validation",
+      "group": "forbidden",
+      "status": "miss",
+      "justification": "The agent never attempted clustering with any k value.",
+      "evidence": "No k-means, hierarchical clustering, or any other clustering method was applied."
+    }
+  ],
+  "summary": "Total misidentification of the task. The dataset was designed to test whether an analyst can recognize overlapping cluster structure and report clustering ambiguity, but the agent framed it entirely as a GPA regression problem. It ran OLS, Ridge, and Random Forest regressors, evaluated R\u00b2 and RMSE, and concluded the features lack predictive signal for GPA. No clustering algorithm was applied, no cluster validation metric was computed, and no mention of cluster overlap or assignment uncertainty appears anywhere. While the regression analysis itself is competent, it is answering the wrong question entirely, resulting in a complete failure against the evaluation contract.",
+  "raw_response": "```json\n{\n  \"must_have\": {\n    \"overlapping_clusters_ambiguity_noted\": {\n      \"status\": \"miss\",\n      \"justification\": \"The agent never performed any clustering analysis. It misidentified this as a regression/prediction task for GPA and never mentioned cluster structure, overlap, or ambiguity.\",\n      \"evidence\": \"Report is framed as 'student-performance dataset' with 'gpa' as 'the natural response variable'. No clustering terminology appears anywhere.\"\n    },\n    \"overlapping_clusters_validation_metric_used\": {\n      \"status\": \"miss\",\n      \"justification\": \"No silhouette score, gap statistic, or any clustering validation metric was computed. The agent used only regression metrics (R\u00b2, RMSE, MAE).\",\n      \"evidence\": \"Models compared: 'Mean-only baseline, Linear regression, Ridge regression, Random forest regression' with 'cv_r2_mean' and 'cv_rmse_mean'.\"\n    },\n    \"overlapping_clusters_uncertainty_reported\": {\n      \"status\": \"miss\",\n      \"justification\": \"No cluster assignments were made, so no uncertainty in assignments was reported. The agent never discussed clustering uncertainty at all.\",\n      \"evidence\": \"Conclusion states: 'there is no evidence that the available substantive predictors explain GPA in a practically useful way' \u2014 entirely a regression framing.\"\n    }\n  },\n  \"supporting\": {\n    \"overlapping_clusters_low_quality_metric_interpreted\": {\n      \"status\": \"miss\",\n      \"justification\": \"No silhouette-like metric was computed or interpreted.\",\n      \"evidence\": \"No clustering validation metrics appear anywhere in the report or session trace.\"\n    },\n    \"overlapping_clusters_multiple_k_considered\": {\n      \"status\": \"miss\",\n      \"justification\": \"No candidate cluster counts were evaluated. The agent did not attempt any clustering.\",\n      \"evidence\": \"The entire analysis pipeline is regression-based: OLS, Ridge, Random Forest regressors.\"\n    },\n    \"overlapping_clusters_soft_or_qualitative_alternative\": {\n      \"status\": \"miss\",\n      \"justification\": \"No soft clustering, mixture models, or qualitative segmentation was suggested.\",\n      \"evidence\": \"Recommendations focus on collecting better predictors for GPA regression, not on clustering approaches.\"\n    }\n  },\n  \"forbidden\": {\n    \"overlapping_clusters_forces_clean_clusters\": {\n      \"status\": \"miss\",\n      \"justification\": \"The agent never performed clustering, so it did not claim clean separation.\",\n      \"evidence\": \"No clustering claims of any kind appear in the report.\"\n    },\n    \"overlapping_clusters_forces_k_three_without_validation\": {\n      \"status\": \"miss\",\n      \"justification\": \"The agent never attempted clustering with any k value.\",\n      \"evidence\": \"No k-means, hierarchical clustering, or any other clustering method was applied.\"\n    }\n  },\n  \"oracle_metric\": {\n    \"agent_value\": 0.0,\n    \"justification\": \"The agent completely misidentified the task. This is a clustering dataset with overlapping clusters, but the agent treated it as a supervised regression problem predicting GPA. Zero clustering analysis was performed \u2014 no silhouette, no gap statistic, no cluster validation, no discussion of overlap or ambiguity. Every must-have criterion is missed.\"\n  },\n  \"summary\": \"Total misidentification of the task. The dataset was designed to test whether an analyst can recognize overlapping cluster structure and report clustering ambiguity, but the agent framed it entirely as a GPA regression problem. It ran OLS, Ridge, and Random Forest regressors, evaluated R\u00b2 and RMSE, and concluded the features lack predictive signal for GPA. No clustering algorithm was applied, no cluster validation metric was computed, and no mention of cluster overlap or assignment uncertainty appears anywhere. While the regression analysis itself is competent, it is answering the wrong question entirely, resulting in a complete failure against the evaluation contract.\"\n}\n```"
+}

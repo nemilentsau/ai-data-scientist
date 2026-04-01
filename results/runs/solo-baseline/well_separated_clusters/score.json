@@ -1,0 +1,78 @@
+{
+  "dataset": "well_separated_clusters",
+  "config": "solo-baseline",
+  "agent": "claude",
+  "verdict": "solved",
+  "core_insight_pass": true,
+  "required_coverage": 1.0,
+  "supporting_coverage": 1.0,
+  "oracle_attainment": 0.453,
+  "oracle_metric_name": "silhouette_score",
+  "oracle_agent_value": 0.453,
+  "fatal_errors": [],
+  "efficiency": {
+    "transcript_chars": 60341.0,
+    "trace_events": 13.0,
+    "report_chars": 9921.0
+  },
+  "criterion_results": [
+    {
+      "criterion_id": "well_separated_clusters_k_equals_three_identified",
+      "group": "must_have",
+      "status": "hit",
+      "justification": "The agent clearly identified k=3 as the optimal cluster count, confirmed by four independent metrics.",
+      "evidence": "Four independent metrics unanimously selected k = 3: Silhouette Score (max) 3 (0.453), Calinski-Harabasz Index (max) 3 (512.3), Davies-Bouldin Index (min) 3 (0.966), Elbow Method 3 (clear elbow)"
+    },
+    {
+      "criterion_id": "well_separated_clusters_cluster_count_justified",
+      "group": "must_have",
+      "status": "hit",
+      "justification": "The agent justified k=3 with silhouette, elbow, Calinski-Harabasz, and Davies-Bouldin metrics, plus cross-validation with agglomerative clustering (ARI=1.0).",
+      "evidence": "Four independent metrics unanimously selected k = 3 ... Cross-validation with Agglomerative Clustering produced Adjusted Rand Index = 1.000 \u2014 perfect agreement"
+    },
+    {
+      "criterion_id": "well_separated_clusters_clusters_visualized",
+      "group": "must_have",
+      "status": "hit",
+      "justification": "Multiple cluster visualizations were produced: PCA scatter, silhouette plot, dendrogram, radar profiles, box plots by cluster, and cluster selection metric plots.",
+      "evidence": "plots/08_pca_clusters.png (Clusters in PCA space), plots/07_silhouette_plot.png (Per-sample silhouette analysis), plots/06_cluster_selection.png (Elbow, silhouette, Calinski-Harabasz, Davies-Bouldin)"
+    },
+    {
+      "criterion_id": "well_separated_clusters_high_separation_noted",
+      "group": "supporting",
+      "status": "hit",
+      "justification": "The agent explicitly described the clusters as unambiguous with perfect agreement between algorithms, and noted clear separation in multiple features.",
+      "evidence": "Three unambiguous customer segments exist ... All clustering metrics and two independent algorithms agree perfectly (ARI = 1.0). ... KDE analysis of avg_order_value revealed three distinct peaks"
+    },
+    {
+      "criterion_id": "well_separated_clusters_cluster_profiles_described",
+      "group": "supporting",
+      "status": "hit",
+      "justification": "The agent provided detailed named segment profiles with per-feature statistics and business interpretation of how segments differ.",
+      "evidence": "Cluster 0: 'Big-Ticket Infrequent' (AOV $119.78, Freq 3.05/mo), Cluster 1: 'Frequent Small-Basket' (AOV $25.11, Freq 15.09/mo), Cluster 2: 'Balanced High-Value' (AOV $74.93, Freq 7.90/mo, LTV $3,601)"
+    },
+    {
+      "criterion_id": "well_separated_clusters_quality_metric_reported",
+      "group": "supporting",
+      "status": "hit",
+      "justification": "Multiple clustering quality metrics were reported numerically.",
+      "evidence": "Silhouette Score 0.453, Calinski-Harabasz Index 512.3, Davies-Bouldin Index 0.966"
+    },
+    {
+      "criterion_id": "well_separated_clusters_arbitrary_k_choice",
+      "group": "forbidden",
+      "status": "miss",
+      "justification": "The agent did not choose k arbitrarily; it systematically evaluated k=2 through k=10 using four independent validation metrics before selecting k=3.",
+      "evidence": "Four independent metrics unanimously selected k = 3"
+    },
+    {
+      "criterion_id": "well_separated_clusters_no_cluster_visualization",
+      "group": "forbidden",
+      "status": "miss",
+      "justification": "The agent produced extensive cluster visualizations including PCA scatter, silhouette plots, dendrogram, radar charts, and box plots.",
+      "evidence": "14 total plots produced, including plots/08_pca_clusters.png, plots/07_silhouette_plot.png, plots/09_dendrogram.png"
+    }
+  ],
+  "summary": "Excellent analysis that thoroughly satisfies all evaluation criteria. The agent correctly identified k=3 as optimal using four independent validation metrics (silhouette, Calinski-Harabasz, Davies-Bouldin, elbow), produced extensive visualizations of the cluster structure (PCA scatter, silhouette plot, dendrogram, radar profiles), and provided rich segment profiles with business-meaningful names and interpretations. No forbidden criteria were triggered. The analysis went well beyond the minimum requirements with additional regression modeling, multimodality detection, and statistical testing, all while staying grounded in the data. The silhouette score of 0.453 is moderate but reasonable given 6-dimensional feature space with noise variables.",
+  "raw_response": "```json\n{\n  \"must_have\": {\n    \"well_separated_clusters_k_equals_three_identified\": {\n      \"status\": \"hit\",\n      \"justification\": \"The agent clearly identified k=3 as the optimal cluster count, confirmed by four independent metrics.\",\n      \"evidence\": \"Four independent metrics unanimously selected k = 3: Silhouette Score (max) 3 (0.453), Calinski-Harabasz Index (max) 3 (512.3), Davies-Bouldin Index (min) 3 (0.966), Elbow Method 3 (clear elbow)\"\n    },\n    \"well_separated_clusters_cluster_count_justified\": {\n      \"status\": \"hit\",\n      \"justification\": \"The agent justified k=3 with silhouette, elbow, Calinski-Harabasz, and Davies-Bouldin metrics, plus cross-validation with agglomerative clustering (ARI=1.0).\",\n      \"evidence\": \"Four independent metrics unanimously selected k = 3 ... Cross-validation with Agglomerative Clustering produced Adjusted Rand Index = 1.000 \u2014 perfect agreement\"\n    },\n    \"well_separated_clusters_clusters_visualized\": {\n      \"status\": \"hit\",\n      \"justification\": \"Multiple cluster visualizations were produced: PCA scatter, silhouette plot, dendrogram, radar profiles, box plots by cluster, and cluster selection metric plots.\",\n      \"evidence\": \"plots/08_pca_clusters.png (Clusters in PCA space), plots/07_silhouette_plot.png (Per-sample silhouette analysis), plots/06_cluster_selection.png (Elbow, silhouette, Calinski-Harabasz, Davies-Bouldin)\"\n    }\n  },\n  \"supporting\": {\n    \"well_separated_clusters_high_separation_noted\": {\n      \"status\": \"hit\",\n      \"justification\": \"The agent explicitly described the clusters as unambiguous with perfect agreement between algorithms, and noted clear separation in multiple features.\",\n      \"evidence\": \"Three unambiguous customer segments exist ... All clustering metrics and two independent algorithms agree perfectly (ARI = 1.0). ... KDE analysis of avg_order_value revealed three distinct peaks\"\n    },\n    \"well_separated_clusters_cluster_profiles_described\": {\n      \"status\": \"hit\",\n      \"justification\": \"The agent provided detailed named segment profiles with per-feature statistics and business interpretation of how segments differ.\",\n      \"evidence\": \"Cluster 0: 'Big-Ticket Infrequent' (AOV $119.78, Freq 3.05/mo), Cluster 1: 'Frequent Small-Basket' (AOV $25.11, Freq 15.09/mo), Cluster 2: 'Balanced High-Value' (AOV $74.93, Freq 7.90/mo, LTV $3,601)\"\n    },\n    \"well_separated_clusters_quality_metric_reported\": {\n      \"status\": \"hit\",\n      \"justification\": \"Multiple clustering quality metrics were reported numerically.\",\n      \"evidence\": \"Silhouette Score 0.453, Calinski-Harabasz Index 512.3, Davies-Bouldin Index 0.966\"\n    }\n  },\n  \"forbidden\": {\n    \"well_separated_clusters_arbitrary_k_choice\": {\n      \"status\": \"miss\",\n      \"justification\": \"The agent did not choose k arbitrarily; it systematically evaluated k=2 through k=10 using four independent validation metrics before selecting k=3.\",\n      \"evidence\": \"Four independent metrics unanimously selected k = 3\"\n    },\n    \"well_separated_clusters_no_cluster_visualization\": {\n      \"status\": \"miss\",\n      \"justification\": \"The agent produced extensive cluster visualizations including PCA scatter, silhouette plots, dendrogram, radar charts, and box plots.\",\n      \"evidence\": \"14 total plots produced, including plots/08_pca_clusters.png, plots/07_silhouette_plot.png, plots/09_dendrogram.png\"\n    }\n  },\n  \"oracle_metric\": {\n    \"agent_value\": 0.453,\n    \"justification\": \"The agent explicitly reported silhouette score of 0.453 for k=3 as the best clustering configuration.\"\n  },\n  \"summary\": \"Excellent analysis that thoroughly satisfies all evaluation criteria. The agent correctly identified k=3 as optimal using four independent validation metrics (silhouette, Calinski-Harabasz, Davies-Bouldin, elbow), produced extensive visualizations of the cluster structure (PCA scatter, silhouette plot, dendrogram, radar profiles), and provided rich segment profiles with business-meaningful names and interpretations. No forbidden criteria were triggered. The analysis went well beyond the minimum requirements with additional regression modeling, multimodality detection, and statistical testing, all while staying grounded in the data. The silhouette score of 0.453 is moderate but reasonable given 6-dimensional feature space with noise variables.\"\n}\n```"
+}

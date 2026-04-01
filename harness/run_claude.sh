@@ -1,13 +1,23 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-DATASET_NAME="${1:?Usage: run_claude.sh <dataset_name> <dataset_csv_path> <results_dir>}"
+DATASET_NAME="${1:?Usage: run_claude.sh <dataset_name> <csv_path> <results_dir> [prompt_file] [max_turns] [model] [tools]}"
 DATASET_CSV="${2:?Missing dataset CSV path}"
 RESULTS_DIR="${3:?Missing results directory}"
+PROMPT_FILE="${4:-}"
+MAX_TURNS="${5:-30}"
+MODEL="${6:-}"
+TOOLS="${7:-Bash,Read,Write,Edit,Glob,Grep}"
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
-PROMPT="$(cat "${SCRIPT_DIR}/prompt_template.txt")"
+
+# Load prompt from file or fall back to default
+if [ -n "${PROMPT_FILE}" ] && [ -f "${PROMPT_FILE}" ]; then
+  PROMPT="$(cat "${PROMPT_FILE}")"
+else
+  PROMPT="$(cat "${SCRIPT_DIR}/prompt_template.txt")"
+fi
 
 # Create isolated working directory
 WORK_DIR=$(mktemp -d)
@@ -36,13 +46,15 @@ cp "${PROJECT_ROOT}/.claude/hooks/trace.sh" "${WORK_DIR}/.claude/hooks/trace.sh"
 export VIRTUAL_ENV="${WORK_DIR}/.venv"
 export PATH="${WORK_DIR}/.venv/bin:${PATH}"
 
+# Build claude command
+CLAUDE_ARGS=(-p "${PROMPT}" --output-format json --max-turns "${MAX_TURNS}" --allowedTools "${TOOLS}")
+if [ -n "${MODEL}" ]; then
+  CLAUDE_ARGS+=(--model "${MODEL}")
+fi
+
 # Run Claude Code headless
 cd "${WORK_DIR}"
-claude -p "${PROMPT}" \
-  --output-format json \
-  --max-turns 30 \
-  --allowedTools "Bash,Read,Write,Edit,Glob,Grep" \
-  > "${RESULTS_DIR}/session.json" 2>&1 || true
+claude "${CLAUDE_ARGS[@]}" > "${RESULTS_DIR}/session.json" 2>&1 || true
 
 # Copy outputs to results — do this BEFORE cleaning up
 cp "${WORK_DIR}/analysis_report.md" "${RESULTS_DIR}/" 2>/dev/null || true

@@ -12,6 +12,11 @@ def _make_result(dataset: str, agent: str, verdict: str) -> ScoreResult:
         dataset_name=dataset,
         agent=agent,
         verdict=verdict,  # type: ignore[arg-type]
+        run_status="run_error" if verdict == "run_error" else "completed",
+        rerun_recommended=verdict == "run_error",
+        run_error_reasons=["missing analysis report (analysis_report.md)"]
+        if verdict == "run_error"
+        else [],
         core_insight_pass=verdict == "solved",
         required_coverage=1.0 if verdict == "solved" else 0.5,
         supporting_coverage=0.5,
@@ -85,3 +90,14 @@ def test_report_includes_fatal_errors_for_wrong_results():
 
     assert "Fatal Errors" in report
     assert "Claimed a spurious pattern" in report
+
+
+def test_report_labels_run_errors_separately_from_failed_results():
+    results = [_make_result("heteroscedasticity", "codex", "run_error")]
+    with tempfile.TemporaryDirectory() as tmp:
+        path = Path(tmp) / "report.md"
+        report = generate_report(results, path)
+
+    assert "run error" in report
+    assert "Rerun Recommended:** yes" in report
+    assert "missing analysis report (analysis_report.md)" in report

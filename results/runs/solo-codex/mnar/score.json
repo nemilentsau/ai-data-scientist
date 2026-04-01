@@ -1,0 +1,85 @@
+{
+  "dataset": "mnar",
+  "config": "solo-codex",
+  "agent": "codex",
+  "verdict": "partial",
+  "core_insight_pass": false,
+  "required_coverage": 0.8333333333333334,
+  "supporting_coverage": 0.8333333333333334,
+  "oracle_attainment": null,
+  "oracle_metric_name": null,
+  "oracle_agent_value": 0.65,
+  "fatal_errors": [],
+  "efficiency": {
+    "transcript_chars": 62304.0,
+    "trace_events": 61.0,
+    "report_chars": 17712.0
+  },
+  "criterion_results": [
+    {
+      "criterion_id": "mnar_missingness_pattern_analyzed",
+      "group": "must_have",
+      "status": "hit",
+      "justification": "The agent conducted an extensive missingness investigation: computed group means by missingness status, ran Welch t-tests and Mann-Whitney U tests for each covariate, and fit a logistic regression predicting income missingness from all observed features. This is a thorough, dedicated missingness analysis rather than a cursory check.",
+      "evidence": "Section 3 'Missing-Data Investigation' includes group mean comparisons, two-sample tests (age p=0.000076, education p=0.000039, satisfaction p=0.002753), and a full logistic regression with odds ratios and pseudo R-squared."
+    },
+    {
+      "criterion_id": "mnar_mnar_identified",
+      "group": "must_have",
+      "status": "partial",
+      "justification": "The agent identified that missingness is systematically related to observed covariates (age, education, satisfaction) that are themselves correlated with income, and hinted that nonresponse may depend on unobserved factors. However, the agent never explicitly labels the data as MNAR, never uses the term 'Missing Not At Random,' and does not directly state that higher-income respondents are more likely to have missing income. The analysis is more consistent with identifying MAR (missingness conditional on observed variables) than MNAR (missingness depending on the missing value itself).",
+      "evidence": "Agent states 'the observed variables explain only part of the missingness process, but they explain enough to reject a naive MCAR interpretation' and in limitations notes 'if nonresponse depends on unobserved factors as well as observed ones' \u2014 but never explicitly connects the mechanism to income values or uses the MNAR label."
+    },
+    {
+      "criterion_id": "mnar_bias_from_naive_handling_explained",
+      "group": "must_have",
+      "status": "hit",
+      "justification": "The agent clearly explains that complete-case analysis would produce biased results since missingness is systematic. They frame all income-based models as conditional on response and explicitly warn against treating observed-income analyses as representative of the full sample.",
+      "evidence": "'any model using only observed income values should be interpreted as a conditional analysis on responders, not as fully representative of the entire sample' and 'High income missingness likely biases complete-case estimates if nonresponse depends on unobserved factors as well as observed ones.'"
+    },
+    {
+      "criterion_id": "mnar_proxy_variable_used",
+      "group": "supporting",
+      "status": "hit",
+      "justification": "The agent used age, education_years, satisfaction_score, and num_children as proxy variables to diagnose the missingness mechanism, both in univariate tests and in a multivariate logistic regression.",
+      "evidence": "Logistic regression shows age (p=0.0167), education_years (p=0.0132), and satisfaction_score (p=0.0029) are statistically significant predictors of income missingness."
+    },
+    {
+      "criterion_id": "mnar_mcar_rejected",
+      "group": "supporting",
+      "status": "hit",
+      "justification": "The agent explicitly rejects the MCAR assumption based on statistical evidence.",
+      "evidence": "'the observed variables explain only part of the missingness process, but they explain enough to reject a naive MCAR interpretation.'"
+    },
+    {
+      "criterion_id": "mnar_sensitivity_or_caveat",
+      "group": "supporting",
+      "status": "partial",
+      "justification": "The agent provides strong caveats about interpreting complete-case analyses and frames results as conditional on response. However, they do not propose a concrete sensitivity analysis methodology (e.g., multiple imputation under MNAR assumptions, pattern-mixture models, or bounds/tipping-point analysis).",
+      "evidence": "Caveats appear in the executive summary, Section 3 interpretation, and Section 8 Limitations, but no specific sensitivity analysis framework is proposed."
+    },
+    {
+      "criterion_id": "mnar_drops_missing_rows_blindly",
+      "group": "forbidden",
+      "status": "miss",
+      "justification": "The agent devoted an entire section to analyzing the missingness mechanism before conducting any income modeling. Complete cases were used for income models only after the missingness investigation and with explicit bias warnings.",
+      "evidence": "Section 3 precedes Section 4 (Income Modeling) and provides the full missingness investigation."
+    },
+    {
+      "criterion_id": "mnar_assumes_mcar",
+      "group": "forbidden",
+      "status": "miss",
+      "justification": "The agent explicitly rejected the MCAR assumption and provided statistical evidence against it.",
+      "evidence": "'enough to reject a naive MCAR interpretation'"
+    },
+    {
+      "criterion_id": "mnar_blind_mean_imputation",
+      "group": "forbidden",
+      "status": "miss",
+      "justification": "The agent never recommended mean or median imputation as a standalone solution. Where imputation was used (satisfaction cross-validation), it was accompanied by a missingness indicator and framed as a secondary analysis.",
+      "evidence": "No recommendation of mean/median imputation appears in the report."
+    }
+  ],
+  "summary": "The agent produced a high-quality, methodologically rigorous analysis that thoroughly investigates the missingness pattern using group comparisons, statistical tests, and logistic regression. It correctly rejects MCAR, uses proxy variables effectively, and clearly warns about bias from naive complete-case analysis. The critical shortcoming is that the agent never explicitly identifies the data as MNAR or directly states that higher-income respondents are more likely to have missing income \u2014 the hallmark insight of this dataset. The analysis describes the mechanism in MAR terms (missingness depends on observed covariates) with only a brief hint at MNAR in the limitations section. No forbidden criteria were triggered, and the overall work is solid but falls just short of the core discovery.",
+  "raw_response": "```json\n{\n  \"must_have\": {\n    \"mnar_missingness_pattern_analyzed\": {\n      \"status\": \"hit\",\n      \"justification\": \"The agent conducted an extensive missingness investigation: computed group means by missingness status, ran Welch t-tests and Mann-Whitney U tests for each covariate, and fit a logistic regression predicting income missingness from all observed features. This is a thorough, dedicated missingness analysis rather than a cursory check.\",\n      \"evidence\": \"Section 3 'Missing-Data Investigation' includes group mean comparisons, two-sample tests (age p=0.000076, education p=0.000039, satisfaction p=0.002753), and a full logistic regression with odds ratios and pseudo R-squared.\"\n    },\n    \"mnar_mnar_identified\": {\n      \"status\": \"partial\",\n      \"justification\": \"The agent identified that missingness is systematically related to observed covariates (age, education, satisfaction) that are themselves correlated with income, and hinted that nonresponse may depend on unobserved factors. However, the agent never explicitly labels the data as MNAR, never uses the term 'Missing Not At Random,' and does not directly state that higher-income respondents are more likely to have missing income. The analysis is more consistent with identifying MAR (missingness conditional on observed variables) than MNAR (missingness depending on the missing value itself).\",\n      \"evidence\": \"Agent states 'the observed variables explain only part of the missingness process, but they explain enough to reject a naive MCAR interpretation' and in limitations notes 'if nonresponse depends on unobserved factors as well as observed ones' \u2014 but never explicitly connects the mechanism to income values or uses the MNAR label.\"\n    },\n    \"mnar_bias_from_naive_handling_explained\": {\n      \"status\": \"hit\",\n      \"justification\": \"The agent clearly explains that complete-case analysis would produce biased results since missingness is systematic. They frame all income-based models as conditional on response and explicitly warn against treating observed-income analyses as representative of the full sample.\",\n      \"evidence\": \"'any model using only observed income values should be interpreted as a conditional analysis on responders, not as fully representative of the entire sample' and 'High income missingness likely biases complete-case estimates if nonresponse depends on unobserved factors as well as observed ones.'\"\n    }\n  },\n  \"supporting\": {\n    \"mnar_proxy_variable_used\": {\n      \"status\": \"hit\",\n      \"justification\": \"The agent used age, education_years, satisfaction_score, and num_children as proxy variables to diagnose the missingness mechanism, both in univariate tests and in a multivariate logistic regression.\",\n      \"evidence\": \"Logistic regression shows age (p=0.0167), education_years (p=0.0132), and satisfaction_score (p=0.0029) are statistically significant predictors of income missingness.\"\n    },\n    \"mnar_mcar_rejected\": {\n      \"status\": \"hit\",\n      \"justification\": \"The agent explicitly rejects the MCAR assumption based on statistical evidence.\",\n      \"evidence\": \"'the observed variables explain only part of the missingness process, but they explain enough to reject a naive MCAR interpretation.'\"\n    },\n    \"mnar_sensitivity_or_caveat\": {\n      \"status\": \"partial\",\n      \"justification\": \"The agent provides strong caveats about interpreting complete-case analyses and frames results as conditional on response. However, they do not propose a concrete sensitivity analysis methodology (e.g., multiple imputation under MNAR assumptions, pattern-mixture models, or bounds/tipping-point analysis).\",\n      \"evidence\": \"Caveats appear in the executive summary, Section 3 interpretation, and Section 8 Limitations, but no specific sensitivity analysis framework is proposed.\"\n    }\n  },\n  \"forbidden\": {\n    \"mnar_drops_missing_rows_blindly\": {\n      \"status\": \"miss\",\n      \"justification\": \"The agent devoted an entire section to analyzing the missingness mechanism before conducting any income modeling. Complete cases were used for income models only after the missingness investigation and with explicit bias warnings.\",\n      \"evidence\": \"Section 3 precedes Section 4 (Income Modeling) and provides the full missingness investigation.\"\n    },\n    \"mnar_assumes_mcar\": {\n      \"status\": \"miss\",\n      \"justification\": \"The agent explicitly rejected the MCAR assumption and provided statistical evidence against it.\",\n      \"evidence\": \"'enough to reject a naive MCAR interpretation'\"\n    },\n    \"mnar_blind_mean_imputation\": {\n      \"status\": \"miss\",\n      \"justification\": \"The agent never recommended mean or median imputation as a standalone solution. Where imputation was used (satisfaction cross-validation), it was accompanied by a missingness indicator and framed as a secondary analysis.\",\n      \"evidence\": \"No recommendation of mean/median imputation appears in the report.\"\n    }\n  },\n  \"oracle_metric\": {\n    \"agent_value\": 0.65,\n    \"justification\": \"The analysis is methodologically thorough with strong missingness investigation, explicit MCAR rejection, use of proxy variables, and clear bias warnings. The primary gap is failing to explicitly identify the data as MNAR \u2014 the agent characterizes the mechanism as dependent on observed covariates (which is technically MAR) rather than stating that higher-income respondents are more likely to omit income, which is the core MNAR insight. The absence of the MNAR label and the missing direct connection between income values and their own missingness prevents a full 'solved' verdict.\"\n  },\n  \"summary\": \"The agent produced a high-quality, methodologically rigorous analysis that thoroughly investigates the missingness pattern using group comparisons, statistical tests, and logistic regression. It correctly rejects MCAR, uses proxy variables effectively, and clearly warns about bias from naive complete-case analysis. The critical shortcoming is that the agent never explicitly identifies the data as MNAR or directly states that higher-income respondents are more likely to have missing income \u2014 the hallmark insight of this dataset. The analysis describes the mechanism in MAR terms (missingness depends on observed covariates) with only a brief hint at MNAR in the limitations section. No forbidden criteria were triggered, and the overall work is solid but falls just short of the core discovery.\"\n}"
+}

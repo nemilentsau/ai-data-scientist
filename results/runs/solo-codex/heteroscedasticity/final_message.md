@@ -1,0 +1,7 @@
+Created [analysis_report.md](/var/folders/j_/dt6mk_nd7tbfpyx2v5z_lv6c0000gn/T/tmp.2BbjRV02H1/analysis_report.md), generated all PNGs in [plots](/var/folders/j_/dt6mk_nd7tbfpyx2v5z_lv6c0000gn/T/tmp.2BbjRV02H1/plots), and added a reproducible analysis script at [analyze_dataset.py](/var/folders/j_/dt6mk_nd7tbfpyx2v5z_lv6c0000gn/T/tmp.2BbjRV02H1/analyze_dataset.py).
+
+Main result: the dataset is clean, and `revenue_usd` is dominated by `ad_spend_usd`. A simple spend-only OLS model explains about `R^2 = 0.945`, with a robust slope of about `$2.49` revenue per `$1` spend. Adding channel, region, month, impressions, and clicks did not materially improve out-of-sample performance, and the full model showed spend/impressions multicollinearity.
+
+Main caveat: inference assumptions are not clean. Residual diagnostics showed strong heteroscedasticity, heavy tails, and 61 observations above the Cook’s-distance `4/n` threshold, so I used that to justify relying on HC3 robust standard errors and called out the most influential over- and under-performing campaigns in the report.
+
+Verification: `python analyze_dataset.py` completed successfully and regenerated the report and 8 plot files. The only runtime noise left is a `joblib/loky` CPU-core detection warning from the environment; it did not affect outputs.

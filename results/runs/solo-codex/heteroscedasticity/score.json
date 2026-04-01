@@ -1,0 +1,78 @@
+{
+  "dataset": "heteroscedasticity",
+  "config": "solo-codex",
+  "agent": "codex",
+  "verdict": "solved",
+  "core_insight_pass": true,
+  "required_coverage": 1.0,
+  "supporting_coverage": 1.0,
+  "oracle_attainment": null,
+  "oracle_metric_name": null,
+  "oracle_agent_value": 0.95,
+  "fatal_errors": [],
+  "efficiency": {
+    "transcript_chars": 104480.0,
+    "trace_events": 72.0,
+    "report_chars": 13966.0
+  },
+  "criterion_results": [
+    {
+      "criterion_id": "heteroscedasticity_residual_diagnostics_run",
+      "group": "must_have",
+      "status": "hit",
+      "justification": "The agent ran Breusch-Pagan, Jarque-Bera, and Durbin-Watson tests, computed Cook's distance and studentized residuals, and produced dedicated residual diagnostic plots.",
+      "evidence": "Breusch-Pagan test for the preferred model: p = 9.697e-37; Jarque-Bera test: p = 8.082e-42; plots/07_residual_diagnostics.png"
+    },
+    {
+      "criterion_id": "heteroscedasticity_non_constant_variance_identified",
+      "group": "must_have",
+      "status": "hit",
+      "justification": "The agent explicitly identifies heteroscedasticity and states residual variance is not constant. While it does not spell out the direction (increasing with spend/fitted values), the Breusch-Pagan test inherently tests for variance as a function of regressors, and the conclusion is unambiguous.",
+      "evidence": "Conclusion: residual variance is not constant. Prediction is still strong, but inference should rely on robust standard errors."
+    },
+    {
+      "criterion_id": "heteroscedasticity_remedy_suggested",
+      "group": "must_have",
+      "status": "hit",
+      "justification": "The agent recommends and actually applies heteroscedasticity-robust HC3 standard errors for inference on the preferred model.",
+      "evidence": "Using heteroscedasticity-robust HC3 standard errors: Spend slope: 2.4946 (95% CI: [2.4541, 2.5351]); For inference, heteroscedasticity-robust standard errors are more appropriate than plain OLS standard errors."
+    },
+    {
+      "criterion_id": "heteroscedasticity_residual_plot_used",
+      "group": "supporting",
+      "status": "hit",
+      "justification": "Both a formal test (Breusch-Pagan) and a residual diagnostic plot are used to support the diagnosis.",
+      "evidence": "Breusch-Pagan test for the preferred model: p = 9.697e-37; visible in plots/07_residual_diagnostics.png"
+    },
+    {
+      "criterion_id": "heteroscedasticity_inference_risk_noted",
+      "group": "supporting",
+      "status": "hit",
+      "justification": "The agent explicitly warns that standard OLS inference is unreliable and that classical standard errors are optimistic under heteroscedasticity.",
+      "evidence": "classical OLS standard errors are optimistic; That affects uncertainty estimates more than it affects predictive accuracy."
+    },
+    {
+      "criterion_id": "heteroscedasticity_linear_mean_trend_preserved",
+      "group": "supporting",
+      "status": "hit",
+      "justification": "The agent clearly distinguishes the strong mean trend (R\u00b2=0.945) from the variance problem, framing the caveat as inferential rather than predictive.",
+      "evidence": "The spend-revenue scatter is strongly linear, so the mean trend is well captured; The main caveat is inferential rather than predictive."
+    },
+    {
+      "criterion_id": "heteroscedasticity_assumes_constant_variance",
+      "group": "forbidden",
+      "status": "miss",
+      "justification": "The agent explicitly tested for and rejected constant variance via a highly significant Breusch-Pagan test.",
+      "evidence": "Breusch-Pagan test for the preferred model: p = 9.697e-37; Conclusion: residual variance is not constant."
+    },
+    {
+      "criterion_id": "heteroscedasticity_uses_ols_uncritically",
+      "group": "forbidden",
+      "status": "miss",
+      "justification": "The agent does not present plain OLS inference as trustworthy. It switches to HC3 robust standard errors and repeatedly caveats OLS results.",
+      "evidence": "Using heteroscedasticity-robust HC3 standard errors; classical OLS standard errors are optimistic."
+    }
+  ],
+  "summary": "The agent delivered a thorough and well-structured analysis that hits every must-have and supporting criterion. It ran formal residual diagnostics (Breusch-Pagan, residual plots), clearly identified heteroscedasticity, applied HC3 robust standard errors as a remedy, warned that standard OLS inference is unreliable, and preserved the strong linear mean trend rather than discarding the model. No forbidden criteria were triggered. The only minor shortcoming is the lack of an explicit statement about the direction of variance growth (increasing with fitted values), but the diagnosis and remediation are otherwise complete and correct.",
+  "raw_response": "```json\n{\n  \"must_have\": {\n    \"heteroscedasticity_residual_diagnostics_run\": {\n      \"status\": \"hit\",\n      \"justification\": \"The agent ran Breusch-Pagan, Jarque-Bera, and Durbin-Watson tests, computed Cook's distance and studentized residuals, and produced dedicated residual diagnostic plots.\",\n      \"evidence\": \"Breusch-Pagan test for the preferred model: p = 9.697e-37; Jarque-Bera test: p = 8.082e-42; plots/07_residual_diagnostics.png\"\n    },\n    \"heteroscedasticity_non_constant_variance_identified\": {\n      \"status\": \"hit\",\n      \"justification\": \"The agent explicitly identifies heteroscedasticity and states residual variance is not constant. While it does not spell out the direction (increasing with spend/fitted values), the Breusch-Pagan test inherently tests for variance as a function of regressors, and the conclusion is unambiguous.\",\n      \"evidence\": \"Conclusion: residual variance is not constant. Prediction is still strong, but inference should rely on robust standard errors.\"\n    },\n    \"heteroscedasticity_remedy_suggested\": {\n      \"status\": \"hit\",\n      \"justification\": \"The agent recommends and actually applies heteroscedasticity-robust HC3 standard errors for inference on the preferred model.\",\n      \"evidence\": \"Using heteroscedasticity-robust HC3 standard errors: Spend slope: 2.4946 (95% CI: [2.4541, 2.5351]); For inference, heteroscedasticity-robust standard errors are more appropriate than plain OLS standard errors.\"\n    }\n  },\n  \"supporting\": {\n    \"heteroscedasticity_residual_plot_used\": {\n      \"status\": \"hit\",\n      \"justification\": \"Both a formal test (Breusch-Pagan) and a residual diagnostic plot are used to support the diagnosis.\",\n      \"evidence\": \"Breusch-Pagan test for the preferred model: p = 9.697e-37; visible in plots/07_residual_diagnostics.png\"\n    },\n    \"heteroscedasticity_inference_risk_noted\": {\n      \"status\": \"hit\",\n      \"justification\": \"The agent explicitly warns that standard OLS inference is unreliable and that classical standard errors are optimistic under heteroscedasticity.\",\n      \"evidence\": \"classical OLS standard errors are optimistic; That affects uncertainty estimates more than it affects predictive accuracy.\"\n    },\n    \"heteroscedasticity_linear_mean_trend_preserved\": {\n      \"status\": \"hit\",\n      \"justification\": \"The agent clearly distinguishes the strong mean trend (R\u00b2=0.945) from the variance problem, framing the caveat as inferential rather than predictive.\",\n      \"evidence\": \"The spend-revenue scatter is strongly linear, so the mean trend is well captured; The main caveat is inferential rather than predictive.\"\n    }\n  },\n  \"forbidden\": {\n    \"heteroscedasticity_assumes_constant_variance\": {\n      \"status\": \"miss\",\n      \"justification\": \"The agent explicitly tested for and rejected constant variance via a highly significant Breusch-Pagan test.\",\n      \"evidence\": \"Breusch-Pagan test for the preferred model: p = 9.697e-37; Conclusion: residual variance is not constant.\"\n    },\n    \"heteroscedasticity_uses_ols_uncritically\": {\n      \"status\": \"miss\",\n      \"justification\": \"The agent does not present plain OLS inference as trustworthy. It switches to HC3 robust standard errors and repeatedly caveats OLS results.\",\n      \"evidence\": \"Using heteroscedasticity-robust HC3 standard errors; classical OLS standard errors are optimistic.\"\n    }\n  },\n  \"oracle_metric\": {\n    \"agent_value\": 0.95,\n    \"justification\": \"All three must-have criteria are fully met, all three supporting criteria are hit, and neither forbidden criterion is triggered. The only minor gap is that the agent does not explicitly describe the direction of the heteroscedasticity (variance increasing with spend/fitted values), instead just stating variance is non-constant. Otherwise this is an exemplary analysis that identifies the key pattern, runs rigorous diagnostics, applies an appropriate remedy, and correctly distinguishes the mean-trend strength from the inference problem.\"\n  },\n  \"summary\": \"The agent delivered a thorough and well-structured analysis that hits every must-have and supporting criterion. It ran formal residual diagnostics (Breusch-Pagan, residual plots), clearly identified heteroscedasticity, applied HC3 robust standard errors as a remedy, warned that standard OLS inference is unreliable, and preserved the strong linear mean trend rather than discarding the model. No forbidden criteria were triggered. The only minor shortcoming is the lack of an explicit statement about the direction of variance growth (increasing with fitted values), but the diagnosis and remediation are otherwise complete and correct.\"\n}\n```"
+}

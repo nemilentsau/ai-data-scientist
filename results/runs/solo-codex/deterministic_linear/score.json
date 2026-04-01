@@ -1,0 +1,85 @@
+{
+  "dataset": "deterministic_linear",
+  "config": "solo-codex",
+  "agent": "codex",
+  "verdict": "solved",
+  "core_insight_pass": true,
+  "required_coverage": 1.0,
+  "supporting_coverage": 1.0,
+  "oracle_attainment": 1.0,
+  "oracle_metric_name": "r2",
+  "oracle_agent_value": 1.0,
+  "fatal_errors": [],
+  "efficiency": {
+    "transcript_chars": 59310.0,
+    "trace_events": 56.0,
+    "report_chars": 14764.0
+  },
+  "criterion_results": [
+    {
+      "criterion_id": "deterministic_linear_linear_relationship_identified",
+      "group": "must_have",
+      "status": "hit",
+      "justification": "The report explicitly identifies the relationship as exact and deterministic, calling it a 'deterministic engineering relationship' with a maximum absolute deviation of 1.776e-15.",
+      "evidence": "voltage_mv = 2 * temperature_c + 3 up to floating-point precision ... Exact calibration check: True"
+    },
+    {
+      "criterion_id": "deterministic_linear_slope_recovered",
+      "group": "must_have",
+      "status": "hit",
+      "justification": "The OLS calibration model recovers a temperature coefficient of exactly 2.000000.",
+      "evidence": "Temperature coefficient: 2.000000"
+    },
+    {
+      "criterion_id": "deterministic_linear_intercept_recovered",
+      "group": "must_have",
+      "status": "hit",
+      "justification": "The OLS calibration model recovers an intercept of exactly 3.000000.",
+      "evidence": "Intercept: 3.000000"
+    },
+    {
+      "criterion_id": "deterministic_linear_fit_near_perfect",
+      "group": "must_have",
+      "status": "hit",
+      "justification": "The report explicitly states R-squared of 1.000000 for the calibration model.",
+      "evidence": "R-squared: 1.000000"
+    },
+    {
+      "criterion_id": "deterministic_linear_equation_written",
+      "group": "supporting",
+      "status": "hit",
+      "justification": "The recovered equation is written explicitly in multiple places throughout the report.",
+      "evidence": "voltage_mv = 3 + 2 * temperature_c ... voltage_mv = 2 * temperature_c + 3"
+    },
+    {
+      "criterion_id": "deterministic_linear_ignores_noise_columns",
+      "group": "supporting",
+      "status": "hit",
+      "justification": "The report identifies humidity and pressure as having near-zero correlations with temperature and shows their OLS coefficients are effectively zero (order 1e-16). It concludes they contribute little explanatory power.",
+      "evidence": "corr(temperature_c, humidity_pct) = 0.068 and corr(temperature_c, pressure_hpa) = 0.098, both too small to support a strong practical linear relationship"
+    },
+    {
+      "criterion_id": "deterministic_linear_avoids_overcomplication",
+      "group": "supporting",
+      "status": "hit",
+      "justification": "The main calibration model uses simple OLS. The random forest was only used as a secondary experiment to test whether other features have any predictive value for temperature \u2014 not as the primary approach for the linear relationship.",
+      "evidence": "I fit an ordinary least squares model with voltage_mv as the response and temperature_c as the sole predictor because the scatterplot indicated a perfect line."
+    },
+    {
+      "criterion_id": "deterministic_linear_claims_nonlinear_structure",
+      "group": "forbidden",
+      "status": "miss",
+      "justification": "The report never claims a nonlinear relationship. It consistently and correctly identifies the relationship as perfectly linear and deterministic.",
+      "evidence": "N/A \u2014 no nonlinear claims present"
+    },
+    {
+      "criterion_id": "deterministic_linear_unnecessary_model_complexity",
+      "group": "forbidden",
+      "status": "miss",
+      "justification": "The main modeling approach is a simple OLS regression. The random forest was used only as a secondary diagnostic for the non-leaky prediction question, not as the primary model for the exact linear structure.",
+      "evidence": "Model A: Calibration model for voltage \u2014 ordinary least squares with temperature_c as the sole predictor"
+    }
+  ],
+  "summary": "The agent produced an excellent analysis that correctly identifies the exact deterministic linear relationship voltage_mv = 2 * temperature_c + 3, recovers the precise slope (2) and intercept (3), reports a perfect R\u00b2 of 1.0, and avoids all forbidden pitfalls. It also goes beyond the minimum by explicitly writing the equation, identifying the noise columns as irrelevant, and keeping the primary model appropriately simple. The secondary modeling of temperature from other features is a reasonable supplementary analysis that does not detract from the core finding. All must-have criteria are satisfied, all supporting criteria are met, and no forbidden criteria are triggered \u2014 verdict: solved.",
+  "raw_response": "```json\n{\n  \"must_have\": {\n    \"deterministic_linear_linear_relationship_identified\": {\n      \"status\": \"hit\",\n      \"justification\": \"The report explicitly identifies the relationship as exact and deterministic, calling it a 'deterministic engineering relationship' with a maximum absolute deviation of 1.776e-15.\",\n      \"evidence\": \"voltage_mv = 2 * temperature_c + 3 up to floating-point precision ... Exact calibration check: True\"\n    },\n    \"deterministic_linear_slope_recovered\": {\n      \"status\": \"hit\",\n      \"justification\": \"The OLS calibration model recovers a temperature coefficient of exactly 2.000000.\",\n      \"evidence\": \"Temperature coefficient: 2.000000\"\n    },\n    \"deterministic_linear_intercept_recovered\": {\n      \"status\": \"hit\",\n      \"justification\": \"The OLS calibration model recovers an intercept of exactly 3.000000.\",\n      \"evidence\": \"Intercept: 3.000000\"\n    },\n    \"deterministic_linear_fit_near_perfect\": {\n      \"status\": \"hit\",\n      \"justification\": \"The report explicitly states R-squared of 1.000000 for the calibration model.\",\n      \"evidence\": \"R-squared: 1.000000\"\n    }\n  },\n  \"supporting\": {\n    \"deterministic_linear_equation_written\": {\n      \"status\": \"hit\",\n      \"justification\": \"The recovered equation is written explicitly in multiple places throughout the report.\",\n      \"evidence\": \"voltage_mv = 3 + 2 * temperature_c ... voltage_mv = 2 * temperature_c + 3\"\n    },\n    \"deterministic_linear_ignores_noise_columns\": {\n      \"status\": \"hit\",\n      \"justification\": \"The report identifies humidity and pressure as having near-zero correlations with temperature and shows their OLS coefficients are effectively zero (order 1e-16). It concludes they contribute little explanatory power.\",\n      \"evidence\": \"corr(temperature_c, humidity_pct) = 0.068 and corr(temperature_c, pressure_hpa) = 0.098, both too small to support a strong practical linear relationship\"\n    },\n    \"deterministic_linear_avoids_overcomplication\": {\n      \"status\": \"hit\",\n      \"justification\": \"The main calibration model uses simple OLS. The random forest was only used as a secondary experiment to test whether other features have any predictive value for temperature \u2014 not as the primary approach for the linear relationship.\",\n      \"evidence\": \"I fit an ordinary least squares model with voltage_mv as the response and temperature_c as the sole predictor because the scatterplot indicated a perfect line.\"\n    }\n  },\n  \"forbidden\": {\n    \"deterministic_linear_claims_nonlinear_structure\": {\n      \"status\": \"miss\",\n      \"justification\": \"The report never claims a nonlinear relationship. It consistently and correctly identifies the relationship as perfectly linear and deterministic.\",\n      \"evidence\": \"N/A \u2014 no nonlinear claims present\"\n    },\n    \"deterministic_linear_unnecessary_model_complexity\": {\n      \"status\": \"miss\",\n      \"justification\": \"The main modeling approach is a simple OLS regression. The random forest was used only as a secondary diagnostic for the non-leaky prediction question, not as the primary model for the exact linear structure.\",\n      \"evidence\": \"Model A: Calibration model for voltage \u2014 ordinary least squares with temperature_c as the sole predictor\"\n    }\n  },\n  \"oracle_metric\": {\n    \"agent_value\": 1.0,\n    \"justification\": \"The calibration model reports R-squared: 1.000000, which is the best (and final) reported R\u00b2 for the deterministic linear relationship.\"\n  },\n  \"summary\": \"The agent produced an excellent analysis that correctly identifies the exact deterministic linear relationship voltage_mv = 2 * temperature_c + 3, recovers the precise slope (2) and intercept (3), reports a perfect R\u00b2 of 1.0, and avoids all forbidden pitfalls. It also goes beyond the minimum by explicitly writing the equation, identifying the noise columns as irrelevant, and keeping the primary model appropriately simple. The secondary modeling of temperature from other features is a reasonable supplementary analysis that does not detract from the core finding. All must-have criteria are satisfied, all supporting criteria are met, and no forbidden criteria are triggered \u2014 verdict: solved.\"\n}\n```"
+}

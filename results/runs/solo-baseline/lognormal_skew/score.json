@@ -1,0 +1,85 @@
+{
+  "dataset": "lognormal_skew",
+  "config": "solo-baseline",
+  "agent": "claude",
+  "verdict": "solved",
+  "core_insight_pass": true,
+  "required_coverage": 1.0,
+  "supporting_coverage": 1.0,
+  "oracle_attainment": 0.512,
+  "oracle_metric_name": "r2",
+  "oracle_agent_value": 0.512,
+  "fatal_errors": [],
+  "efficiency": {
+    "transcript_chars": 60035.0,
+    "trace_events": 12.0,
+    "report_chars": 9763.0
+  },
+  "criterion_results": [
+    {
+      "criterion_id": "lognormal_skew_right_skew_detected",
+      "group": "must_have",
+      "status": "hit",
+      "justification": "Agent clearly identifies heavy right skew in the target variable with a quantified skewness statistic.",
+      "evidence": "\"The funding amount is heavily right-skewed (skewness = 3.23) with a long right tail containing 42 outliers (5.2%) above $446K by IQR criterion.\""
+    },
+    {
+      "criterion_id": "lognormal_skew_lognormal_structure_identified",
+      "group": "must_have",
+      "status": "hit",
+      "justification": "Agent explicitly names the distribution as log-normal and validates with a Shapiro-Wilk test on the log-transformed values.",
+      "evidence": "\"Startup funding follows a log-normal distribution.\" and \"A log-transformation yields an approximately normal distribution (Shapiro-Wilk p = 0.52), justifying its use as the modeling target.\""
+    },
+    {
+      "criterion_id": "lognormal_skew_target_transformed",
+      "group": "must_have",
+      "status": "hit",
+      "justification": "Agent applies a log transform to the target and uses log(funding_amount_usd) throughout all modeling.",
+      "evidence": "\"Given the log-normal distribution of funding, I modeled log(funding_amount_usd) as the target. I compared five model families using 10-fold cross-validation.\""
+    },
+    {
+      "criterion_id": "lognormal_skew_post_transform_improvement_shown",
+      "group": "must_have",
+      "status": "hit",
+      "justification": "Agent demonstrates that the log-transformed target passes normality tests (raw skew=3.23 vs. log-transformed Shapiro-Wilk p=0.52), residuals are normal (p=0.617), and the model achieves R\u00b2=0.512. The contrast between the raw distribution (heavily skewed) and the well-behaved log-space model constitutes showing improvement.",
+      "evidence": "\"Residual normality (Shapiro-Wilk): W=0.994, p=0.617 \u2014 Residuals are normal\" and distribution plot 01 showing raw vs log10 funding side by side."
+    },
+    {
+      "criterion_id": "lognormal_skew_distribution_plot_used",
+      "group": "supporting",
+      "status": "hit",
+      "justification": "Agent produces distribution plots for both raw and log-transformed funding (plot 01), residual diagnostics (plot 08), and actual-vs-predicted plots (plot 11).",
+      "evidence": "\"plots/01_distributions.png \u2014 Distributions of all numeric variables\" includes both raw funding histogram and log10(funding) histogram. \"plots/08_ols_diagnostics.png \u2014 OLS residual diagnostics (4 panels).\""
+    },
+    {
+      "criterion_id": "lognormal_skew_back_transform_interpreted",
+      "group": "supporting",
+      "status": "hit",
+      "justification": "Agent correctly interprets log-space coefficients as multiplicative effects on the original dollar scale.",
+      "evidence": "\"Practical Effect Sizes: +100 employees \u2192 x1.32 (32% more); +5 years since founding \u2192 x1.64 (64% more); Series C vs Seed \u2192 x1.19 (19% more).\""
+    },
+    {
+      "criterion_id": "lognormal_skew_normal_target_assumption_rejected",
+      "group": "supporting",
+      "status": "hit",
+      "justification": "Agent explicitly contrasts the raw target's heavy skew against the normality of the log-transformed target, effectively rejecting raw normality as a modeling assumption.",
+      "evidence": "\"All numeric features are well-behaved with low skewness (~0), except the target variable funding_amount_usd which is heavily right-skewed\" and the decision to model log(funding) throughout."
+    },
+    {
+      "criterion_id": "lognormal_skew_assumes_raw_normality",
+      "group": "forbidden",
+      "status": "miss",
+      "justification": "Agent never assumes the raw target is normal. On the contrary, it identifies heavy right skew (skewness=3.23) and explicitly rejects modeling the raw target.",
+      "evidence": "\"funding_amount_usd which is heavily right-skewed\" \u2014 skew detected in the very first inspection."
+    },
+    {
+      "criterion_id": "lognormal_skew_skips_transform_despite_skew",
+      "group": "forbidden",
+      "status": "miss",
+      "justification": "Agent applies a log transform immediately after detecting skew and uses it consistently across all models.",
+      "evidence": "\"I modeled log(funding_amount_usd) as the target.\""
+    }
+  ],
+  "summary": "This is an exemplary analysis that fully addresses the lognormal skew challenge. The agent detected right skew (skewness=3.23), identified the log-normal structure with a Shapiro-Wilk validation, applied a log transform to the target, demonstrated improved residual behavior post-transformation, produced diagnostic plots, correctly back-transformed coefficients into multiplicative effect sizes, and never assumed raw normality. All four must-have criteria are hit, all three supporting criteria are hit, and neither forbidden criterion is triggered. The R\u00b2=0.512 represents a reasonable fit given the dataset's inherent noise. Verdict: solved.",
+  "raw_response": "```json\n{\n  \"must_have\": {\n    \"lognormal_skew_right_skew_detected\": {\n      \"status\": \"hit\",\n      \"justification\": \"Agent clearly identifies heavy right skew in the target variable with a quantified skewness statistic.\",\n      \"evidence\": \"\\\"The funding amount is heavily right-skewed (skewness = 3.23) with a long right tail containing 42 outliers (5.2%) above $446K by IQR criterion.\\\"\"\n    },\n    \"lognormal_skew_lognormal_structure_identified\": {\n      \"status\": \"hit\",\n      \"justification\": \"Agent explicitly names the distribution as log-normal and validates with a Shapiro-Wilk test on the log-transformed values.\",\n      \"evidence\": \"\\\"Startup funding follows a log-normal distribution.\\\" and \\\"A log-transformation yields an approximately normal distribution (Shapiro-Wilk p = 0.52), justifying its use as the modeling target.\\\"\"\n    },\n    \"lognormal_skew_target_transformed\": {\n      \"status\": \"hit\",\n      \"justification\": \"Agent applies a log transform to the target and uses log(funding_amount_usd) throughout all modeling.\",\n      \"evidence\": \"\\\"Given the log-normal distribution of funding, I modeled log(funding_amount_usd) as the target. I compared five model families using 10-fold cross-validation.\\\"\"\n    },\n    \"lognormal_skew_post_transform_improvement_shown\": {\n      \"status\": \"hit\",\n      \"justification\": \"Agent demonstrates that the log-transformed target passes normality tests (raw skew=3.23 vs. log-transformed Shapiro-Wilk p=0.52), residuals are normal (p=0.617), and the model achieves R\u00b2=0.512. The contrast between the raw distribution (heavily skewed) and the well-behaved log-space model constitutes showing improvement.\",\n      \"evidence\": \"\\\"Residual normality (Shapiro-Wilk): W=0.994, p=0.617 \u2014 Residuals are normal\\\" and distribution plot 01 showing raw vs log10 funding side by side.\"\n    }\n  },\n  \"supporting\": {\n    \"lognormal_skew_distribution_plot_used\": {\n      \"status\": \"hit\",\n      \"justification\": \"Agent produces distribution plots for both raw and log-transformed funding (plot 01), residual diagnostics (plot 08), and actual-vs-predicted plots (plot 11).\",\n      \"evidence\": \"\\\"plots/01_distributions.png \u2014 Distributions of all numeric variables\\\" includes both raw funding histogram and log10(funding) histogram. \\\"plots/08_ols_diagnostics.png \u2014 OLS residual diagnostics (4 panels).\\\"\"\n    },\n    \"lognormal_skew_back_transform_interpreted\": {\n      \"status\": \"hit\",\n      \"justification\": \"Agent correctly interprets log-space coefficients as multiplicative effects on the original dollar scale.\",\n      \"evidence\": \"\\\"Practical Effect Sizes: +100 employees \u2192 x1.32 (32% more); +5 years since founding \u2192 x1.64 (64% more); Series C vs Seed \u2192 x1.19 (19% more).\\\"\"\n    },\n    \"lognormal_skew_normal_target_assumption_rejected\": {\n      \"status\": \"hit\",\n      \"justification\": \"Agent explicitly contrasts the raw target's heavy skew against the normality of the log-transformed target, effectively rejecting raw normality as a modeling assumption.\",\n      \"evidence\": \"\\\"All numeric features are well-behaved with low skewness (~0), except the target variable funding_amount_usd which is heavily right-skewed\\\" and the decision to model log(funding) throughout.\"\n    }\n  },\n  \"forbidden\": {\n    \"lognormal_skew_assumes_raw_normality\": {\n      \"status\": \"miss\",\n      \"justification\": \"Agent never assumes the raw target is normal. On the contrary, it identifies heavy right skew (skewness=3.23) and explicitly rejects modeling the raw target.\",\n      \"evidence\": \"\\\"funding_amount_usd which is heavily right-skewed\\\" \u2014 skew detected in the very first inspection.\"\n    },\n    \"lognormal_skew_skips_transform_despite_skew\": {\n      \"status\": \"miss\",\n      \"justification\": \"Agent applies a log transform immediately after detecting skew and uses it consistently across all models.\",\n      \"evidence\": \"\\\"I modeled log(funding_amount_usd) as the target.\\\"\"\n    }\n  },\n  \"oracle_metric\": {\n    \"agent_value\": 0.512,\n    \"justification\": \"The agent's best reported R\u00b2 after log transformation is 0.512 from the final parsimonious OLS model (Adjusted R\u00b2=0.508, CV R\u00b2\u22480.496). Using the highest reported value.\"\n  },\n  \"summary\": \"This is an exemplary analysis that fully addresses the lognormal skew challenge. The agent detected right skew (skewness=3.23), identified the log-normal structure with a Shapiro-Wilk validation, applied a log transform to the target, demonstrated improved residual behavior post-transformation, produced diagnostic plots, correctly back-transformed coefficients into multiplicative effect sizes, and never assumed raw normality. All four must-have criteria are hit, all three supporting criteria are hit, and neither forbidden criterion is triggered. The R\u00b2=0.512 represents a reasonable fit given the dataset's inherent noise. Verdict: solved.\"\n}"
+}

@@ -1,0 +1,78 @@
+{
+  "dataset": "spurious_correlation",
+  "config": "solo-baseline",
+  "agent": "claude",
+  "verdict": "solved",
+  "core_insight_pass": true,
+  "required_coverage": 1.0,
+  "supporting_coverage": 1.0,
+  "oracle_attainment": null,
+  "oracle_metric_name": null,
+  "oracle_agent_value": 0.95,
+  "fatal_errors": [],
+  "efficiency": {
+    "transcript_chars": 55963.0,
+    "trace_events": 10.0,
+    "report_chars": 9826.0
+  },
+  "criterion_results": [
+    {
+      "criterion_id": "spurious_correlation_shared_confounder_identified",
+      "group": "must_have",
+      "status": "hit",
+      "justification": "The report explicitly identifies temperature as the common cause / confounding variable in a dedicated section (3.2) and reinforces it throughout.",
+      "evidence": "Temperature is the **common cause** (confounding variable): Hot days -> more ice cream purchased; Hot days -> more people swimming -> more drowning risk"
+    },
+    {
+      "criterion_id": "spurious_correlation_controlled_analysis_done",
+      "group": "must_have",
+      "status": "hit",
+      "justification": "Section 3.3 presents partial correlation analysis controlling for temperature, showing the ice-cream\u2013drowning correlation drops from r=0.486 to r=0.089. Section 4.4 adds a multiple regression confound test confirming the same result.",
+      "evidence": "Controlling for temperature **destroys** the ice cream\u2013drowning relationship: Raw r=0.486, Partial r (controlling for temp)=0.089 (p=0.017) \u2014 Nearly vanishes"
+    },
+    {
+      "criterion_id": "spurious_correlation_causal_warning_given",
+      "group": "must_have",
+      "status": "hit",
+      "justification": "Multiple explicit warnings against causal interpretation appear in sections 3.1, 6, and 7.",
+      "evidence": "**Correlation does not imply causation** -- even strong, statistically significant correlations can be entirely spurious."
+    },
+    {
+      "criterion_id": "spurious_correlation_seasonal_pattern_described",
+      "group": "supporting",
+      "status": "hit",
+      "justification": "Section 2.1 details the seasonal structure, showing summer vs winter means for all variables, and explains that both ice cream sales and drowning rise in warm periods.",
+      "evidence": "All variables except humidity exhibit strong seasonality driven by temperature. Summer (Jun\u2013Aug) vs. winter (Dec\u2013Feb) contrasts are dramatic: Temperature ~25\u00b0C vs ~-3\u00b0C, Ice cream 1,117 vs 57 units/day, Drowning 1.07 vs 0.16/day"
+    },
+    {
+      "criterion_id": "spurious_correlation_partial_correlation_or_regression",
+      "group": "supporting",
+      "status": "hit",
+      "justification": "Both partial correlation (Section 3.3) and multiple regression (Section 4.4) are used. The session transcript confirms these were computed from actual residual-based partial correlations.",
+      "evidence": "Ice cream vs Drowning | controlling for temperature: r=0.0890; Pool visits vs Drowning | controlling for temperature: r=0.0197; Ice cream vs Drowning | controlling for temp + UV: r=0.0618"
+    },
+    {
+      "criterion_id": "spurious_correlation_time_axis_respected",
+      "group": "supporting",
+      "status": "hit",
+      "justification": "The report leverages the time structure throughout: time series plots (Plot 1), monthly breakdowns (Plot 9), seasonal contrast tables, and time-series cross-validation for regression.",
+      "evidence": "Cross-validated (5-fold time-series split): Mean R\u00b2=0.775\u2026 The gap between in-sample (0.947) and CV (0.775) R\u00b2 is expected given yearly seasonality in a time-series split"
+    },
+    {
+      "criterion_id": "spurious_correlation_claims_direct_causality",
+      "group": "forbidden",
+      "status": "miss",
+      "justification": "The report never claims ice cream causes drowning. It labels the relationship 'spurious' and attributes it entirely to the shared temperature confounder.",
+      "evidence": "The apparent relationship between ice cream sales and drowning is entirely explained by their shared dependence on temperature."
+    },
+    {
+      "criterion_id": "spurious_correlation_ignores_confounder",
+      "group": "forbidden",
+      "status": "miss",
+      "justification": "The main conclusions are all built on the confound-adjusted analysis. The raw correlation is only presented as a 'naive view' before being debunked.",
+      "evidence": "**Spurious correlation confirmed**: Ice cream sales and drowning incidents are correlated (r=0.486) only because both are driven by temperature. After controlling for temperature, the partial correlation drops to r=0.089"
+    }
+  ],
+  "summary": "This is an excellent analysis that fully meets the evaluation contract. The agent correctly identifies temperature as the shared confounder (Section 3.2), demonstrates through partial correlation that the ice-cream\u2013drowning relationship nearly vanishes when controlling for temperature (r drops from 0.486 to 0.089, Section 3.3), and repeatedly warns against causal interpretation (Sections 3.1, 6, 7). The seasonal pattern is well-described with summer/winter contrasts, and the time structure is respected throughout. The analysis goes further with appropriate Poisson regression for count data, multicollinearity diagnostics, and data quality investigation. No forbidden criteria are triggered \u2014 the report never claims direct causality and never draws conclusions from the raw correlation alone. Verdict: solved.",
+  "raw_response": "```json\n{\n  \"must_have\": {\n    \"spurious_correlation_shared_confounder_identified\": {\n      \"status\": \"hit\",\n      \"justification\": \"The report explicitly identifies temperature as the common cause / confounding variable in a dedicated section (3.2) and reinforces it throughout.\",\n      \"evidence\": \"Temperature is the **common cause** (confounding variable): Hot days -> more ice cream purchased; Hot days -> more people swimming -> more drowning risk\"\n    },\n    \"spurious_correlation_controlled_analysis_done\": {\n      \"status\": \"hit\",\n      \"justification\": \"Section 3.3 presents partial correlation analysis controlling for temperature, showing the ice-cream\u2013drowning correlation drops from r=0.486 to r=0.089. Section 4.4 adds a multiple regression confound test confirming the same result.\",\n      \"evidence\": \"Controlling for temperature **destroys** the ice cream\u2013drowning relationship: Raw r=0.486, Partial r (controlling for temp)=0.089 (p=0.017) \u2014 Nearly vanishes\"\n    },\n    \"spurious_correlation_causal_warning_given\": {\n      \"status\": \"hit\",\n      \"justification\": \"Multiple explicit warnings against causal interpretation appear in sections 3.1, 6, and 7.\",\n      \"evidence\": \"**Correlation does not imply causation** -- even strong, statistically significant correlations can be entirely spurious.\"\n    }\n  },\n  \"supporting\": {\n    \"spurious_correlation_seasonal_pattern_described\": {\n      \"status\": \"hit\",\n      \"justification\": \"Section 2.1 details the seasonal structure, showing summer vs winter means for all variables, and explains that both ice cream sales and drowning rise in warm periods.\",\n      \"evidence\": \"All variables except humidity exhibit strong seasonality driven by temperature. Summer (Jun\u2013Aug) vs. winter (Dec\u2013Feb) contrasts are dramatic: Temperature ~25\u00b0C vs ~-3\u00b0C, Ice cream 1,117 vs 57 units/day, Drowning 1.07 vs 0.16/day\"\n    },\n    \"spurious_correlation_partial_correlation_or_regression\": {\n      \"status\": \"hit\",\n      \"justification\": \"Both partial correlation (Section 3.3) and multiple regression (Section 4.4) are used. The session transcript confirms these were computed from actual residual-based partial correlations.\",\n      \"evidence\": \"Ice cream vs Drowning | controlling for temperature: r=0.0890; Pool visits vs Drowning | controlling for temperature: r=0.0197; Ice cream vs Drowning | controlling for temp + UV: r=0.0618\"\n    },\n    \"spurious_correlation_time_axis_respected\": {\n      \"status\": \"hit\",\n      \"justification\": \"The report leverages the time structure throughout: time series plots (Plot 1), monthly breakdowns (Plot 9), seasonal contrast tables, and time-series cross-validation for regression.\",\n      \"evidence\": \"Cross-validated (5-fold time-series split): Mean R\u00b2=0.775\u2026 The gap between in-sample (0.947) and CV (0.775) R\u00b2 is expected given yearly seasonality in a time-series split\"\n    }\n  },\n  \"forbidden\": {\n    \"spurious_correlation_claims_direct_causality\": {\n      \"status\": \"miss\",\n      \"justification\": \"The report never claims ice cream causes drowning. It labels the relationship 'spurious' and attributes it entirely to the shared temperature confounder.\",\n      \"evidence\": \"The apparent relationship between ice cream sales and drowning is entirely explained by their shared dependence on temperature.\"\n    },\n    \"spurious_correlation_ignores_confounder\": {\n      \"status\": \"miss\",\n      \"justification\": \"The main conclusions are all built on the confound-adjusted analysis. The raw correlation is only presented as a 'naive view' before being debunked.\",\n      \"evidence\": \"**Spurious correlation confirmed**: Ice cream sales and drowning incidents are correlated (r=0.486) only because both are driven by temperature. After controlling for temperature, the partial correlation drops to r=0.089\"\n    }\n  },\n  \"oracle_metric\": {\n    \"agent_value\": 0.95,\n    \"justification\": \"All three must-have criteria are fully met with rigorous quantitative evidence. All three supporting criteria are also met. No forbidden criterion is triggered. The analysis is thorough, correctly structured, and goes beyond minimum requirements with Poisson regression, multicollinearity discussion, and data quality checks. A near-exemplary response to this evaluation contract.\"\n  },\n  \"summary\": \"This is an excellent analysis that fully meets the evaluation contract. The agent correctly identifies temperature as the shared confounder (Section 3.2), demonstrates through partial correlation that the ice-cream\u2013drowning relationship nearly vanishes when controlling for temperature (r drops from 0.486 to 0.089, Section 3.3), and repeatedly warns against causal interpretation (Sections 3.1, 6, 7). The seasonal pattern is well-described with summer/winter contrasts, and the time structure is respected throughout. The analysis goes further with appropriate Poisson regression for count data, multicollinearity diagnostics, and data quality investigation. No forbidden criteria are triggered \u2014 the report never claims direct causality and never draws conclusions from the raw correlation alone. Verdict: solved.\"\n}"
+}

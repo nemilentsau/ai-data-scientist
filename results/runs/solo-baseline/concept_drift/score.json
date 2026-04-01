@@ -1,0 +1,87 @@
+{
+  "dataset": "concept_drift",
+  "config": "solo-baseline",
+  "agent": "claude",
+  "verdict": "wrong",
+  "core_insight_pass": false,
+  "required_coverage": 0.25,
+  "supporting_coverage": 0.16666666666666666,
+  "oracle_attainment": null,
+  "oracle_metric_name": null,
+  "oracle_agent_value": 0.05,
+  "fatal_errors": [
+    "Fit a single pooled model without checking for drift."
+  ],
+  "efficiency": {
+    "transcript_chars": 63855.0,
+    "trace_events": 13.0,
+    "report_chars": 11178.0
+  },
+  "criterion_results": [
+    {
+      "criterion_id": "concept_drift_temporal_order_respected",
+      "group": "must_have",
+      "status": "hit",
+      "justification": "The agent preserves temporal ordering throughout. Time series plots, autocorrelation analysis, rolling statistics, and hourly/day-of-week breakdowns all use the original timestamp ordering. No shuffling or random splitting was performed.",
+      "evidence": "\"No temporal autocorrelation: lag-1 autocorrelation = -0.018\"; time series plot (04_timeseries.png); rolling 24h statistics (13_rolling_statistics.png)"
+    },
+    {
+      "criterion_id": "concept_drift_drift_detected",
+      "group": "must_have",
+      "status": "miss",
+      "justification": "The agent explicitly concludes there is no drift or regime change, completely missing the abrupt distribution shift at the midpoint of the dataset.",
+      "evidence": "\"Temporal stationarity: Rolling statistics are stable -- no drift or regime changes\"; \"No temporal patterns exist. No autocorrelation, no time-of-day effects, no day-of-week effects, no trends, no seasonality.\""
+    },
+    {
+      "criterion_id": "concept_drift_pre_post_segments_compared",
+      "group": "must_have",
+      "status": "miss",
+      "justification": "The agent never splits the data into pre- and post-midpoint (or any temporal) segments for comparison. All analyses treat the 1,500 observations as a single pool.",
+      "evidence": "No first-half vs. second-half comparison appears anywhere in the report. All models are trained on the full dataset."
+    },
+    {
+      "criterion_id": "concept_drift_single_global_model_problem_noted",
+      "group": "must_have",
+      "status": "miss",
+      "justification": "While the agent notes that all global models have negative R\u00b2 and perform at chance, it attributes this to features being uninformative rather than to concept drift making a single global model misleading.",
+      "evidence": "\"The measured process parameters do not predict defect rates. This is the central finding.\"; \"Do not build predictive models on these features alone. Any model trained on these features will not generalize -- it will fit noise.\""
+    },
+    {
+      "criterion_id": "concept_drift_relationship_flip_described",
+      "group": "supporting",
+      "status": "miss",
+      "justification": "The agent never examines whether the temperature-defect relationship changes sign across time segments. It reports only the global near-zero correlation.",
+      "evidence": "\"temperature_c: Pearson r = 0.025, Spearman rho = 0.039\" \u2014 only global correlation reported, no temporal decomposition."
+    },
+    {
+      "criterion_id": "concept_drift_changepoint_or_rolling_diagnostic",
+      "group": "supporting",
+      "status": "partial",
+      "justification": "The agent uses rolling 24h statistics and autocorrelation \u2014 valid temporal diagnostics \u2014 but applies them only to the marginal distribution of defect_rate, not to the relationship between features and target. Consequently, it misses the concept drift entirely.",
+      "evidence": "\"Rolling statistics are stable -- no drift or regime changes\"; ACF/PACF plots generated; but no rolling correlation, rolling coefficient, or changepoint analysis was performed."
+    },
+    {
+      "criterion_id": "concept_drift_adaptation_strategy_suggested",
+      "group": "supporting",
+      "status": "miss",
+      "justification": "The agent recommends investigating unmeasured variables and expanding sensors, but never suggests drift-aware strategies such as retraining, temporal segmentation, or monitoring for distribution shift.",
+      "evidence": "Recommendations focus on \"Investigate unmeasured variables,\" \"Expand the sensor suite,\" and \"Do not build predictive models on these features alone.\""
+    },
+    {
+      "criterion_id": "concept_drift_single_model_without_drift_check",
+      "group": "forbidden",
+      "status": "hit",
+      "justification": "The agent fits multiple pooled models (Linear Regression, Random Forest, Gradient Boosting, Logistic Regression, Beta Regression) on all 1,500 observations without ever checking for concept drift \u2014 i.e., whether the feature-target relationships change over time. Its temporal checks (rolling mean/std of defect_rate, autocorrelation) only examine the marginal target distribution, not the stability of model relationships, which is what concept drift is about.",
+      "evidence": "All models use full-dataset cross-validation; \"Temporal stationarity: Rolling statistics are stable\" refers only to marginal defect_rate; no rolling correlation or windowed model comparison was attempted."
+    },
+    {
+      "criterion_id": "concept_drift_ignores_time_order",
+      "group": "forbidden",
+      "status": "miss",
+      "justification": "The agent consistently uses and respects the temporal ordering. Time series plots, autocorrelation, and rolling windows all preserve time order.",
+      "evidence": "Time series plots, ACF/PACF analysis, rolling 24h statistics all use the timestamp column correctly."
+    }
+  ],
+  "summary": "The agent conducted a thorough but fundamentally misguided analysis. It performed extensive EDA, fitted numerous models, and checked many statistical assumptions \u2014 but all on pooled data, completely missing the abrupt concept drift at the dataset's midpoint. The rolling diagnostics it employed only examined the marginal distribution of defect_rate, never the stability of feature-target relationships over time. As a result, it concluded that process parameters are uninformative and recommended investigating unmeasured variables \u2014 the exact opposite of the correct conclusion that features are predictive within each regime but their relationships flip sign at the changepoint. A forbidden criterion is triggered because the pooled modeling was done without meaningful concept drift checking, yielding a verdict of **wrong**.",
+  "raw_response": "```json\n{\n  \"must_have\": {\n    \"concept_drift_temporal_order_respected\": {\n      \"status\": \"hit\",\n      \"justification\": \"The agent preserves temporal ordering throughout. Time series plots, autocorrelation analysis, rolling statistics, and hourly/day-of-week breakdowns all use the original timestamp ordering. No shuffling or random splitting was performed.\",\n      \"evidence\": \"\\\"No temporal autocorrelation: lag-1 autocorrelation = -0.018\\\"; time series plot (04_timeseries.png); rolling 24h statistics (13_rolling_statistics.png)\"\n    },\n    \"concept_drift_drift_detected\": {\n      \"status\": \"miss\",\n      \"justification\": \"The agent explicitly concludes there is no drift or regime change, completely missing the abrupt distribution shift at the midpoint of the dataset.\",\n      \"evidence\": \"\\\"Temporal stationarity: Rolling statistics are stable -- no drift or regime changes\\\"; \\\"No temporal patterns exist. No autocorrelation, no time-of-day effects, no day-of-week effects, no trends, no seasonality.\\\"\"\n    },\n    \"concept_drift_pre_post_segments_compared\": {\n      \"status\": \"miss\",\n      \"justification\": \"The agent never splits the data into pre- and post-midpoint (or any temporal) segments for comparison. All analyses treat the 1,500 observations as a single pool.\",\n      \"evidence\": \"No first-half vs. second-half comparison appears anywhere in the report. All models are trained on the full dataset.\"\n    },\n    \"concept_drift_single_global_model_problem_noted\": {\n      \"status\": \"miss\",\n      \"justification\": \"While the agent notes that all global models have negative R\u00b2 and perform at chance, it attributes this to features being uninformative rather than to concept drift making a single global model misleading.\",\n      \"evidence\": \"\\\"The measured process parameters do not predict defect rates. This is the central finding.\\\"; \\\"Do not build predictive models on these features alone. Any model trained on these features will not generalize -- it will fit noise.\\\"\"\n    }\n  },\n  \"supporting\": {\n    \"concept_drift_relationship_flip_described\": {\n      \"status\": \"miss\",\n      \"justification\": \"The agent never examines whether the temperature-defect relationship changes sign across time segments. It reports only the global near-zero correlation.\",\n      \"evidence\": \"\\\"temperature_c: Pearson r = 0.025, Spearman rho = 0.039\\\" \u2014 only global correlation reported, no temporal decomposition.\"\n    },\n    \"concept_drift_changepoint_or_rolling_diagnostic\": {\n      \"status\": \"partial\",\n      \"justification\": \"The agent uses rolling 24h statistics and autocorrelation \u2014 valid temporal diagnostics \u2014 but applies them only to the marginal distribution of defect_rate, not to the relationship between features and target. Consequently, it misses the concept drift entirely.\",\n      \"evidence\": \"\\\"Rolling statistics are stable -- no drift or regime changes\\\"; ACF/PACF plots generated; but no rolling correlation, rolling coefficient, or changepoint analysis was performed.\"\n    },\n    \"concept_drift_adaptation_strategy_suggested\": {\n      \"status\": \"miss\",\n      \"justification\": \"The agent recommends investigating unmeasured variables and expanding sensors, but never suggests drift-aware strategies such as retraining, temporal segmentation, or monitoring for distribution shift.\",\n      \"evidence\": \"Recommendations focus on \\\"Investigate unmeasured variables,\\\" \\\"Expand the sensor suite,\\\" and \\\"Do not build predictive models on these features alone.\\\"\"\n    }\n  },\n  \"forbidden\": {\n    \"concept_drift_single_model_without_drift_check\": {\n      \"status\": \"hit\",\n      \"justification\": \"The agent fits multiple pooled models (Linear Regression, Random Forest, Gradient Boosting, Logistic Regression, Beta Regression) on all 1,500 observations without ever checking for concept drift \u2014 i.e., whether the feature-target relationships change over time. Its temporal checks (rolling mean/std of defect_rate, autocorrelation) only examine the marginal target distribution, not the stability of model relationships, which is what concept drift is about.\",\n      \"evidence\": \"All models use full-dataset cross-validation; \\\"Temporal stationarity: Rolling statistics are stable\\\" refers only to marginal defect_rate; no rolling correlation or windowed model comparison was attempted.\"\n    },\n    \"concept_drift_ignores_time_order\": {\n      \"status\": \"miss\",\n      \"justification\": \"The agent consistently uses and respects the temporal ordering. Time series plots, autocorrelation, and rolling windows all preserve time order.\",\n      \"evidence\": \"Time series plots, ACF/PACF analysis, rolling 24h statistics all use the timestamp column correctly.\"\n    }\n  },\n  \"oracle_metric\": {\n    \"agent_value\": 0.05,\n    \"justification\": \"The agent completely misses the central pattern \u2014 an abrupt concept drift at the midpoint where the temperature-defect relationship flips sign. It concludes the features are uninformative when in reality they are predictive within each regime. A forbidden criterion is hit (pooled models without real drift checking). The only positive is that temporal order was preserved, but this provided no analytical benefit since the drift was never detected.\"\n  },\n  \"summary\": \"The agent conducted a thorough but fundamentally misguided analysis. It performed extensive EDA, fitted numerous models, and checked many statistical assumptions \u2014 but all on pooled data, completely missing the abrupt concept drift at the dataset's midpoint. The rolling diagnostics it employed only examined the marginal distribution of defect_rate, never the stability of feature-target relationships over time. As a result, it concluded that process parameters are uninformative and recommended investigating unmeasured variables \u2014 the exact opposite of the correct conclusion that features are predictive within each regime but their relationships flip sign at the changepoint. A forbidden criterion is triggered because the pooled modeling was done without meaningful concept drift checking, yielding a verdict of **wrong**.\"\n}\n```"
+}

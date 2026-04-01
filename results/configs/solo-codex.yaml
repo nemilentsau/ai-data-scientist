@@ -1,0 +1,8 @@
+name: solo-codex
+description: Single Codex CLI agent with generic data science prompt
+created: "2026-03-31"
+team:
+  - role: codex
+    prompt: prompts/analyst-generic.md
+    max_turns: 30
+harness: harness/run_codex.sh

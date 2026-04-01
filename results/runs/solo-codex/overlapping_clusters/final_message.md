@@ -1,0 +1,5 @@
+The analysis is complete. The report is at [analysis_report.md](/var/folders/j_/dt6mk_nd7tbfpyx2v5z_lv6c0000gn/T/tmp.GI3tXuIVtY/analysis_report.md), the plots are in [plots](/var/folders/j_/dt6mk_nd7tbfpyx2v5z_lv6c0000gn/T/tmp.GI3tXuIVtY/plots), and the reproducible pipeline is in [analyze_dataset.py](/var/folders/j_/dt6mk_nd7tbfpyx2v5z_lv6c0000gn/T/tmp.GI3tXuIVtY/analyze_dataset.py).
+
+Main result: the dataset is structurally clean, but there is effectively no detectable relationship between the provided predictors and `gpa`. All tested models performed worse than a mean-only baseline out of sample. The best cross-validated result was the dummy mean model at R^2 = -0.033 and RMSE = 0.583, while OLS had R^2 = 0.004 with no significant predictors.
+
+I also checked assumptions rather than stopping at low fit: no strong multicollinearity, no strong heteroskedasticity signal, no obvious omitted nonlinear structure from RESET, and only mild residual non-normality despite formal rejection in a large sample. The practical conclusion is that this dataset does not support useful GPA prediction from the available variables.

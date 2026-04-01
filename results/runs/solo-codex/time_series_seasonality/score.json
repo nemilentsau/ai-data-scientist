@@ -1,0 +1,85 @@
+{
+  "dataset": "time_series_seasonality",
+  "config": "solo-codex",
+  "agent": "codex",
+  "verdict": "solved",
+  "core_insight_pass": true,
+  "required_coverage": 1.0,
+  "supporting_coverage": 1.0,
+  "oracle_attainment": null,
+  "oracle_metric_name": null,
+  "oracle_agent_value": 0.85,
+  "fatal_errors": [],
+  "efficiency": {
+    "transcript_chars": 93294.0,
+    "trace_events": 74.0,
+    "report_chars": 14591.0
+  },
+  "criterion_results": [
+    {
+      "criterion_id": "time_series_seasonality_temporal_order_respected",
+      "group": "must_have",
+      "status": "hit",
+      "justification": "The agent treats the data as a time series throughout: sorts by date, uses a date index, performs ADF stationarity tests, STL decomposition, autocorrelation/Ljung-Box tests, and uses a time-ordered train/test split (first 876 days train, last 219 days test).",
+      "evidence": "Train/test split: Train: first 876 days, Test: last 219 days; ADF pageviews: stat=-1.380, p=0.59166; Ljung-Box on residuals at lags 7 and 14"
+    },
+    {
+      "criterion_id": "time_series_seasonality_weekly_seasonality_identified",
+      "group": "must_have",
+      "status": "hit",
+      "justification": "Weekly seasonality is explicitly identified via day-of-week means (Monday/Sunday peaks, Thursday trough), Kruskal-Wallis test (p=3.17e-29 for pageviews), STL decomposition with period=7 (seasonal_strength=0.830), and day-of-week dummies in the OLS model.",
+      "evidence": "Monday 1124.28, Thursday 747.65; Kruskal-Wallis pageviews stat=147.101, p=3.17e-29; STL seasonal_strength 0.830"
+    },
+    {
+      "criterion_id": "time_series_seasonality_yearly_seasonality_identified",
+      "group": "must_have",
+      "status": "hit",
+      "justification": "Yearly seasonality is identified and modeled through annual Fourier terms in the Calendar OLS model, with explicit mention of 'broad within-year cycles' from the first annual sine term. Yearly aggregates also show the annual pattern.",
+      "evidence": "Calendar OLS with linear time trend, annual Fourier terms, and day-of-week dummies; 'Strong first annual sine term, consistent with broad within-year cycles'"
+    },
+    {
+      "criterion_id": "time_series_seasonality_trend_and_seasonality_accounted_for",
+      "group": "must_have",
+      "status": "hit",
+      "justification": "Both trend and seasonality are decomposed and modeled. STL shows trend_strength=0.962 and seasonal_strength=0.830 for pageviews. The Calendar OLS includes a linear time trend (~0.804 pageviews/day), annual Fourier terms, and weekday dummies, achieving R\u00b2=0.958.",
+      "evidence": "trend_strength 0.962, seasonal_strength 0.830; OLS: 'Positive time trend: about 0.804 pageviews per day'; Training R-squared: 0.958"
+    },
+    {
+      "criterion_id": "time_series_seasonality_decomposition_or_autocorrelation",
+      "group": "supporting",
+      "status": "hit",
+      "justification": "The agent performs STL decomposition (period=7, robust=True), computes autocorrelation functions (ACF through lag 14), runs Ljung-Box tests at lags 7 and 14, and applies ADF stationarity tests.",
+      "evidence": "STL with weekly period (period=7); ACF table for new_signups and support_tickets through lag 14; Ljung-Box lb_stat 7.2206 p=0.4063 at lag 7"
+    },
+    {
+      "criterion_id": "time_series_seasonality_time_axis_visualized",
+      "group": "supporting",
+      "status": "hit",
+      "justification": "Multiple time-axis visualizations are produced: overview time series, STL decomposition plot, holdout forecast comparison, and anomaly flags over time.",
+      "evidence": "Saved: ./plots/timeseries_overview.png, ./plots/pageviews_stl_decomposition.png, ./plots/pageviews_holdout_forecast.png, ./plots/anomaly_flags.png"
+    },
+    {
+      "criterion_id": "time_series_seasonality_multiple_metrics_considered",
+      "group": "supporting",
+      "status": "hit",
+      "justification": "All six numeric metrics are analyzed: pageviews, unique_visitors, bounce_rate, avg_session_duration_sec, new_signups, and support_tickets. Correlations, lagged cross-correlations, and separate models are built for pageviews and new_signups.",
+      "evidence": "Correlation matrix across all 6 metrics; lagged correlations of signups vs traffic; 'unique_visitors tracks pageviews very closely (r=0.972)'; separate Poisson GLM for new_signups"
+    },
+    {
+      "criterion_id": "time_series_seasonality_ignores_temporal_structure",
+      "group": "forbidden",
+      "status": "miss",
+      "justification": "The agent explicitly respects temporal structure throughout: date-sorted indexing, time-series decomposition, stationarity tests, autocorrelation analysis, and time-ordered holdout splits.",
+      "evidence": "Entire analysis is time-series oriented with STL, ADF, Ljung-Box, ACF, and chronological train/test split."
+    },
+    {
+      "criterion_id": "time_series_seasonality_no_seasonality_modeling",
+      "group": "forbidden",
+      "status": "miss",
+      "justification": "Seasonality is explicitly modeled via STL decomposition, day-of-week dummies, annual Fourier terms in OLS, and a seasonal naive benchmark.",
+      "evidence": "Calendar OLS with 'annual Fourier terms, and day-of-week dummies'; 7-day seasonal naive benchmark; STL decomposition"
+    }
+  ],
+  "summary": "The agent delivers a comprehensive, well-structured time-series analysis that fully respects temporal ordering, identifies both weekly and yearly seasonal components, and models trend plus seasonality with an interpretable Calendar OLS. Weekly seasonality is strongly supported by day-of-week statistics, Kruskal-Wallis tests, and STL decomposition. Yearly seasonality is captured through annual Fourier terms in the regression model. The analysis also includes proper diagnostics (Ljung-Box, Breusch-Pagan, Shapiro-Wilk), a meaningful holdout evaluation against a seasonal naive benchmark, and exploration of multiple metrics. No forbidden criteria are violated. Verdict: solved.",
+  "raw_response": "```json\n{\n  \"must_have\": {\n    \"time_series_seasonality_temporal_order_respected\": {\n      \"status\": \"hit\",\n      \"justification\": \"The agent treats the data as a time series throughout: sorts by date, uses a date index, performs ADF stationarity tests, STL decomposition, autocorrelation/Ljung-Box tests, and uses a time-ordered train/test split (first 876 days train, last 219 days test).\",\n      \"evidence\": \"Train/test split: Train: first 876 days, Test: last 219 days; ADF pageviews: stat=-1.380, p=0.59166; Ljung-Box on residuals at lags 7 and 14\"\n    },\n    \"time_series_seasonality_weekly_seasonality_identified\": {\n      \"status\": \"hit\",\n      \"justification\": \"Weekly seasonality is explicitly identified via day-of-week means (Monday/Sunday peaks, Thursday trough), Kruskal-Wallis test (p=3.17e-29 for pageviews), STL decomposition with period=7 (seasonal_strength=0.830), and day-of-week dummies in the OLS model.\",\n      \"evidence\": \"Monday 1124.28, Thursday 747.65; Kruskal-Wallis pageviews stat=147.101, p=3.17e-29; STL seasonal_strength 0.830\"\n    },\n    \"time_series_seasonality_yearly_seasonality_identified\": {\n      \"status\": \"hit\",\n      \"justification\": \"Yearly seasonality is identified and modeled through annual Fourier terms in the Calendar OLS model, with explicit mention of 'broad within-year cycles' from the first annual sine term. Yearly aggregates also show the annual pattern.\",\n      \"evidence\": \"Calendar OLS with linear time trend, annual Fourier terms, and day-of-week dummies; 'Strong first annual sine term, consistent with broad within-year cycles'\"\n    },\n    \"time_series_seasonality_trend_and_seasonality_accounted_for\": {\n      \"status\": \"hit\",\n      \"justification\": \"Both trend and seasonality are decomposed and modeled. STL shows trend_strength=0.962 and seasonal_strength=0.830 for pageviews. The Calendar OLS includes a linear time trend (~0.804 pageviews/day), annual Fourier terms, and weekday dummies, achieving R\u00b2=0.958.\",\n      \"evidence\": \"trend_strength 0.962, seasonal_strength 0.830; OLS: 'Positive time trend: about 0.804 pageviews per day'; Training R-squared: 0.958\"\n    }\n  },\n  \"supporting\": {\n    \"time_series_seasonality_decomposition_or_autocorrelation\": {\n      \"status\": \"hit\",\n      \"justification\": \"The agent performs STL decomposition (period=7, robust=True), computes autocorrelation functions (ACF through lag 14), runs Ljung-Box tests at lags 7 and 14, and applies ADF stationarity tests.\",\n      \"evidence\": \"STL with weekly period (period=7); ACF table for new_signups and support_tickets through lag 14; Ljung-Box lb_stat 7.2206 p=0.4063 at lag 7\"\n    },\n    \"time_series_seasonality_time_axis_visualized\": {\n      \"status\": \"hit\",\n      \"justification\": \"Multiple time-axis visualizations are produced: overview time series, STL decomposition plot, holdout forecast comparison, and anomaly flags over time.\",\n      \"evidence\": \"Saved: ./plots/timeseries_overview.png, ./plots/pageviews_stl_decomposition.png, ./plots/pageviews_holdout_forecast.png, ./plots/anomaly_flags.png\"\n    },\n    \"time_series_seasonality_multiple_metrics_considered\": {\n      \"status\": \"hit\",\n      \"justification\": \"All six numeric metrics are analyzed: pageviews, unique_visitors, bounce_rate, avg_session_duration_sec, new_signups, and support_tickets. Correlations, lagged cross-correlations, and separate models are built for pageviews and new_signups.\",\n      \"evidence\": \"Correlation matrix across all 6 metrics; lagged correlations of signups vs traffic; 'unique_visitors tracks pageviews very closely (r=0.972)'; separate Poisson GLM for new_signups\"\n    }\n  },\n  \"forbidden\": {\n    \"time_series_seasonality_ignores_temporal_structure\": {\n      \"status\": \"miss\",\n      \"justification\": \"The agent explicitly respects temporal structure throughout: date-sorted indexing, time-series decomposition, stationarity tests, autocorrelation analysis, and time-ordered holdout splits.\",\n      \"evidence\": \"Entire analysis is time-series oriented with STL, ADF, Ljung-Box, ACF, and chronological train/test split.\"\n    },\n    \"time_series_seasonality_no_seasonality_modeling\": {\n      \"status\": \"miss\",\n      \"justification\": \"Seasonality is explicitly modeled via STL decomposition, day-of-week dummies, annual Fourier terms in OLS, and a seasonal naive benchmark.\",\n      \"evidence\": \"Calendar OLS with 'annual Fourier terms, and day-of-week dummies'; 7-day seasonal naive benchmark; STL decomposition\"\n    }\n  },\n  \"oracle_metric\": {\n    \"agent_value\": 0.85,\n    \"justification\": \"All four must-have criteria are fully met and all three supporting criteria are hit. No forbidden criteria are triggered. The analysis is thorough, with proper time-series methodology including STL decomposition, stationarity testing, calendar regression with trend and seasonal components, and rigorous diagnostics. Minor gap: the STL decomposition used only period=7 rather than also explicitly decomposing at a yearly period, though yearly seasonality was effectively captured through Fourier terms in modeling.\"\n  },\n  \"summary\": \"The agent delivers a comprehensive, well-structured time-series analysis that fully respects temporal ordering, identifies both weekly and yearly seasonal components, and models trend plus seasonality with an interpretable Calendar OLS. Weekly seasonality is strongly supported by day-of-week statistics, Kruskal-Wallis tests, and STL decomposition. Yearly seasonality is captured through annual Fourier terms in the regression model. The analysis also includes proper diagnostics (Ljung-Box, Breusch-Pagan, Shapiro-Wilk), a meaningful holdout evaluation against a seasonal naive benchmark, and exploration of multiple metrics. No forbidden criteria are violated. Verdict: solved.\"\n}"
+}

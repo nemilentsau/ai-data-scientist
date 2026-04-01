@@ -1,0 +1,7 @@
+The analysis is complete. I generated the report at [analysis_report.md](/var/folders/j_/dt6mk_nd7tbfpyx2v5z_lv6c0000gn/T/tmp.0VDIcyWg4I/analysis_report.md) and saved the plots in [plots/](/var/folders/j_/dt6mk_nd7tbfpyx2v5z_lv6c0000gn/T/tmp.0VDIcyWg4I/plots). I also added a reproducible pipeline at [analyze_dataset.py](/var/folders/j_/dt6mk_nd7tbfpyx2v5z_lv6c0000gn/T/tmp.0VDIcyWg4I/analyze_dataset.py).
+
+Main findings: the dataset is structurally very clean with no nulls or duplicates, `recovery_score` has clear signal, and `readmitted` does not. For recovery, a simple linear model was the right choice and held up under diagnostics: `severity_index` was the dominant negative predictor, the model explained about half the variance (`R^2` about 0.50), residual normality and heteroskedasticity checks were acceptable, and linear regression outperformed a random forest in validation. For readmission, both logistic regression and random forest were weak after cross-validation (`ROC-AUC` only about 0.53 to 0.55), so the available features do not support a useful predictive classifier.
+
+One important substantive result is confounding: treatment groups differ strongly in baseline severity and age. Unadjusted averages make treatment B look better on recovery, but the adjusted regression flips the sign, so raw treatment comparisons are not causally interpretable.
+
+Verification: I ran `python analyze_dataset.py` successfully end to end and confirmed the report plus 7 PNG plots were created.

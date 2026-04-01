@@ -1,0 +1,95 @@
+{
+  "dataset": "simpsons_paradox",
+  "config": "solo-codex",
+  "agent": "codex",
+  "verdict": "solved",
+  "run_status": "completed",
+  "rerun_recommended": false,
+  "run_error_reasons": [],
+  "core_insight_pass": true,
+  "required_coverage": 1.0,
+  "supporting_coverage": 0.8333333333333334,
+  "oracle_attainment": null,
+  "oracle_metric_name": null,
+  "oracle_agent_value": 0.0,
+  "fatal_errors": [],
+  "efficiency": {
+    "transcript_chars": 40237.0,
+    "trace_events": 45.0,
+    "report_chars": 10672.0
+  },
+  "criterion_results": [
+    {
+      "criterion_id": "simpsons_paradox_aggregate_effect",
+      "group": "must_have",
+      "status": "hit",
+      "justification": "The report computes aggregate treatment means (A=66.286, B=68.529) and runs a Welch t-test (p=1.789e-08) showing a significant unadjusted difference favoring treatment B.",
+      "evidence": "Welch t-test for recovery_score by treatment A vs B: statistic=-5.670, p-value=1.789e-08. Unadjusted recovery differs..."
+    },
+    {
+      "criterion_id": "simpsons_paradox_within_group_effects",
+      "group": "must_have",
+      "status": "hit",
+      "justification": "The report provides a Group Means table stratified by department and treatment, showing within-department recovery scores: Cardiology A=76.6 vs B=71.5, Neurology A=69.4 vs B=65.2, Orthopedics A=63.7 vs B=60.0. Treatment A outperforms B in every department.",
+      "evidence": "Group Means table: Cardiology A=76.621 vs B=71.521; Neurology A=69.412 vs B=65.218; Orthopedics A=63.730 vs B=59.975"
+    },
+    {
+      "criterion_id": "simpsons_paradox_reversal_identified",
+      "group": "must_have",
+      "status": "hit",
+      "justification": "The report explicitly states that the direction of the treatment effect reverses after adjustment: aggregate favors B, but adjusted/within-group analysis favors A.",
+      "evidence": "After adjustment, treatment B is associated with -4.003 lower recovery-score points than treatment A (p=2.682e-23). This is the opposite direction of the unadjusted mean difference, which is a strong sign of confounding."
+    },
+    {
+      "criterion_id": "simpsons_paradox_confounder_identified",
+      "group": "must_have",
+      "status": "hit",
+      "justification": "The report identifies department (and its proxy, severity) as the confounder driving the reversal. It notes departments are stratified by severity and treatment assignment is imbalanced across them.",
+      "evidence": "Departments are highly stratified by severity: mean severity_index is 3.027 in Cardiology, 5.029 in Neurology, and 6.975 in Orthopedics. The raw treatment comparison is confounded: treatment A patients are older and sicker on average... Raw averages favor treatment B, but adjusted regression flips the sign, indicating severe confounding by baseline severity and department."
+    },
+    {
+      "criterion_id": "simpsons_paradox_correct_conclusion",
+      "group": "must_have",
+      "status": "hit",
+      "justification": "The report's conclusions are based on the adjusted/stratified analysis, not the aggregate trend. It correctly identifies that treatment A is associated with better recovery after accounting for confounding, and does not recommend treatment B based on the naive comparison.",
+      "evidence": "The treatment comparison is not randomized. Raw averages favor treatment B, but adjusted regression flips the sign, indicating severe confounding by baseline severity and department."
+    },
+    {
+      "criterion_id": "simpsons_paradox_named_simpsons_paradox",
+      "group": "supporting",
+      "status": "partial",
+      "justification": "The report describes the mechanism of Simpson's paradox (aggregate trend reversal due to confounding subgroup composition) but never names it as 'Simpson's paradox' explicitly.",
+      "evidence": "This is the opposite direction of the unadjusted mean difference, which is a strong sign of confounding."
+    },
+    {
+      "criterion_id": "simpsons_paradox_effect_sizes_quantified",
+      "group": "supporting",
+      "status": "hit",
+      "justification": "The report quantifies aggregate means by treatment (A=66.286, B=68.529), within-department means for both treatments, and the adjusted regression coefficient (-4.003 for treatment B vs A).",
+      "evidence": "Aggregate means: A=66.286, B=68.529. Adjusted coefficient: C(treatment)[T.B] = -4.0034. Within-group means provided in Group Means table."
+    },
+    {
+      "criterion_id": "simpsons_paradox_visualized_reversal",
+      "group": "supporting",
+      "status": "hit",
+      "justification": "The Group Means table clearly makes the reversal visible by displaying treatment A vs B recovery scores within each department. Additionally, group boxplots are referenced.",
+      "evidence": "Group Means table stratified by department \u00d7 treatment; referenced plots: recovery_group_boxplots.png, severity_group_boxplots.png"
+    },
+    {
+      "criterion_id": "simpsons_paradox_aggregate_only_conclusion",
+      "group": "forbidden",
+      "status": "miss",
+      "justification": "The report explicitly warns against the aggregate trend and bases its conclusions on the adjusted/stratified analysis.",
+      "evidence": "Raw averages favor treatment B, but adjusted regression flips the sign, indicating severe confounding by baseline severity and department."
+    },
+    {
+      "criterion_id": "simpsons_paradox_ignores_grouping_variable",
+      "group": "forbidden",
+      "status": "miss",
+      "justification": "The report extensively analyzes department as a grouping/confounding variable and stratifies the analysis by it.",
+      "evidence": "Group Means table stratified by department; department included in OLS model; confounding by department explicitly discussed."
+    }
+  ],
+  "summary": "The analysis is strong. It computes both the aggregate treatment effect (favoring B) and within-department effects (all favoring A), explicitly identifies the reversal, attributes it to confounding by department and severity, and correctly bases its conclusions on the stratified evidence. The main gap is that the phenomenon is never named as Simpson's paradox, though the mechanism is clearly described. All must-have criteria are met, no forbidden criteria are triggered, and most supporting criteria are satisfied. Verdict: solved.",
+  "raw_response": "```json\n{\n  \"must_have\": {\n    \"simpsons_paradox_aggregate_effect\": {\n      \"status\": \"hit\",\n      \"justification\": \"The report computes aggregate treatment means (A=66.286, B=68.529) and runs a Welch t-test (p=1.789e-08) showing a significant unadjusted difference favoring treatment B.\",\n      \"evidence\": \"Welch t-test for recovery_score by treatment A vs B: statistic=-5.670, p-value=1.789e-08. Unadjusted recovery differs...\"\n    },\n    \"simpsons_paradox_within_group_effects\": {\n      \"status\": \"hit\",\n      \"justification\": \"The report provides a Group Means table stratified by department and treatment, showing within-department recovery scores: Cardiology A=76.6 vs B=71.5, Neurology A=69.4 vs B=65.2, Orthopedics A=63.7 vs B=60.0. Treatment A outperforms B in every department.\",\n      \"evidence\": \"Group Means table: Cardiology A=76.621 vs B=71.521; Neurology A=69.412 vs B=65.218; Orthopedics A=63.730 vs B=59.975\"\n    },\n    \"simpsons_paradox_reversal_identified\": {\n      \"status\": \"hit\",\n      \"justification\": \"The report explicitly states that the direction of the treatment effect reverses after adjustment: aggregate favors B, but adjusted/within-group analysis favors A.\",\n      \"evidence\": \"After adjustment, treatment B is associated with -4.003 lower recovery-score points than treatment A (p=2.682e-23). This is the opposite direction of the unadjusted mean difference, which is a strong sign of confounding.\"\n    },\n    \"simpsons_paradox_confounder_identified\": {\n      \"status\": \"hit\",\n      \"justification\": \"The report identifies department (and its proxy, severity) as the confounder driving the reversal. It notes departments are stratified by severity and treatment assignment is imbalanced across them.\",\n      \"evidence\": \"Departments are highly stratified by severity: mean severity_index is 3.027 in Cardiology, 5.029 in Neurology, and 6.975 in Orthopedics. The raw treatment comparison is confounded: treatment A patients are older and sicker on average... Raw averages favor treatment B, but adjusted regression flips the sign, indicating severe confounding by baseline severity and department.\"\n    },\n    \"simpsons_paradox_correct_conclusion\": {\n      \"status\": \"hit\",\n      \"justification\": \"The report's conclusions are based on the adjusted/stratified analysis, not the aggregate trend. It correctly identifies that treatment A is associated with better recovery after accounting for confounding, and does not recommend treatment B based on the naive comparison.\",\n      \"evidence\": \"The treatment comparison is not randomized. Raw averages favor treatment B, but adjusted regression flips the sign, indicating severe confounding by baseline severity and department.\"\n    }\n  },\n  \"supporting\": {\n    \"simpsons_paradox_named_simpsons_paradox\": {\n      \"status\": \"partial\",\n      \"justification\": \"The report describes the mechanism of Simpson's paradox (aggregate trend reversal due to confounding subgroup composition) but never names it as 'Simpson's paradox' explicitly.\",\n      \"evidence\": \"This is the opposite direction of the unadjusted mean difference, which is a strong sign of confounding.\"\n    },\n    \"simpsons_paradox_effect_sizes_quantified\": {\n      \"status\": \"hit\",\n      \"justification\": \"The report quantifies aggregate means by treatment (A=66.286, B=68.529), within-department means for both treatments, and the adjusted regression coefficient (-4.003 for treatment B vs A).\",\n      \"evidence\": \"Aggregate means: A=66.286, B=68.529. Adjusted coefficient: C(treatment)[T.B] = -4.0034. Within-group means provided in Group Means table.\"\n    },\n    \"simpsons_paradox_visualized_reversal\": {\n      \"status\": \"hit\",\n      \"justification\": \"The Group Means table clearly makes the reversal visible by displaying treatment A vs B recovery scores within each department. Additionally, group boxplots are referenced.\",\n      \"evidence\": \"Group Means table stratified by department \u00d7 treatment; referenced plots: recovery_group_boxplots.png, severity_group_boxplots.png\"\n    }\n  },\n  \"forbidden\": {\n    \"simpsons_paradox_aggregate_only_conclusion\": {\n      \"status\": \"miss\",\n      \"justification\": \"The report explicitly warns against the aggregate trend and bases its conclusions on the adjusted/stratified analysis.\",\n      \"evidence\": \"Raw averages favor treatment B, but adjusted regression flips the sign, indicating severe confounding by baseline severity and department.\"\n    },\n    \"simpsons_paradox_ignores_grouping_variable\": {\n      \"status\": \"miss\",\n      \"justification\": \"The report extensively analyzes department as a grouping/confounding variable and stratifies the analysis by it.\",\n      \"evidence\": \"Group Means table stratified by department; department included in OLS model; confounding by department explicitly discussed.\"\n    }\n  },\n  \"oracle_metric\": {\n    \"agent_value\": 0.0,\n    \"justification\": \"No oracle metric is defined for this discovery-type task family.\"\n  },\n  \"summary\": \"The analysis is strong. It computes both the aggregate treatment effect (favoring B) and within-department effects (all favoring A), explicitly identifies the reversal, attributes it to confounding by department and severity, and correctly bases its conclusions on the stratified evidence. The main gap is that the phenomenon is never named as Simpson's paradox, though the mechanism is clearly described. All must-have criteria are met, no forbidden criteria are triggered, and most supporting criteria are satisfied. Verdict: solved.\"\n}"
+}

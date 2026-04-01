@@ -1,9 +1,13 @@
 """Tests for prompt building and deterministic scoring helpers."""
 
+import tempfile
+from pathlib import Path
+
 from datasets.registry import OracleMetric, get_dataset
 from reviewer.scorer import (
     CriterionResult,
     ScoreResult,
+    assess_run_state,
     build_reviewer_prompt,
     compute_coverage,
     determine_verdict,
@@ -104,6 +108,26 @@ def test_oracle_attainment_normalizes_lower_is_better_metrics():
     assert normalize_oracle_attainment(oracle, 4.0) == 0.75
 
 
+def test_run_state_marks_missing_outputs_as_run_error():
+    with tempfile.TemporaryDirectory() as tmp:
+        run_dir = Path(tmp)
+        run_status, reasons = assess_run_state(run_dir)
+
+    assert run_status == "run_error"
+    assert "missing analysis report (analysis_report.md)" in reasons
+
+
+def test_run_state_marks_complete_outputs_as_completed():
+    with tempfile.TemporaryDirectory() as tmp:
+        run_dir = Path(tmp)
+        (run_dir / "analysis_report.md").write_text("report")
+
+        run_status, reasons = assess_run_state(run_dir)
+
+    assert run_status == "completed"
+    assert reasons == []
+
+
 def test_score_result_dataclass_uses_structured_fields():
     result = ScoreResult(
         dataset_name="test",
@@ -115,6 +139,9 @@ def test_score_result_dataclass_uses_structured_fields():
         oracle_attainment=0.9,
         oracle_metric_name="r2",
         oracle_agent_value=0.9,
+        run_status="completed",
+        rerun_recommended=False,
+        run_error_reasons=[],
         fatal_errors=[],
         efficiency={"trace_events": 10.0},
         criterion_results=[],
@@ -124,4 +151,5 @@ def test_score_result_dataclass_uses_structured_fields():
 
     assert result.dataset_name == "test"
     assert result.verdict == "solved"
+    assert result.run_status == "completed"
     assert result.oracle_attainment == 0.9

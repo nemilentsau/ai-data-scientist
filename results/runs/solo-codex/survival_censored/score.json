@@ -1,0 +1,85 @@
+{
+  "dataset": "survival_censored",
+  "config": "solo-codex",
+  "agent": "codex",
+  "verdict": "solved",
+  "core_insight_pass": true,
+  "required_coverage": 1.0,
+  "supporting_coverage": 1.0,
+  "oracle_attainment": null,
+  "oracle_metric_name": null,
+  "oracle_agent_value": 1.0,
+  "fatal_errors": [],
+  "efficiency": {
+    "transcript_chars": 48586.0,
+    "trace_events": 44.0,
+    "report_chars": 9374.0
+  },
+  "criterion_results": [
+    {
+      "criterion_id": "survival_censored_censoring_accounted_for",
+      "group": "must_have",
+      "status": "hit",
+      "justification": "The agent explicitly identified event_occurred as the censoring indicator, reported 530 events and 270 censored observations, and used the indicator as the event column in both KM and Cox models.",
+      "evidence": "Event indicator: event_occurred ... Event rate: 0.662 (530 events, 270 censored)"
+    },
+    {
+      "criterion_id": "survival_censored_survival_method_used",
+      "group": "must_have",
+      "status": "hit",
+      "justification": "The agent used Kaplan-Meier estimation with log-rank tests, Cox proportional hazards regression, and a Weibull AFT sensitivity model.",
+      "evidence": "Log-rank test by treatment: p = 1.23e-14 ... Cox partial AIC with log biomarker: 6339.66 ... A Weibull AFT model was fit as a sensitivity analysis."
+    },
+    {
+      "criterion_id": "survival_censored_treatment_groups_compared",
+      "group": "must_have",
+      "status": "hit",
+      "justification": "Treatment groups were compared via log-rank test (p = 1.23e-14) and as a covariate in the multivariable Cox model with HR and CI reported.",
+      "evidence": "Log-rank test by treatment: p = 1.23e-14 ... treatment_Drug_B hazard ratio 0.5096 (95% CI 0.4280 to 0.6068, p = 3.71e-14)"
+    },
+    {
+      "criterion_id": "survival_censored_drug_b_better_survival",
+      "group": "must_have",
+      "status": "hit",
+      "justification": "The agent explicitly concluded Drug_B has better survival in both unadjusted and adjusted analyses, supported by a hazard ratio of ~0.51.",
+      "evidence": "Drug_B is associated with better survival than Drug_A in both unadjusted Kaplan-Meier analysis and adjusted Cox modeling."
+    },
+    {
+      "criterion_id": "survival_censored_survival_curves_shown",
+      "group": "supporting",
+      "status": "hit",
+      "justification": "Kaplan-Meier survival curves were generated for both treatment and stage groups.",
+      "evidence": "plots/km_treatment.png, plots/km_stage.png"
+    },
+    {
+      "criterion_id": "survival_censored_hazard_or_risk_interpreted",
+      "group": "supporting",
+      "status": "hit",
+      "justification": "The treatment effect was interpreted directly in terms of hazard ratio with confidence interval.",
+      "evidence": "treatment_Drug_B is the only clearly supported predictor in the adjusted Cox model, with hazard ratio 0.510 (95% CI 0.428 to 0.607, p = 3.71e-14)"
+    },
+    {
+      "criterion_id": "survival_censored_covariates_considered",
+      "group": "supporting",
+      "status": "hit",
+      "justification": "Age and stage were included in the Cox model and their weak/inconclusive associations were discussed. Covariate balance by treatment was also checked.",
+      "evidence": "Age, sex, stage, and biomarker all have confidence intervals crossing the null and should be treated as weak or inconclusive signals ... Treatment groups are not perfectly stage-balanced, so the adjusted model is more trustworthy than crude event rates alone."
+    },
+    {
+      "criterion_id": "survival_censored_naive_mean_time",
+      "group": "forbidden",
+      "status": "miss",
+      "justification": "The agent did not compute or compare naive mean observed times as a treatment comparison. Descriptive statistics were reported only for profiling, not for drawing survival conclusions.",
+      "evidence": "Treatment comparison used log-rank test and Cox model, not mean time comparison."
+    },
+    {
+      "criterion_id": "survival_censored_ignores_event_indicator",
+      "group": "forbidden",
+      "status": "miss",
+      "justification": "The event indicator was used throughout: in KM fitting, Cox model, and Weibull AFT model.",
+      "evidence": "Event indicator: event_occurred ... event rate 0.662 (530 events, 270 censored)"
+    }
+  ],
+  "summary": "The agent delivered an exemplary survival analysis. It correctly identified the dataset as a time-to-event problem, used the censoring indicator throughout, applied both Kaplan-Meier and Cox PH methods, compared treatment groups with censoring-aware tests, and correctly concluded Drug_B shows superior survival. The analysis went further with covariate balance checks, proportional hazards assumption testing, cross-validated concordance, and a Weibull AFT sensitivity analysis. No forbidden patterns were triggered.",
+  "raw_response": "```json\n{\n  \"must_have\": {\n    \"survival_censored_censoring_accounted_for\": {\n      \"status\": \"hit\",\n      \"justification\": \"The agent explicitly identified event_occurred as the censoring indicator, reported 530 events and 270 censored observations, and used the indicator as the event column in both KM and Cox models.\",\n      \"evidence\": \"Event indicator: event_occurred ... Event rate: 0.662 (530 events, 270 censored)\"\n    },\n    \"survival_censored_survival_method_used\": {\n      \"status\": \"hit\",\n      \"justification\": \"The agent used Kaplan-Meier estimation with log-rank tests, Cox proportional hazards regression, and a Weibull AFT sensitivity model.\",\n      \"evidence\": \"Log-rank test by treatment: p = 1.23e-14 ... Cox partial AIC with log biomarker: 6339.66 ... A Weibull AFT model was fit as a sensitivity analysis.\"\n    },\n    \"survival_censored_treatment_groups_compared\": {\n      \"status\": \"hit\",\n      \"justification\": \"Treatment groups were compared via log-rank test (p = 1.23e-14) and as a covariate in the multivariable Cox model with HR and CI reported.\",\n      \"evidence\": \"Log-rank test by treatment: p = 1.23e-14 ... treatment_Drug_B hazard ratio 0.5096 (95% CI 0.4280 to 0.6068, p = 3.71e-14)\"\n    },\n    \"survival_censored_drug_b_better_survival\": {\n      \"status\": \"hit\",\n      \"justification\": \"The agent explicitly concluded Drug_B has better survival in both unadjusted and adjusted analyses, supported by a hazard ratio of ~0.51.\",\n      \"evidence\": \"Drug_B is associated with better survival than Drug_A in both unadjusted Kaplan-Meier analysis and adjusted Cox modeling.\"\n    }\n  },\n  \"supporting\": {\n    \"survival_censored_survival_curves_shown\": {\n      \"status\": \"hit\",\n      \"justification\": \"Kaplan-Meier survival curves were generated for both treatment and stage groups.\",\n      \"evidence\": \"plots/km_treatment.png, plots/km_stage.png\"\n    },\n    \"survival_censored_hazard_or_risk_interpreted\": {\n      \"status\": \"hit\",\n      \"justification\": \"The treatment effect was interpreted directly in terms of hazard ratio with confidence interval.\",\n      \"evidence\": \"treatment_Drug_B is the only clearly supported predictor in the adjusted Cox model, with hazard ratio 0.510 (95% CI 0.428 to 0.607, p = 3.71e-14)\"\n    },\n    \"survival_censored_covariates_considered\": {\n      \"status\": \"hit\",\n      \"justification\": \"Age and stage were included in the Cox model and their weak/inconclusive associations were discussed. Covariate balance by treatment was also checked.\",\n      \"evidence\": \"Age, sex, stage, and biomarker all have confidence intervals crossing the null and should be treated as weak or inconclusive signals ... Treatment groups are not perfectly stage-balanced, so the adjusted model is more trustworthy than crude event rates alone.\"\n    }\n  },\n  \"forbidden\": {\n    \"survival_censored_naive_mean_time\": {\n      \"status\": \"miss\",\n      \"justification\": \"The agent did not compute or compare naive mean observed times as a treatment comparison. Descriptive statistics were reported only for profiling, not for drawing survival conclusions.\",\n      \"evidence\": \"Treatment comparison used log-rank test and Cox model, not mean time comparison.\"\n    },\n    \"survival_censored_ignores_event_indicator\": {\n      \"status\": \"miss\",\n      \"justification\": \"The event indicator was used throughout: in KM fitting, Cox model, and Weibull AFT model.\",\n      \"evidence\": \"Event indicator: event_occurred ... event rate 0.662 (530 events, 270 censored)\"\n    }\n  },\n  \"oracle_metric\": {\n    \"agent_value\": 1.0,\n    \"justification\": \"All four must-have criteria are hit, all three supporting criteria are hit, and neither forbidden criterion is triggered. The analysis is methodologically rigorous with proper survival methods, assumption checking (PH test, cross-validation), covariate adjustment, and correct conclusions.\"\n  },\n  \"summary\": \"The agent delivered an exemplary survival analysis. It correctly identified the dataset as a time-to-event problem, used the censoring indicator throughout, applied both Kaplan-Meier and Cox PH methods, compared treatment groups with censoring-aware tests, and correctly concluded Drug_B shows superior survival. The analysis went further with covariate balance checks, proportional hazards assumption testing, cross-validated concordance, and a Weibull AFT sensitivity analysis. No forbidden patterns were triggered.\"\n}\n```"
+}

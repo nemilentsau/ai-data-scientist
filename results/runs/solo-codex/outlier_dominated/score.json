@@ -1,0 +1,78 @@
+{
+  "dataset": "outlier_dominated",
+  "config": "solo-codex",
+  "agent": "codex",
+  "verdict": "partial",
+  "core_insight_pass": false,
+  "required_coverage": 0.6666666666666666,
+  "supporting_coverage": 1.0,
+  "oracle_attainment": null,
+  "oracle_metric_name": null,
+  "oracle_agent_value": 0.4,
+  "fatal_errors": [],
+  "efficiency": {
+    "transcript_chars": 68394.0,
+    "trace_events": 73.0,
+    "report_chars": 12382.0
+  },
+  "criterion_results": [
+    {
+      "criterion_id": "outlier_dominated_outliers_detected",
+      "group": "must_have",
+      "status": "hit",
+      "justification": "The agent thoroughly detected extreme order-total outliers by reconstructing expected totals from component variables and identifying rows with massive discrepancies, negative totals, and implausible values.",
+      "evidence": "Rows with absolute discrepancy > $1,000: 60 (5.0%); Negative order_total_usd rows: 28 (2.3%); Top anomaly discrepancy: $19,867.89; Table of 10 most extreme anomalies provided."
+    },
+    {
+      "criterion_id": "outlier_dominated_influence_on_fit_explained",
+      "group": "must_have",
+      "status": "partial",
+      "justification": "The agent showed that outliers massively inflate summary statistics (mean abs error $704 vs median $53; order_total std $3,044 vs mean $1,093) and declared the data 'cannot be treated as accounting-consistent.' However, they never explicitly demonstrated how outliers distort an OLS regression fit on the main relationship. They framed the problem as classification of 'returned' rather than showing OLS distortion on order totals.",
+      "evidence": "Mean absolute discrepancy: $704.29 ... Those anomalies are materially important and dominate the data-quality assessment."
+    },
+    {
+      "criterion_id": "outlier_dominated_robust_or_justified_handling",
+      "group": "must_have",
+      "status": "partial",
+      "justification": "The agent chose non-parametric tests over parametric ones ('non-parametric comparisons were preferred'), included outlier-derived features in modeling, and critically did NOT drop rows. They recommended auditing the data source. However, they never formally compared a robust regression estimator (Huber, RANSAC, Theil-Sen, median regression) against naive OLS to demonstrate the difference, which is the core expected comparison.",
+      "evidence": "Shapiro-Wilk tests ... reject normality for most variables, so non-parametric comparisons were preferred; Recommendations: Audit how order_total_usd was generated or exported."
+    },
+    {
+      "criterion_id": "outlier_dominated_reconstructs_expected_total",
+      "group": "supporting",
+      "status": "hit",
+      "justification": "The agent explicitly reconstructed expected totals from component variables using the formula items_qty * unit_price_usd * (1 - discount_pct/100) + shipping_usd and showed that extreme totals are wildly inconsistent with normal orders.",
+      "evidence": "expected_total_usd = items_qty * unit_price_usd * (1 - discount_pct / 100) + shipping_usd; Top anomaly: order_total $21,343 vs expected $1,475 (error $19,867)."
+    },
+    {
+      "criterion_id": "outlier_dominated_outlier_fraction_quantified",
+      "group": "supporting",
+      "status": "hit",
+      "justification": "The agent quantified outlier counts at multiple thresholds and as percentages of the dataset.",
+      "evidence": "Rows with absolute discrepancy > $1,000: 60 (5.0%); Negative order_total_usd rows: 28 (2.3%); Also reported counts at thresholds 1, 5, 10, 100, 1000."
+    },
+    {
+      "criterion_id": "outlier_dominated_segment_not_confused",
+      "group": "supporting",
+      "status": "hit",
+      "justification": "The agent cleanly separated the segment analysis from the outlier problem. They showed segment differences are non-significant and correctly identified the order-total anomalies as the main issue, not customer segments.",
+      "evidence": "Chi-square test: chi-square = 1.037, p-value = 0.595; 'There is no statistically credible evidence that return propensity differs by segment in this sample.'"
+    },
+    {
+      "criterion_id": "outlier_dominated_trusts_ols_without_diagnostics",
+      "group": "forbidden",
+      "status": "miss",
+      "justification": "The agent did not fit or interpret OLS without diagnostics. They performed extensive outlier diagnostics (consistency checks, negative total flags, error distributions) before any modeling, and the models they did fit included diagnostic checks (VIF, Box-Tidwell, Hosmer-Lemeshow).",
+      "evidence": "Section 3 (Data Quality and Anomaly Investigation) precedes Section 4 (Modeling); Section 5 provides full model diagnostics."
+    },
+    {
+      "criterion_id": "outlier_dominated_drops_rows_without_justification",
+      "group": "forbidden",
+      "status": "miss",
+      "justification": "The agent retained all 1200 rows throughout the analysis and explicitly recommended auditing the data rather than removing rows.",
+      "evidence": "Analysis frame shape: 1200 x 13 (same as raw); Recommendation: 'Audit how order_total_usd was generated or exported.'"
+    }
+  ],
+  "summary": "The agent produced a thorough, technically polished analysis with strong outlier detection: it reconstructed expected totals, quantified the outlier fraction, identified extreme anomalies, and avoided confusing segments with outliers. No forbidden criteria were triggered. However, it fundamentally missed the dataset's core challenge by framing the task as classification of 'returned' rather than investigating how a small fraction of extreme order totals distorts ordinary least-squares regression. It never fit OLS to demonstrate distortion, nor compared robust estimators against naive OLS\u2014the two central analytical expectations. The result is a partial verdict: solid data-quality work that stops short of the key insight about robust vs. non-robust estimation.",
+  "raw_response": "```json\n{\n  \"must_have\": {\n    \"outlier_dominated_outliers_detected\": {\n      \"status\": \"hit\",\n      \"justification\": \"The agent thoroughly detected extreme order-total outliers by reconstructing expected totals from component variables and identifying rows with massive discrepancies, negative totals, and implausible values.\",\n      \"evidence\": \"Rows with absolute discrepancy > $1,000: 60 (5.0%); Negative order_total_usd rows: 28 (2.3%); Top anomaly discrepancy: $19,867.89; Table of 10 most extreme anomalies provided.\"\n    },\n    \"outlier_dominated_influence_on_fit_explained\": {\n      \"status\": \"partial\",\n      \"justification\": \"The agent showed that outliers massively inflate summary statistics (mean abs error $704 vs median $53; order_total std $3,044 vs mean $1,093) and declared the data 'cannot be treated as accounting-consistent.' However, they never explicitly demonstrated how outliers distort an OLS regression fit on the main relationship. They framed the problem as classification of 'returned' rather than showing OLS distortion on order totals.\",\n      \"evidence\": \"Mean absolute discrepancy: $704.29 ... Those anomalies are materially important and dominate the data-quality assessment.\"\n    },\n    \"outlier_dominated_robust_or_justified_handling\": {\n      \"status\": \"partial\",\n      \"justification\": \"The agent chose non-parametric tests over parametric ones ('non-parametric comparisons were preferred'), included outlier-derived features in modeling, and critically did NOT drop rows. They recommended auditing the data source. However, they never formally compared a robust regression estimator (Huber, RANSAC, Theil-Sen, median regression) against naive OLS to demonstrate the difference, which is the core expected comparison.\",\n      \"evidence\": \"Shapiro-Wilk tests ... reject normality for most variables, so non-parametric comparisons were preferred; Recommendations: Audit how order_total_usd was generated or exported.\"\n    }\n  },\n  \"supporting\": {\n    \"outlier_dominated_reconstructs_expected_total\": {\n      \"status\": \"hit\",\n      \"justification\": \"The agent explicitly reconstructed expected totals from component variables using the formula items_qty * unit_price_usd * (1 - discount_pct/100) + shipping_usd and showed that extreme totals are wildly inconsistent with normal orders.\",\n      \"evidence\": \"expected_total_usd = items_qty * unit_price_usd * (1 - discount_pct / 100) + shipping_usd; Top anomaly: order_total $21,343 vs expected $1,475 (error $19,867).\"\n    },\n    \"outlier_dominated_outlier_fraction_quantified\": {\n      \"status\": \"hit\",\n      \"justification\": \"The agent quantified outlier counts at multiple thresholds and as percentages of the dataset.\",\n      \"evidence\": \"Rows with absolute discrepancy > $1,000: 60 (5.0%); Negative order_total_usd rows: 28 (2.3%); Also reported counts at thresholds 1, 5, 10, 100, 1000.\"\n    },\n    \"outlier_dominated_segment_not_confused\": {\n      \"status\": \"hit\",\n      \"justification\": \"The agent cleanly separated the segment analysis from the outlier problem. They showed segment differences are non-significant and correctly identified the order-total anomalies as the main issue, not customer segments.\",\n      \"evidence\": \"Chi-square test: chi-square = 1.037, p-value = 0.595; 'There is no statistically credible evidence that return propensity differs by segment in this sample.'\"\n    }\n  },\n  \"forbidden\": {\n    \"outlier_dominated_trusts_ols_without_diagnostics\": {\n      \"status\": \"miss\",\n      \"justification\": \"The agent did not fit or interpret OLS without diagnostics. They performed extensive outlier diagnostics (consistency checks, negative total flags, error distributions) before any modeling, and the models they did fit included diagnostic checks (VIF, Box-Tidwell, Hosmer-Lemeshow).\",\n      \"evidence\": \"Section 3 (Data Quality and Anomaly Investigation) precedes Section 4 (Modeling); Section 5 provides full model diagnostics.\"\n    },\n    \"outlier_dominated_drops_rows_without_justification\": {\n      \"status\": \"miss\",\n      \"justification\": \"The agent retained all 1200 rows throughout the analysis and explicitly recommended auditing the data rather than removing rows.\",\n      \"evidence\": \"Analysis frame shape: 1200 x 13 (same as raw); Recommendation: 'Audit how order_total_usd was generated or exported.'\"\n    }\n  },\n  \"oracle_metric\": {\n    \"agent_value\": 0.4,\n    \"justification\": \"The agent excelled at outlier detection, data reconstruction, and quantification (all supporting criteria hit). However, it missed the core analytical task: it never fit OLS on the order-total relationship to show distortion, and never compared a robust estimator against naive OLS. Instead it reframed the problem as binary classification of 'returned', which, while technically competent, sidesteps the key pattern the dataset was designed to test. Two of three must-haves are only partial.\"\n  },\n  \"summary\": \"The agent produced a thorough, technically polished analysis with strong outlier detection: it reconstructed expected totals, quantified the outlier fraction, identified extreme anomalies, and avoided confusing segments with outliers. No forbidden criteria were triggered. However, it fundamentally missed the dataset's core challenge by framing the task as classification of 'returned' rather than investigating how a small fraction of extreme order totals distorts ordinary least-squares regression. It never fit OLS to demonstrate distortion, nor compared robust estimators against naive OLS\u2014the two central analytical expectations. The result is a partial verdict: solid data-quality work that stops short of the key insight about robust vs. non-robust estimation.\"\n}"
+}

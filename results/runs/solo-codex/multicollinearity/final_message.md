@@ -1,0 +1,5 @@
+Created a full, reproducible analysis workflow and wrote the results to [analysis_report.md](/private/var/folders/j_/dt6mk_nd7tbfpyx2v5z_lv6c0000gn/T/tmp.6ggCQMp1E2/analysis_report.md). The analysis script is in [analyze_dataset.py](/private/var/folders/j_/dt6mk_nd7tbfpyx2v5z_lv6c0000gn/T/tmp.6ggCQMp1E2/analyze_dataset.py), and all PNG outputs were saved under [plots](/private/var/folders/j_/dt6mk_nd7tbfpyx2v5z_lv6c0000gn/T/tmp.6ggCQMp1E2/plots).
+
+Main result: this is a clean housing-price dataset with no missing values or duplicate IDs. Price is driven primarily by `sq_ft`, with `year_built` adding secondary signal. A plain linear regression outperformed ridge, lasso, random forest, and log-linear alternatives in 5-fold CV, with mean CV `R^2` about `0.9425` and holdout `R^2` about `0.9491`. Assumption checks were broadly acceptable, but there is substantial multicollinearity among size-related predictors, so coefficient interpretation for `sq_ft` / `num_rooms` / `lot_size_acres` should be treated cautiously.
+
+Verification: `python analyze_dataset.py` completed successfully and regenerated the report and plots.

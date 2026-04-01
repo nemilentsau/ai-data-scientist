@@ -1,5 +1,5 @@
 {
-  "name": "trace-viewer",
+  "name": "benchmark-dashboard",
   "private": true,
   "version": "1.0.0",
   "type": "module",
@@ -12,5 +12,8 @@
     "@sveltejs/vite-plugin-svelte": "^5.0.3",
     "svelte": "^5.28.2",
     "vite": "^6.3.5"
+  },
+  "dependencies": {
+    "yaml": "^2.8.3"
   }
 }

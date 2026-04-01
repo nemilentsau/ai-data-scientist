@@ -1,0 +1,85 @@
+{
+  "dataset": "lognormal_skew",
+  "config": "solo-codex",
+  "agent": "codex",
+  "verdict": "solved",
+  "core_insight_pass": true,
+  "required_coverage": 1.0,
+  "supporting_coverage": 1.0,
+  "oracle_attainment": 0.385,
+  "oracle_metric_name": "r2",
+  "oracle_agent_value": 0.385,
+  "fatal_errors": [],
+  "efficiency": {
+    "transcript_chars": 58942.0,
+    "trace_events": 52.0,
+    "report_chars": 13621.0
+  },
+  "criterion_results": [
+    {
+      "criterion_id": "lognormal_skew_right_skew_detected",
+      "group": "must_have",
+      "status": "hit",
+      "justification": "Agent explicitly computed and reported strong right skew in the target variable.",
+      "evidence": "funding_amount_usd is highly right-skewed with skewness 3.23; Median funding is $118,934; mean funding is $168,083, indicating the mean is pulled upward by a small number of large rounds."
+    },
+    {
+      "criterion_id": "lognormal_skew_lognormal_structure_identified",
+      "group": "must_have",
+      "status": "hit",
+      "justification": "Agent identified that the target is best modeled on the log scale, noting the log transform makes it closer to Gaussian \u2014 equivalent to recognizing log-normal structure.",
+      "evidence": "A log transform materially improves symmetry. ... An interpretable OLS model on log(1 + funding_amount_usd) ... the log transform makes the target closer to Gaussian."
+    },
+    {
+      "criterion_id": "lognormal_skew_target_transformed",
+      "group": "must_have",
+      "status": "hit",
+      "justification": "Agent applied a log1p transform to the target for both OLS and ridge regression models.",
+      "evidence": "An interpretable OLS model on log(1 + funding_amount_usd) for coefficient interpretation and diagnostics. TransformedTargetRegressor(regressor=RidgeCV(...), func=np.log1p, inverse_func=np.expm1)"
+    },
+    {
+      "criterion_id": "lognormal_skew_post_transform_improvement_shown",
+      "group": "must_have",
+      "status": "hit",
+      "justification": "Agent showed improvement via both model comparison (ridge_log R\u00b2=0.38 vs linear_raw R\u00b2=0.363) and residual diagnostics after transform (Jarque-Bera p=0.301 indicating acceptable normality).",
+      "evidence": "ridge_log cv_r2_mean=0.38 vs linear_raw cv_r2_mean=0.363. Residual normality is acceptable after the log transform: Jarque-Bera statistic = 2.401, p-value = 0.301, residual skew = -0.059."
+    },
+    {
+      "criterion_id": "lognormal_skew_distribution_plot_used",
+      "group": "supporting",
+      "status": "hit",
+      "justification": "Agent generated a funding distribution plot and model diagnostic plots to visually justify the transform.",
+      "evidence": "![Funding distribution](./plots/funding_distribution.png) ... ![Model diagnostics](./plots/model_diagnostics.png)"
+    },
+    {
+      "criterion_id": "lognormal_skew_back_transform_interpreted",
+      "group": "supporting",
+      "status": "hit",
+      "justification": "Agent interpreted coefficients as percentage changes on the original scale and reported holdout metrics in dollars after back-transformation.",
+      "evidence": "Increasing years_since_founding by one year is associated with an estimated 9.9% increase in expected funding on the log scale. Test MAE: $82,412, Test RMSE: $128,411."
+    },
+    {
+      "criterion_id": "lognormal_skew_normal_target_assumption_rejected",
+      "group": "supporting",
+      "status": "hit",
+      "justification": "Agent explicitly rejected modeling the raw target as normal, stating it would be misleading.",
+      "evidence": "Raw funding is strongly right-skewed, so fitting a model directly on dollars gives heteroskedastic residuals and places too much weight on a small number of very large deals. ... Funding amounts are dominated by a long right tail, so analysis on the raw target alone would be misleading."
+    },
+    {
+      "criterion_id": "lognormal_skew_assumes_raw_normality",
+      "group": "forbidden",
+      "status": "miss",
+      "justification": "Agent did not assume raw normality; explicitly tested for and detected strong right skew (skewness=3.23) before proceeding.",
+      "evidence": "funding_amount_usd is highly right-skewed with skewness 3.23"
+    },
+    {
+      "criterion_id": "lognormal_skew_skips_transform_despite_skew",
+      "group": "forbidden",
+      "status": "miss",
+      "justification": "Agent applied a log transform as the primary modeling strategy after detecting skew.",
+      "evidence": "I therefore used: 1. An interpretable OLS model on log(1 + funding_amount_usd) ... 2. A ridge regression with the same log target"
+    }
+  ],
+  "summary": "The agent produced an excellent analysis that hits every must-have and supporting criterion. It detected the strong right skew (skewness=3.23), identified the log-normal structure, applied a log1p transform, and demonstrated improved fit via both cross-validated model comparison and residual diagnostics. The report goes further by interpreting coefficients on the original scale, rejecting the normality assumption explicitly, and including distribution and diagnostic plots. No forbidden criteria were triggered. The final R\u00b2 of 0.385 is moderate but reasonable given only seven predictors.",
+  "raw_response": "```json\n{\n  \"must_have\": {\n    \"lognormal_skew_right_skew_detected\": {\n      \"status\": \"hit\",\n      \"justification\": \"Agent explicitly computed and reported strong right skew in the target variable.\",\n      \"evidence\": \"funding_amount_usd is highly right-skewed with skewness 3.23; Median funding is $118,934; mean funding is $168,083, indicating the mean is pulled upward by a small number of large rounds.\"\n    },\n    \"lognormal_skew_lognormal_structure_identified\": {\n      \"status\": \"hit\",\n      \"justification\": \"Agent identified that the target is best modeled on the log scale, noting the log transform makes it closer to Gaussian \u2014 equivalent to recognizing log-normal structure.\",\n      \"evidence\": \"A log transform materially improves symmetry. ... An interpretable OLS model on log(1 + funding_amount_usd) ... the log transform makes the target closer to Gaussian.\"\n    },\n    \"lognormal_skew_target_transformed\": {\n      \"status\": \"hit\",\n      \"justification\": \"Agent applied a log1p transform to the target for both OLS and ridge regression models.\",\n      \"evidence\": \"An interpretable OLS model on log(1 + funding_amount_usd) for coefficient interpretation and diagnostics. TransformedTargetRegressor(regressor=RidgeCV(...), func=np.log1p, inverse_func=np.expm1)\"\n    },\n    \"lognormal_skew_post_transform_improvement_shown\": {\n      \"status\": \"hit\",\n      \"justification\": \"Agent showed improvement via both model comparison (ridge_log R\u00b2=0.38 vs linear_raw R\u00b2=0.363) and residual diagnostics after transform (Jarque-Bera p=0.301 indicating acceptable normality).\",\n      \"evidence\": \"ridge_log cv_r2_mean=0.38 vs linear_raw cv_r2_mean=0.363. Residual normality is acceptable after the log transform: Jarque-Bera statistic = 2.401, p-value = 0.301, residual skew = -0.059.\"\n    }\n  },\n  \"supporting\": {\n    \"lognormal_skew_distribution_plot_used\": {\n      \"status\": \"hit\",\n      \"justification\": \"Agent generated a funding distribution plot and model diagnostic plots to visually justify the transform.\",\n      \"evidence\": \"![Funding distribution](./plots/funding_distribution.png) ... ![Model diagnostics](./plots/model_diagnostics.png)\"\n    },\n    \"lognormal_skew_back_transform_interpreted\": {\n      \"status\": \"hit\",\n      \"justification\": \"Agent interpreted coefficients as percentage changes on the original scale and reported holdout metrics in dollars after back-transformation.\",\n      \"evidence\": \"Increasing years_since_founding by one year is associated with an estimated 9.9% increase in expected funding on the log scale. Test MAE: $82,412, Test RMSE: $128,411.\"\n    },\n    \"lognormal_skew_normal_target_assumption_rejected\": {\n      \"status\": \"hit\",\n      \"justification\": \"Agent explicitly rejected modeling the raw target as normal, stating it would be misleading.\",\n      \"evidence\": \"Raw funding is strongly right-skewed, so fitting a model directly on dollars gives heteroskedastic residuals and places too much weight on a small number of very large deals. ... Funding amounts are dominated by a long right tail, so analysis on the raw target alone would be misleading.\"\n    }\n  },\n  \"forbidden\": {\n    \"lognormal_skew_assumes_raw_normality\": {\n      \"status\": \"miss\",\n      \"justification\": \"Agent did not assume raw normality; explicitly tested for and detected strong right skew (skewness=3.23) before proceeding.\",\n      \"evidence\": \"funding_amount_usd is highly right-skewed with skewness 3.23\"\n    },\n    \"lognormal_skew_skips_transform_despite_skew\": {\n      \"status\": \"miss\",\n      \"justification\": \"Agent applied a log transform as the primary modeling strategy after detecting skew.\",\n      \"evidence\": \"I therefore used: 1. An interpretable OLS model on log(1 + funding_amount_usd) ... 2. A ridge regression with the same log target\"\n    }\n  },\n  \"oracle_metric\": {\n    \"agent_value\": 0.385,\n    \"justification\": \"Agent reports Test R\u00b2 of 0.385 for the selected ridge model with log-transformed target on the holdout set. CV mean R\u00b2 was 0.38.\"\n  },\n  \"summary\": \"The agent produced an excellent analysis that hits every must-have and supporting criterion. It detected the strong right skew (skewness=3.23), identified the log-normal structure, applied a log1p transform, and demonstrated improved fit via both cross-validated model comparison and residual diagnostics. The report goes further by interpreting coefficients on the original scale, rejecting the normality assumption explicitly, and including distribution and diagnostic plots. No forbidden criteria were triggered. The final R\u00b2 of 0.385 is moderate but reasonable given only seven predictors.\"\n}\n```"
+}
