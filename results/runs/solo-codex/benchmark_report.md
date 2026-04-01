@@ -19,7 +19,7 @@
 | overlapping_clusters | - | failed (0%) | - |
 | pure_noise | - | solved (100%) | - |
 | quadratic | - | solved (100%) | - |
-| simpsons_paradox | - | wrong (30%) | - |
+| simpsons_paradox | - | solved (100%) | - |
 | spurious_correlation | - | partial (83%) | - |
 | survival_censored | - | solved (100%) | - |
 | time_series_seasonality | - | solved (100%) | - |
@@ -29,7 +29,7 @@
 
 | Agent | Solve Rate | Wrong Rate | Run Error Rate | Avg Required | Avg Supporting | Avg Oracle |
 |-------|------------|------------|----------------|--------------|----------------|-----------|
-| Codex | 55% | 15% | 0% | 75% | 73% | 68% |
+| Codex | 60% | 10% | 0% | 78% | 77% | 68% |
 
 ## Detailed Results
 
@@ -443,33 +443,31 @@
 
 ### simpsons_paradox
 
-#### Codex (wrong)
+#### Codex (solved)
 
-**Summary:** The agent conducted a methodologically competent but fundamentally misdirected analysis. While it correctly identified confounding between treatment groups and computed aggregate treatment effects, it never performed the critical stratified analysis — comparing treatment effects within each department — that would have revealed Simpson's paradox. Instead, it relied on a multivariate regression that controlled for severity_index (a variable strongly correlated with the grouping variable), which effectively absorbed the department effect and masked the reversal. The final conclusion that treatment A is better aligns with the aggregate trend and contradicts what a proper within-group analysis would show, triggering the forbidden criterion. Verdict: wrong.
+**Summary:** The analysis is strong. It computes both the aggregate treatment effect (favoring B) and within-department effects (all favoring A), explicitly identifies the reversal, attributes it to confounding by department and severity, and correctly bases its conclusions on the stratified evidence. The main gap is that the phenomenon is never named as Simpson's paradox, though the mechanism is clearly described. All must-have criteria are met, no forbidden criteria are triggered, and most supporting criteria are satisfied. Verdict: solved.
 **Run Status:** completed
 **Rerun Recommended:** no
-**Core Insight:** fail
-**Required Coverage:** 30%
-**Supporting Coverage:** 17%
-**Fatal Errors:**
-- Reach a final conclusion from the aggregate trend while ignoring subgroup reversal.
-**Efficiency:** report_chars=14714, trace_events=62, transcript_chars=79273
+**Core Insight:** pass
+**Required Coverage:** 100%
+**Supporting Coverage:** 83%
+**Efficiency:** report_chars=10672, trace_events=45, transcript_chars=40237
 
 **Must Have**
-- `simpsons_paradox_aggregate_effect`: hit. The agent explicitly computes and compares the aggregate treatment effect on recovery score (A=68.71 vs B=66.66) and length of stay, with ANOVA tests confirming statistical significance. Evidence: Recovery by treatment: ANOVA p = 6.704e-06 ... mean recovery A=68.714, B=66.658
-- `simpsons_paradox_within_group_effects`: miss. The agent never stratifies treatment effects within each department. They show department-level summaries and a department-treatment mix table, but never compute recovery_score by treatment WITHIN each department. The regression adjusts for department as a covariate (alongside severity), which is not the same as showing within-group treatment comparisons that would reveal the reversal. Evidence: No stratified within-department treatment comparison appears anywhere in the report. The regression pools all groups via covariates rather than showing per-department effects.
-- `simpsons_paradox_reversal_identified`: miss. The agent never states that the treatment direction reverses between the aggregate and within-group analyses. In fact, the agent concludes the same direction at both levels (A is better). Evidence: After adjustment, treatment A is associated with meaningfully better recovery than treatment B — no mention of any reversal.
-- `simpsons_paradox_confounder_identified`: partial. The agent identifies that treatment groups are confounded by department and severity, and shows the department-treatment mix imbalance. However, they emphasize severity_index as the dominant driver and never connect department specifically as the confounder causing a Simpson's paradox reversal. Evidence: Treatment groups are not balanced at baseline ... concentrated in different departments ... department-treatment mix table shown. But severity_index is the dominant driver is the conclusion.
-- `simpsons_paradox_correct_conclusion`: miss. The agent concludes treatment A is better, which follows the aggregate direction. The ground truth requires the conclusion to follow the within-group (stratified) evidence, which should show a reversal. The agent's regression over-adjusts by including severity (which is collinear with department), masking the paradox. Evidence: After adjustment, treatment A is associated with meaningfully better recovery than treatment B, while LOS differences mostly disappear.
+- `simpsons_paradox_aggregate_effect`: hit. The report computes aggregate treatment means (A=66.286, B=68.529) and runs a Welch t-test (p=1.789e-08) showing a significant unadjusted difference favoring treatment B. Evidence: Welch t-test for recovery_score by treatment A vs B: statistic=-5.670, p-value=1.789e-08. Unadjusted recovery differs...
+- `simpsons_paradox_within_group_effects`: hit. The report provides a Group Means table stratified by department and treatment, showing within-department recovery scores: Cardiology A=76.6 vs B=71.5, Neurology A=69.4 vs B=65.2, Orthopedics A=63.7 vs B=60.0. Treatment A outperforms B in every department. Evidence: Group Means table: Cardiology A=76.621 vs B=71.521; Neurology A=69.412 vs B=65.218; Orthopedics A=63.730 vs B=59.975
+- `simpsons_paradox_reversal_identified`: hit. The report explicitly states that the direction of the treatment effect reverses after adjustment: aggregate favors B, but adjusted/within-group analysis favors A. Evidence: After adjustment, treatment B is associated with -4.003 lower recovery-score points than treatment A (p=2.682e-23). This is the opposite direction of the unadjusted mean difference, which is a strong sign of confounding.
+- `simpsons_paradox_confounder_identified`: hit. The report identifies department (and its proxy, severity) as the confounder driving the reversal. It notes departments are stratified by severity and treatment assignment is imbalanced across them. Evidence: Departments are highly stratified by severity: mean severity_index is 3.027 in Cardiology, 5.029 in Neurology, and 6.975 in Orthopedics. The raw treatment comparison is confounded: treatment A patients are older and sicker on average... Raw averages favor treatment B, but adjusted regression flips the sign, indicating severe confounding by baseline severity and department.
+- `simpsons_paradox_correct_conclusion`: hit. The report's conclusions are based on the adjusted/stratified analysis, not the aggregate trend. It correctly identifies that treatment A is associated with better recovery after accounting for confounding, and does not recommend treatment B based on the naive comparison. Evidence: The treatment comparison is not randomized. Raw averages favor treatment B, but adjusted regression flips the sign, indicating severe confounding by baseline severity and department.
 
 **Supporting**
-- `simpsons_paradox_named_simpsons_paradox`: miss. The report never names Simpson's paradox or describes the ecological fallacy / aggregation reversal mechanism. Evidence: No mention of Simpson's paradox or equivalent language anywhere in the report.
-- `simpsons_paradox_effect_sizes_quantified`: partial. The agent quantifies the aggregate effect sizes (mean recovery by treatment, regression coefficient of -4.72 for treatment B) but never quantifies within-department treatment effects, which is essential for showing the paradox. Evidence: treatment B is associated with an approximately 4.72-point lower recovery score ... A=68.714, B=66.658
-- `simpsons_paradox_visualized_reversal`: miss. The agent generates several plots (boxplots, scatterplots, heatmaps) but none that visualize the aggregate-vs-subgroup reversal pattern. Evidence: Plots listed include treatment_boxplots.png and recovery_vs_severity.png but no stratified treatment comparison plot.
+- `simpsons_paradox_named_simpsons_paradox`: partial. The report describes the mechanism of Simpson's paradox (aggregate trend reversal due to confounding subgroup composition) but never names it as 'Simpson's paradox' explicitly. Evidence: This is the opposite direction of the unadjusted mean difference, which is a strong sign of confounding.
+- `simpsons_paradox_effect_sizes_quantified`: hit. The report quantifies aggregate means by treatment (A=66.286, B=68.529), within-department means for both treatments, and the adjusted regression coefficient (-4.003 for treatment B vs A). Evidence: Aggregate means: A=66.286, B=68.529. Adjusted coefficient: C(treatment)[T.B] = -4.0034. Within-group means provided in Group Means table.
+- `simpsons_paradox_visualized_reversal`: hit. The Group Means table clearly makes the reversal visible by displaying treatment A vs B recovery scores within each department. Additionally, group boxplots are referenced. Evidence: Group Means table stratified by department × treatment; referenced plots: recovery_group_boxplots.png, severity_group_boxplots.png
 
 **Forbidden**
-- `simpsons_paradox_aggregate_only_conclusion`: hit. The agent's final conclusion follows the aggregate trend direction (treatment A is better) without ever identifying or acknowledging the within-group reversal. Even though a regression was used, it incorporated severity as a covariate (highly collinear with department), effectively masking the department-level reversal and producing a conclusion aligned with the aggregate. Evidence: After adjustment, treatment A is associated with meaningfully better recovery than treatment B ... Higher severity is strongly associated with worse recovery.
-- `simpsons_paradox_ignores_grouping_variable`: miss. The agent does not ignore the grouping variable entirely — department is included in the regression model and discussed in the confounding section. The failure is in how it was used (covariate in regression rather than stratification variable), not that it was ignored. Evidence: Treatment assignment is confounded by severity and department ... department-treatment mix table provided.
+- `simpsons_paradox_aggregate_only_conclusion`: miss. The report explicitly warns against the aggregate trend and bases its conclusions on the adjusted/stratified analysis. Evidence: Raw averages favor treatment B, but adjusted regression flips the sign, indicating severe confounding by baseline severity and department.
+- `simpsons_paradox_ignores_grouping_variable`: miss. The report extensively analyzes department as a grouping/confounding variable and stratifies the analysis by it. Evidence: Group Means table stratified by department; department included in OLS model; confounding by department explicitly discussed.
 
 ### spurious_correlation
 

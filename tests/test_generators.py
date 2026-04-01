@@ -61,8 +61,11 @@ def test_simpsons_paradox_trend_reversal():
     assert "recovery_score" in df.columns
     assert "severity_index" in df.columns
 
-    # Aggregate: higher severity → lower recovery (negative corr)
-    # But treatment A should have *better* recovery within each dept
+    overall_recovery = df.groupby("treatment")["recovery_score"].mean()
+    assert overall_recovery["B"] > overall_recovery["A"], (
+        "Aggregate recovery should incorrectly favor treatment B"
+    )
+
     for dept in df["department"].unique():
         sub = df[df["department"] == dept]
         a = sub[sub["treatment"] == "A"]["recovery_score"].mean()
