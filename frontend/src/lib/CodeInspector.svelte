@@ -51,7 +51,7 @@
 
 <div class="inspector">
   <div class="inspector-controls">
-    <label class="inspector-filter">
+    <label class="filter-group">
       <span>Dataset</span>
       <select bind:value={filterDataset}>
         <option value="all">All datasets</option>
@@ -60,7 +60,7 @@
         {/each}
       </select>
     </label>
-    <label class="inspector-filter">
+    <label class="filter-group">
       <span>Config</span>
       <select bind:value={filterConfig}>
         <option value="all">All configs</option>
@@ -69,7 +69,7 @@
         {/each}
       </select>
     </label>
-    <span class="inspector-count">{filtered.length} files</span>
+    <span class="section-count">{filtered.length} files</span>
   </div>
 
   {#if groups.length === 0}
@@ -136,44 +136,6 @@
     flex-wrap: wrap;
   }
 
-  .inspector-filter {
-    display: flex;
-    flex-direction: column;
-    gap: 5px;
-  }
-
-  .inspector-filter span {
-    font-size: 0.7rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    color: var(--text-muted);
-  }
-
-  .inspector-filter select {
-    min-width: 180px;
-    padding: 8px 12px;
-    background: var(--bg);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    color: var(--text);
-    font-size: 0.85rem;
-    transition: border-color var(--transition-fast);
-  }
-
-  .inspector-filter select:focus {
-    border-color: var(--accent);
-    outline: none;
-  }
-
-  .inspector-count {
-    font-size: 0.82rem;
-    font-weight: 600;
-    color: var(--text-muted);
-    padding: 8px 0;
-    margin-left: auto;
-    font-variant-numeric: tabular-nums;
-  }
 
   .inspector-empty {
     padding: 48px 24px;

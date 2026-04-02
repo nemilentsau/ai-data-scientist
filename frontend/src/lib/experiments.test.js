@@ -6,7 +6,6 @@ import {
   filterArtifacts,
   hydrateArtifactDetail,
   hydrateCaseDetail,
-  hydrateExperimentArtifact,
 } from "./experiments.js";
 
 test("buildExperimentView indexes configs, datasets, and case summaries", () => {
@@ -235,7 +234,7 @@ test("hydrateCaseDetail loads score, trace, report, and plots for a selected cas
   assert.equal(detail.relatedArtifacts[0].title, "Multimodal note");
 });
 
-test("hydrateExperimentArtifact loads markdown content for experiment-scoped notes", async () => {
+test("hydrateArtifactDetail loads markdown content for experiment-scoped notes", async () => {
   const manifest = {
     experiment: { experiment_id: "exp_one" },
     artifacts: [
@@ -259,7 +258,7 @@ test("hydrateExperimentArtifact loads markdown content for experiment-scoped not
     },
   });
 
-  const detail = await hydrateExperimentArtifact(
+  const detail = await hydrateArtifactDetail(
     manifest,
     manifest.artifacts[0],
     fetcher,

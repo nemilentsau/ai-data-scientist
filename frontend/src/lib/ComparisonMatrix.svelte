@@ -1,25 +1,7 @@
 <script>
+  import { VERDICT_COLORS as verdictColors, VERDICT_BG as verdictBg, displayVerdict } from "./parse.js";
+
   let { configNames, configs, datasets, runMap, onSelect } = $props();
-
-  const verdictColors = {
-    solved: "var(--green)",
-    partial: "var(--orange)",
-    wrong: "var(--red)",
-    failed: "var(--red)",
-    run_error: "var(--red)",
-  };
-
-  const verdictBg = {
-    solved: "var(--green-soft)",
-    partial: "var(--orange-soft)",
-    wrong: "var(--red-soft)",
-    failed: "var(--red-soft)",
-    run_error: "var(--red-soft)",
-  };
-
-  function displayVerdict(verdict) {
-    return verdict === "run_error" ? "run error" : verdict;
-  }
 
   function getAggregates(configName) {
     let total = 0;

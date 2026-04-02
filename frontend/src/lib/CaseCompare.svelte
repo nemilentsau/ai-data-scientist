@@ -1,27 +1,11 @@
 <script>
+  import Lightbox from "./Lightbox.svelte";
+  import { VERDICT_COLORS as verdictColors, displayVerdict } from "./parse.js";
+
   let { artifactCatalog = [], datasets = [], configNames = [], runMap = {}, onSelectRun = null } = $props();
 
   let selectedDataset = $state("");
   let compareType = $state("plots");
-
-  // Auto-select first dataset
-  $effect(() => {
-    if (datasets.length > 0 && (!selectedDataset || !datasets.includes(selectedDataset))) {
-      selectedDataset = datasets[0];
-    }
-  });
-
-  const verdictColors = {
-    solved: "var(--green)",
-    partial: "var(--orange)",
-    wrong: "var(--red)",
-    failed: "var(--red)",
-    run_error: "var(--red)",
-  };
-
-  function displayVerdict(verdict) {
-    return verdict === "run_error" ? "run error" : verdict;
-  }
 
   let columns = $derived.by(() => {
     if (!selectedDataset) return [];
@@ -66,7 +50,7 @@
 
 <div class="compare">
   <div class="compare-controls">
-    <label class="compare-select">
+    <label class="filter-group filter-group--wide">
       <span>Dataset</span>
       <select bind:value={selectedDataset}>
         {#each datasets as ds}
@@ -173,27 +157,11 @@
 </div>
 
 {#if lightboxSrc}
-  <!-- svelte-ignore a11y_click_events_have_key_events a11y_interactive_supports_focus -->
-  <div
-    class="lb-backdrop"
-    role="dialog"
-    aria-modal="true"
-    tabindex="-1"
-    onclick={(e) => e.target === e.currentTarget && (lightboxSrc = null)}
-    onkeydown={(e) => e.key === "Escape" && (lightboxSrc = null)}
-  >
-    <div class="lb-content">
-      <div class="lb-header">
-        <span class="lb-filename">{lightboxLabel}</span>
-        <button class="lb-close" onclick={() => (lightboxSrc = null)} aria-label="Close">
-          <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M13 5L5 13M5 5l8 8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
-        </button>
-      </div>
-      <div class="lb-body">
-        <img src={lightboxSrc} alt={lightboxLabel} />
-      </div>
-    </div>
-  </div>
+  <Lightbox
+    src={lightboxSrc}
+    label={lightboxLabel}
+    onClose={() => (lightboxSrc = null)}
+  />
 {/if}
 
 <style>
@@ -210,34 +178,8 @@
     flex-wrap: wrap;
   }
 
-  .compare-select {
-    display: flex;
-    flex-direction: column;
-    gap: 5px;
-  }
-
-  .compare-select span {
-    font-size: 0.7rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    color: var(--text-muted);
-  }
-
-  .compare-select select {
+  .filter-group--wide select {
     min-width: 240px;
-    padding: 9px 12px;
-    background: var(--bg);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    color: var(--text);
-    font-size: 0.88rem;
-    transition: border-color var(--transition-fast);
-  }
-
-  .compare-select select:focus {
-    border-color: var(--accent);
-    outline: none;
   }
 
   .compare-type-switch {
@@ -456,91 +398,4 @@
     overflow-wrap: anywhere;
   }
 
-  /* ── Lightbox ── */
-  .lb-backdrop {
-    position: fixed;
-    inset: 0;
-    z-index: 1000;
-    background: rgba(10, 12, 20, 0.75);
-    backdrop-filter: blur(8px);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 24px;
-    animation: lbFade 150ms ease;
-  }
-
-  @keyframes lbFade {
-    from { opacity: 0; }
-    to { opacity: 1; }
-  }
-
-  .lb-content {
-    display: flex;
-    flex-direction: column;
-    max-width: 95vw;
-    max-height: 92vh;
-    background: var(--bg-secondary);
-    border: 1px solid var(--border);
-    border-radius: 16px;
-    overflow: hidden;
-    box-shadow: var(--shadow-lg);
-    animation: lbScale 200ms cubic-bezier(0.16, 1, 0.3, 1);
-  }
-
-  @keyframes lbScale {
-    from { opacity: 0; transform: scale(0.95); }
-    to { opacity: 1; transform: scale(1); }
-  }
-
-  .lb-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 12px 18px;
-    border-bottom: 1px solid var(--border);
-    background: var(--bg);
-    flex-shrink: 0;
-  }
-
-  .lb-filename {
-    font-family: var(--font-mono);
-    font-size: 0.8rem;
-    color: var(--text-muted);
-  }
-
-  .lb-close {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 32px;
-    height: 32px;
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    background: var(--bg-secondary);
-    color: var(--text-muted);
-    transition: all var(--transition-fast);
-  }
-
-  .lb-close:hover {
-    color: var(--red);
-    border-color: var(--red);
-    background: var(--red-soft);
-  }
-
-  .lb-body {
-    overflow: auto;
-    padding: 16px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: var(--bg);
-  }
-
-  .lb-body img {
-    max-width: 100%;
-    max-height: 82vh;
-    object-fit: contain;
-    border-radius: var(--radius);
-  }
 </style>

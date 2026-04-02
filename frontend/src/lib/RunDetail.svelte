@@ -1,10 +1,11 @@
 <script>
-  import { extractTools } from "./parse.js";
+  import { extractTools, VERDICT_COLORS as verdictColors, displayVerdict } from "./parse.js";
   import CriteriaTable from "./CriteriaTable.svelte";
   import ReportView from "./ReportView.svelte";
   import Timeline from "./Timeline.svelte";
   import ToolFilter from "./ToolFilter.svelte";
   import EventModal from "./EventModal.svelte";
+  import Lightbox from "./Lightbox.svelte";
 
   let { run, config = null, onSelectArtifact = null } = $props();
 
@@ -36,18 +37,6 @@
     activeTools = next;
   }
 
-  const verdictColors = {
-    solved: "var(--green)",
-    pass: "var(--green)",
-    partial: "var(--orange)",
-    wrong: "var(--red)",
-    failed: "var(--red)",
-    run_error: "var(--red)",
-  };
-
-  function displayVerdict(verdict) {
-    return verdict === "run_error" ? "run error" : verdict;
-  }
 </script>
 
 <div class="detail">
@@ -232,27 +221,11 @@
 {/if}
 
 {#if lightboxSrc}
-  <!-- svelte-ignore a11y_click_events_have_key_events a11y_interactive_supports_focus -->
-  <div
-    class="lightbox-backdrop"
-    role="dialog"
-    aria-modal="true"
-    tabindex="-1"
-    onclick={(e) => e.target === e.currentTarget && (lightboxSrc = null)}
-    onkeydown={(e) => e.key === "Escape" && (lightboxSrc = null)}
-  >
-    <div class="lightbox">
-      <div class="lightbox-header">
-        <span class="lightbox-label">{lightboxLabel}</span>
-        <button class="lightbox-close" onclick={() => (lightboxSrc = null)} aria-label="Close">
-          <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M13 5L5 13M5 5l8 8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
-        </button>
-      </div>
-      <div class="lightbox-body">
-        <img src={lightboxSrc} alt={lightboxLabel} />
-      </div>
-    </div>
-  </div>
+  <Lightbox
+    src={lightboxSrc}
+    label={lightboxLabel}
+    onClose={() => (lightboxSrc = null)}
+  />
 {/if}
 
 <style>
@@ -508,93 +481,6 @@
     background: var(--bg);
   }
 
-  /* ── Lightbox ── */
-  .lightbox-backdrop {
-    position: fixed;
-    inset: 0;
-    z-index: 1000;
-    background: rgba(10, 12, 20, 0.7);
-    backdrop-filter: blur(8px);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 32px;
-    animation: lb-fade-in 150ms ease;
-  }
-
-  @keyframes lb-fade-in {
-    from { opacity: 0; }
-    to { opacity: 1; }
-  }
-
-  .lightbox {
-    display: flex;
-    flex-direction: column;
-    max-width: 95vw;
-    max-height: 92vh;
-    background: var(--bg-secondary);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-xl, 16px);
-    overflow: hidden;
-    box-shadow: var(--shadow-lg, var(--shadow-md));
-    animation: lb-scale-in 200ms cubic-bezier(0.16, 1, 0.3, 1);
-  }
-
-  @keyframes lb-scale-in {
-    from { opacity: 0; transform: scale(0.95); }
-    to { opacity: 1; transform: scale(1); }
-  }
-
-  .lightbox-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 12px 18px;
-    border-bottom: 1px solid var(--border);
-    background: var(--bg);
-    flex-shrink: 0;
-  }
-
-  .lightbox-label {
-    font-family: var(--font-mono);
-    font-size: 0.8rem;
-    color: var(--text-muted);
-  }
-
-  .lightbox-close {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 32px;
-    height: 32px;
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    background: var(--bg-secondary);
-    color: var(--text-muted);
-    transition: all var(--transition-fast, 120ms ease);
-  }
-
-  .lightbox-close:hover {
-    color: var(--red);
-    border-color: var(--red);
-    background: var(--red-soft, color-mix(in srgb, var(--red) 5%, var(--bg-secondary)));
-  }
-
-  .lightbox-body {
-    overflow: auto;
-    padding: 16px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: var(--bg);
-  }
-
-  .lightbox-body img {
-    max-width: 100%;
-    max-height: 82vh;
-    object-fit: contain;
-    border-radius: var(--radius);
-  }
 
   /* ── Trace ── */
   .trace-controls {

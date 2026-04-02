@@ -560,49 +560,6 @@ def _build_experiment_record(
     }
 
 
-def _build_manifest(
-    *,
-    experiment_record: dict[str, Any],
-    config_records: list[dict[str, Any]],
-    case_records: list[dict[str, Any]],
-    workflow_records: list[dict[str, Any]],
-    agent_records: list[dict[str, Any]],
-    artifact_records: list[dict[str, Any]],
-    evaluation_records: list[dict[str, Any]],
-) -> dict[str, Any]:
-    evaluations_by_case = {
-        evaluation["case_id"]: evaluation for evaluation in evaluation_records
-    }
-
-    case_summaries = []
-    for case in case_records:
-        case_summaries.append(
-            {
-                "case_id": case["case_id"],
-                "dataset": case["dataset"],
-                "config_name": case["config_name"],
-                "workflow_run_id": case["latest_workflow_run_id"],
-                "evaluation_id": case["evaluation_id"],
-                "verdict": (
-                    evaluations_by_case[case["case_id"]]["verdict"]
-                    if case["evaluation_id"] is not None
-                    else None
-                ),
-                "artifact_count": len(case["artifact_ids"]),
-            }
-        )
-
-    return {
-        "experiment": experiment_record,
-        "config_snapshots": config_records,
-        "cases": case_summaries,
-        "workflow_runs": workflow_records,
-        "agent_runs": agent_records,
-        "artifacts": artifact_records,
-        "evaluations": evaluation_records,
-    }
-
-
 def _write_json(path: Path, payload: Any) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(payload, indent=2) + "\n")

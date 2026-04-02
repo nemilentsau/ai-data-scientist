@@ -95,3 +95,44 @@ button {
 ::-webkit-scrollbar-thumb:hover {
   background: var(--text-faint);
 }
+
+/* ── Shared filter controls ── */
+.filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.filter-group span {
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+}
+
+.filter-group select {
+  min-width: 180px;
+  padding: 8px 12px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text);
+  font-size: 0.85rem;
+  transition: border-color var(--transition-fast);
+}
+
+.filter-group select:focus {
+  border-color: var(--accent);
+  outline: none;
+}
+
+/* ── Shared section count badge ── */
+.section-count {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  padding: 8px 0;
+  margin-left: auto;
+  font-variant-numeric: tabular-nums;
+}

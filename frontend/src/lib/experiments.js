@@ -128,10 +128,6 @@ export async function hydrateCaseDetail(manifest, run, fetcher = fetch) {
   };
 }
 
-export async function hydrateExperimentArtifact(manifest, artifact, fetcher = fetch) {
-  return hydrateArtifactDetail(manifest, artifact, fetcher);
-}
-
 export async function hydrateArtifactDetail(manifest, artifact, fetcher = fetch) {
   const casesById = Object.fromEntries(
     (manifest.cases ?? []).map((caseSummary) => [caseSummary.case_id, caseSummary]),

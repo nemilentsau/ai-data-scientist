@@ -62,17 +62,6 @@ export function parseTrace(text) {
   return { events, meta: hasMeta ? meta : null };
 }
 
-/** Parse a session.json file (Claude CLI output). */
-export function parseSession(text) {
-  try {
-    const data = JSON.parse(text);
-    // session.json is the raw Claude CLI JSON output
-    return { session: data };
-  } catch {
-    return { session: null };
-  }
-}
-
 /** Extract unique tool names from events. */
 export function extractTools(events) {
   const tools = new Set();
@@ -130,6 +119,31 @@ export function formatTime(ts) {
 export function deltaSeconds(ts1, ts2) {
   if (!ts1 || !ts2) return null;
   return ((new Date(ts2).getTime() - new Date(ts1).getTime()) / 1000).toFixed(1);
+}
+
+/** Verdict → CSS color variable mapping. */
+export const VERDICT_COLORS = {
+  solved: "var(--green)",
+  pass: "var(--green)",
+  partial: "var(--orange)",
+  wrong: "var(--red)",
+  failed: "var(--red)",
+  run_error: "var(--red)",
+};
+
+/** Verdict → soft background color mapping. */
+export const VERDICT_BG = {
+  solved: "var(--green-soft)",
+  pass: "var(--green-soft)",
+  partial: "var(--orange-soft)",
+  wrong: "var(--red-soft)",
+  failed: "var(--red-soft)",
+  run_error: "var(--red-soft)",
+};
+
+/** Display-friendly verdict label. */
+export function displayVerdict(verdict) {
+  return verdict === "run_error" ? "run error" : verdict;
 }
 
 /** Tool name to color mapping. */
