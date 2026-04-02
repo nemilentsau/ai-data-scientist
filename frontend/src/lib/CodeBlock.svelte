@@ -48,12 +48,14 @@
   .code-header {
     display: flex;
     justify-content: space-between;
-    padding: 4px 10px;
+    padding: 6px 12px;
     background: var(--bg-tertiary);
-    font-size: 0.65rem;
+    font-size: 0.67rem;
+    font-weight: 600;
     text-transform: uppercase;
-    letter-spacing: 0.05em;
-    color: var(--text-muted);
+    letter-spacing: 0.06em;
+    color: var(--text-faint, var(--text-muted));
+    border-bottom: 1px solid var(--border);
   }
 
   .code-content {
@@ -64,8 +66,8 @@
   .line-nums {
     display: flex;
     flex-direction: column;
-    padding: 8px 0;
-    min-width: 40px;
+    padding: 10px 0;
+    min-width: 42px;
     text-align: right;
     user-select: none;
     color: var(--text-muted);
@@ -74,6 +76,7 @@
     font-size: 0.8rem;
     line-height: 1.5;
     border-right: 1px solid var(--border);
+    background: var(--bg-tertiary);
   }
 
   .line-nums span {
@@ -82,38 +85,40 @@
 
   .code-pre {
     flex: 1;
-    padding: 8px 12px;
+    padding: 10px 14px;
     margin: 0;
     overflow-x: auto;
     font-size: 0.8rem;
     line-height: 1.5;
     white-space: pre;
     tab-size: 4;
+    color: var(--text);
   }
 
   .diff-add {
-    background: color-mix(in srgb, var(--green) 12%, transparent);
+    background: color-mix(in srgb, var(--green) 10%, transparent);
     color: var(--green);
   }
 
   .diff-del {
-    background: color-mix(in srgb, var(--red) 12%, transparent);
+    background: color-mix(in srgb, var(--red) 10%, transparent);
     color: var(--red);
   }
 
   .show-more {
     display: block;
     width: 100%;
-    padding: 6px;
+    padding: 7px;
     background: var(--bg-tertiary);
     border: none;
     border-top: 1px solid var(--border);
     color: var(--accent);
-    font-size: 0.75rem;
+    font-size: 0.78rem;
+    font-weight: 600;
     transition: background 0.1s;
   }
 
   .show-more:hover {
-    background: var(--bg-secondary);
+    background: color-mix(in srgb, var(--accent) 5%, var(--bg-secondary));
   }
 </style>

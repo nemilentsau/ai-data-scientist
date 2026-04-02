@@ -31,23 +31,23 @@
   .timeline {
     display: flex;
     flex-direction: column;
-    gap: 2px;
+    gap: 4px;
   }
 
   .time-gap {
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 4px 0;
+    padding: 6px 0;
   }
 
   .time-gap span {
-    font-size: 0.7rem;
+    font-size: 0.72rem;
+    font-weight: 500;
     color: var(--text-muted);
     background: var(--bg-tertiary);
-    padding: 2px 10px;
+    padding: 3px 12px;
     border-radius: 10px;
-    opacity: 0.7;
   }
 
   .no-events {

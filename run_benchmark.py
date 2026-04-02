@@ -10,6 +10,9 @@ from pathlib import Path
 
 import yaml
 
+from experiment_catalog import catalog_db_path, load_experiment_manifest
+from experiment_import import build_experiment_id, import_legacy_experiment
+
 ROOT = Path(__file__).parent
 DATASETS_DIR = ROOT / "datasets" / "generated"
 RESULTS_DIR = ROOT / "results"
@@ -158,7 +161,48 @@ def generate_report(scores, config_name: str):
     return report
 
 
-def main():
+def refresh_experiment_catalog(
+    *,
+    config_name: str,
+    config: dict,
+    dataset_names: list[str],
+    experiment_id: str | None,
+    experiment_title: str | None,
+    experiment_description: str | None,
+) -> Path:
+    """Import the current benchmark outputs into the experiment catalog."""
+    experiments_dir = RESULTS_DIR / "experiments"
+    resolved_experiment_id = experiment_id or build_experiment_id(
+        slug=experiment_title or config_name
+    )
+    existing_manifest = None
+    db_path = catalog_db_path(experiments_dir)
+    if db_path.exists():
+        existing_manifest = load_experiment_manifest(db_path, resolved_experiment_id)
+
+    resolved_title = experiment_title
+    if resolved_title is None and existing_manifest is not None:
+        resolved_title = existing_manifest["experiment"]["title"]
+    if resolved_title is None:
+        resolved_title = f"{config_name} benchmark"
+
+    resolved_description = experiment_description
+    if resolved_description is None and existing_manifest is not None:
+        resolved_description = existing_manifest["experiment"].get("description")
+    if resolved_description is None:
+        resolved_description = config.get("description") or f"Benchmark results for {config_name}."
+
+    return import_legacy_experiment(
+        repo_root=ROOT,
+        experiment_id=resolved_experiment_id,
+        title=resolved_title,
+        description=resolved_description,
+        configs=[config_name],
+        datasets=dataset_names,
+    )
+
+
+def main(argv: list[str] | None = None):
     parser = argparse.ArgumentParser(description="AI Data Scientist Benchmark")
     parser.add_argument(
         "--config",
@@ -186,7 +230,30 @@ def main():
         action="store_true",
         help="Skip scoring (use existing scores)",
     )
-    args = parser.parse_args()
+    parser.add_argument(
+        "--experiment-id",
+        help="Optional experiment id to refresh in the experiment catalog.",
+    )
+    parser.add_argument(
+        "--experiment-title",
+        help=(
+            "Optional experiment title. Reuses the existing title when "
+            "importing into an existing experiment."
+        ),
+    )
+    parser.add_argument(
+        "--experiment-description",
+        help=(
+            "Optional experiment description. Reuses the existing description "
+            "when importing into an existing experiment."
+        ),
+    )
+    parser.add_argument(
+        "--skip-import",
+        action="store_true",
+        help="Skip importing benchmark metadata into results/experiments.",
+    )
+    args = parser.parse_args(argv)
 
     config = load_config(args.config)
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -228,6 +295,17 @@ def main():
             generate_report(scores, args.config)
     else:
         print("Scoring skipped.")
+
+    if not args.skip_import:
+        experiment_dir = refresh_experiment_catalog(
+            config_name=args.config,
+            config=config,
+            dataset_names=dataset_names,
+            experiment_id=args.experiment_id,
+            experiment_title=args.experiment_title,
+            experiment_description=args.experiment_description,
+        )
+        print(f"\nExperiment metadata saved to {experiment_dir}")
 
     print("\nBenchmark complete!")
 

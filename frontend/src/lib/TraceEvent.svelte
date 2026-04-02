@@ -94,44 +94,47 @@
   .event {
     background: var(--bg-secondary);
     border-radius: var(--radius);
-    border-left: 3px solid transparent;
-    transition: all 0.1s;
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--event-color);
+    transition: all var(--transition-fast, 120ms ease);
     cursor: pointer;
+    box-shadow: var(--shadow-xs);
   }
 
   .event:hover {
-    background: var(--bg-tertiary);
+    border-color: color-mix(in srgb, var(--event-color) 35%, var(--border));
+    border-left-color: var(--event-color);
+    box-shadow: var(--shadow-sm);
   }
 
   .event.error {
     border-left-color: var(--red);
-  }
-
-  .event:not(.error) {
-    border-left-color: var(--event-color);
+    background: color-mix(in srgb, var(--red) 2%, var(--bg-secondary));
   }
 
   .event-header {
     display: flex;
     align-items: center;
     gap: 8px;
-    padding: 8px 12px;
-    min-height: 40px;
+    padding: 10px 14px;
+    min-height: 42px;
   }
 
   .time {
     font-family: var(--font-mono);
     font-size: 0.75rem;
-    color: var(--text-muted);
+    color: var(--text-faint, var(--text-muted));
     min-width: 65px;
+    font-variant-numeric: tabular-nums;
   }
 
   .delta {
     font-family: var(--font-mono);
     font-size: 0.65rem;
-    color: var(--text-muted);
+    color: var(--text-faint, var(--text-muted));
     opacity: 0.5;
     min-width: 45px;
+    font-variant-numeric: tabular-nums;
   }
 
   .icon {
@@ -140,7 +143,7 @@
     justify-content: center;
     width: 28px;
     height: 28px;
-    border-radius: var(--radius);
+    border-radius: 6px;
     font-family: var(--font-mono);
     font-size: 0.8rem;
     font-weight: 700;
@@ -156,27 +159,27 @@
   .badge {
     font-size: 0.6rem;
     font-weight: 700;
-    padding: 1px 6px;
-    border-radius: 3px;
+    padding: 2px 7px;
+    border-radius: 999px;
     text-transform: uppercase;
     letter-spacing: 0.05em;
     flex-shrink: 0;
   }
 
   .ok-badge {
-    background: color-mix(in srgb, var(--green) 15%, transparent);
+    background: color-mix(in srgb, var(--green) 10%, var(--bg-secondary));
     color: var(--green);
   }
 
   .error-badge {
-    background: color-mix(in srgb, var(--red) 15%, transparent);
+    background: color-mix(in srgb, var(--red) 10%, var(--bg-secondary));
     color: var(--red);
   }
 
   .summary-text {
     flex: 1;
     font-family: var(--font-mono);
-    font-size: 0.8rem;
+    font-size: 0.78rem;
     color: var(--text-muted);
     overflow: hidden;
     text-overflow: ellipsis;
@@ -184,27 +187,28 @@
   }
 
   .json-btn {
-    padding: 4px 8px;
+    padding: 4px 10px;
     font-family: var(--font-mono);
-    font-size: 0.75rem;
+    font-size: 0.72rem;
     background: var(--bg-tertiary);
     border: 1px solid var(--border);
-    border-radius: var(--radius);
-    color: var(--text-muted);
+    border-radius: 6px;
+    color: var(--text-faint, var(--text-muted));
     flex-shrink: 0;
-    transition: all 0.1s;
+    transition: all var(--transition-fast, 120ms ease);
   }
 
   .json-btn:hover {
     color: var(--accent);
     border-color: var(--accent);
+    background: var(--accent-soft, color-mix(in srgb, var(--accent) 5%, var(--bg-secondary)));
   }
 
   .event-body {
-    padding: 0 12px 12px;
+    padding: 0 14px 14px;
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 10px;
   }
 
   .section {
@@ -216,8 +220,8 @@
   .section-label {
     font-size: 0.7rem;
     text-transform: uppercase;
-    letter-spacing: 0.05em;
-    color: var(--text-muted);
+    letter-spacing: 0.06em;
+    color: var(--text-faint, var(--text-muted));
     font-weight: 600;
   }
 

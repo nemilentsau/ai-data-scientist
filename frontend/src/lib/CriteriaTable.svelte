@@ -84,30 +84,32 @@
   .criteria {
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 22px;
   }
 
   .group-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 0 4px 6px;
-    border-bottom: 1px solid var(--border);
+    padding: 0 4px 10px;
+    border-bottom: 2px solid var(--border);
     margin-bottom: 4px;
   }
 
   .group-name {
-    font-size: 0.75rem;
-    font-weight: 600;
+    font-size: 0.78rem;
+    font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 0.05em;
-    color: var(--text-muted);
+    letter-spacing: 0.06em;
+    color: var(--text);
   }
 
   .group-count {
-    font-size: 0.75rem;
+    font-size: 0.78rem;
     font-family: var(--font-mono);
+    font-weight: 700;
     color: var(--text-muted);
+    font-variant-numeric: tabular-nums;
   }
 
   .criterion {
@@ -115,19 +117,25 @@
     flex-direction: column;
     width: 100%;
     text-align: left;
-    padding: 8px 12px;
+    padding: 12px 16px;
     background: var(--bg-secondary);
     border: 1px solid var(--border);
+    border-left: 3px solid transparent;
     border-radius: var(--radius);
-    transition: all 0.1s;
+    box-shadow: var(--shadow-xs);
+    transition: all var(--transition-fast, 120ms ease);
   }
 
   .criterion:hover {
-    background: var(--bg-tertiary);
+    border-color: color-mix(in srgb, var(--accent) 25%, var(--border));
+    border-left-color: color-mix(in srgb, var(--accent) 25%, var(--border));
+    box-shadow: var(--shadow-sm);
   }
 
   .criterion.expanded {
-    border-color: var(--text-muted);
+    border-color: var(--accent);
+    border-left-color: var(--accent);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 6%, transparent);
   }
 
   .criterion-header {
@@ -137,16 +145,19 @@
   }
 
   .status-dot {
-    width: 8px;
-    height: 8px;
+    width: 9px;
+    height: 9px;
     border-radius: 50%;
     flex-shrink: 0;
+    box-shadow: 0 0 0 3px color-mix(in srgb, currentColor 10%, transparent);
   }
 
   .criterion-name {
     flex: 1;
-    font-size: 0.85rem;
+    font-size: 0.88rem;
+    font-weight: 500;
     text-transform: capitalize;
+    color: var(--text);
   }
 
   .status-label {
@@ -154,39 +165,45 @@
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.05em;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: color-mix(in srgb, currentColor 8%, var(--bg));
   }
 
   .criterion-body {
-    margin-top: 10px;
-    padding-top: 10px;
+    margin-top: 14px;
+    padding-top: 14px;
     border-top: 1px solid var(--border);
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 12px;
   }
 
   .field-label {
     display: block;
-    font-size: 0.65rem;
+    font-size: 0.68rem;
+    font-weight: 600;
     text-transform: uppercase;
-    letter-spacing: 0.05em;
-    color: var(--text-muted);
+    letter-spacing: 0.06em;
+    color: var(--text-faint, var(--text-muted));
     margin-bottom: 4px;
   }
 
   .criterion-body p {
-    font-size: 0.85rem;
-    line-height: 1.6;
+    font-size: 0.88rem;
+    line-height: 1.65;
     color: var(--text-muted);
   }
 
   .evidence {
     font-family: var(--font-mono);
-    font-size: 0.8rem;
+    font-size: 0.82rem;
     background: var(--bg);
-    padding: 8px 12px;
+    padding: 12px 14px;
     border-radius: var(--radius);
+    border: 1px solid var(--border);
     white-space: pre-wrap;
     word-break: break-word;
+    line-height: 1.6;
   }
 </style>
