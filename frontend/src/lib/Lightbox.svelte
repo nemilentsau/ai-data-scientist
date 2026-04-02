@@ -15,6 +15,10 @@
     else if (e.key === "ArrowLeft" && onPrev && hasPrev) onPrev();
     else if (e.key === "ArrowRight" && onNext && hasNext) onNext();
   }
+
+  function autoFocus(node) {
+    node.focus();
+  }
 </script>
 
 <!-- svelte-ignore a11y_click_events_have_key_events a11y_interactive_supports_focus -->
@@ -23,6 +27,7 @@
   role="dialog"
   aria-modal="true"
   tabindex="-1"
+  use:autoFocus
   onclick={(e) => e.target === e.currentTarget && onClose()}
   onkeydown={handleKeydown}
 >

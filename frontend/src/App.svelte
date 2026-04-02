@@ -8,7 +8,6 @@
   import CodeInspector from "./lib/CodeInspector.svelte";
   import {
     buildExperimentView,
-    filterArtifacts,
     hydrateArtifactDetail,
     hydrateCaseDetail,
   } from "./lib/experiments.js";
@@ -21,11 +20,6 @@
   let activeSection = $state("overview");
   let search = $state("");
   let artifactSubView = $state("gallery");
-  let artifactQuery = $state("");
-  let artifactCategory = $state("analysis");
-  let artifactDataset = $state("all");
-  let artifactConfig = $state("all");
-  let artifactVisibleCount = $state(12);
   let loading = $state(true);
   let experimentLoading = $state(false);
   let detailLoading = $state(false);
@@ -52,7 +46,6 @@
         selectedRun = null;
         selectedArtifact = null;
         activeSection = "overview";
-        resetArtifactFilters();
         return;
       }
 
@@ -100,7 +93,6 @@
     selectedExperimentId = experimentId;
     search = "";
     activeSection = "overview";
-    resetArtifactFilters();
     await loadExperiment(experimentId);
   }
 
@@ -139,18 +131,6 @@
   function goBack() {
     selectedRun = null;
     selectedArtifact = null;
-  }
-
-  function resetArtifactFilters() {
-    artifactQuery = "";
-    artifactCategory = "analysis";
-    artifactDataset = "all";
-    artifactConfig = "all";
-    artifactVisibleCount = 12;
-  }
-
-  function showMoreArtifacts() {
-    artifactVisibleCount += 12;
   }
 
   let experimentView = $derived.by(() =>
@@ -207,19 +187,6 @@
       return false;
     });
   });
-
-  let filteredArtifacts = $derived.by(() =>
-    filterArtifacts(experimentView.artifactCatalog, {
-      query: artifactQuery,
-      category: artifactCategory,
-      dataset: artifactDataset,
-      config: artifactConfig,
-    }),
-  );
-
-  let visibleArtifacts = $derived.by(() =>
-    filteredArtifacts.slice(0, artifactVisibleCount),
-  );
 
   let plotArtifacts = $derived.by(() =>
     experimentView.artifactCatalog.filter((a) => a.category === "plots"),

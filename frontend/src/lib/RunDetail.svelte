@@ -40,7 +40,6 @@
 </script>
 
 <div class="flex flex-col gap-5">
-  <!-- Header -->
   <div class="flex items-center justify-between gap-4 px-6 py-5 bg-bg-secondary border border-border rounded-2xl shadow-sm">
     <div>
       <div class="flex items-baseline gap-2">
@@ -65,7 +64,6 @@
   </div>
 
   {#if score}
-    <!-- Summary Bar -->
     <div class="flex gap-px rounded-xl overflow-hidden border border-border shadow-sm">
       {#if score.verdict === "run_error"}
         <div class="flex-[1.5] flex flex-col items-center gap-1.5 px-3 py-4 bg-bg-secondary first:rounded-l-xl last:rounded-r-xl">
@@ -121,7 +119,6 @@
     </div>
   {/if}
 
-  <!-- Tabs -->
   <nav class="flex border-b-2 border-border">
     <button class="tab-btn" class:tab-active={activeTab === "score"} onclick={() => (activeTab = "score")}>
       Score

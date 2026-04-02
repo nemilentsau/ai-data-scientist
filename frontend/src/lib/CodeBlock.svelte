@@ -8,10 +8,8 @@
     isTruncated ? lines.slice(0, maxLines).join("\n") : code
   );
 
-  let lineNumbers = $derived(
-    displayCode.split("\n").map((_, i) => i + 1)
-  );
-
+  let displayLines = $derived(displayCode.split("\n"));
+  let lineNumbers = $derived(displayLines.map((_, i) => i + 1));
   let isDiff = $derived(language === "diff");
 </script>
 
@@ -26,9 +24,9 @@
         <span class="px-2">{n}</span>
       {/each}
     </div>
-    <pre class="flex-1 px-3.5 py-2.5 m-0 overflow-x-auto text-[0.8rem] leading-[1.5] whitespace-pre tab-[4] text-text"><code>{#each displayCode.split("\n") as line, i}{#if isDiff}<span
+    <pre class="flex-1 px-3.5 py-2.5 m-0 overflow-x-auto text-[0.8rem] leading-[1.5] whitespace-pre tab-[4] text-text"><code>{#each displayLines as line, i}{#if isDiff}<span
       class={line.startsWith("+") ? "bg-green/10 text-green" : line.startsWith("-") ? "bg-red/10 text-red" : ""}
-    >{line}</span>{:else}<span>{line}</span>{/if}{#if i < displayCode.split("\n").length - 1}{"\n"}{/if}{/each}</code></pre>
+    >{line}</span>{:else}<span>{line}</span>{/if}{#if i < displayLines.length - 1}{"\n"}{/if}{/each}</code></pre>
   </div>
   {#if isTruncated}
     <button
