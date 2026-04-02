@@ -49,9 +49,9 @@
   }
 </script>
 
-<div class="inspector">
-  <div class="inspector-controls">
-    <label class="filter-group">
+<div class="flex flex-col gap-6">
+  <div class="flex gap-3 items-end flex-wrap">
+    <label>
       <span>Dataset</span>
       <select bind:value={filterDataset}>
         <option value="all">All datasets</option>
@@ -60,7 +60,7 @@
         {/each}
       </select>
     </label>
-    <label class="filter-group">
+    <label>
       <span>Config</span>
       <select bind:value={filterConfig}>
         <option value="all">All configs</option>
@@ -69,40 +69,43 @@
         {/each}
       </select>
     </label>
-    <span class="section-count">{filtered.length} files</span>
+    <span class="text-text-muted text-[0.85rem]">{filtered.length} files</span>
   </div>
 
   {#if groups.length === 0}
-    <div class="inspector-empty">No generated code files match the current filters.</div>
+    <div class="py-12 px-6 text-center text-text-muted">No generated code files match the current filters.</div>
   {:else}
     {#each groups as [dataset, items]}
-      <div class="inspector-group">
-        <div class="inspector-group-header">
-          <h3>{dataset.replace(/_/g, " ")}</h3>
-          <span class="inspector-group-count">{items.length}</span>
+      <div>
+        <div class="flex items-center gap-2.5 pb-2.5 border-b border-border mb-2">
+          <h3 class="text-[0.92rem] font-bold capitalize text-text m-0">{dataset.replace(/_/g, " ")}</h3>
+          <span class="text-[0.72rem] font-bold py-0.5 px-[9px] rounded-full bg-[color-mix(in_srgb,var(--color-purple)_10%,var(--color-bg))] text-purple">{items.length}</span>
         </div>
 
-        <div class="inspector-list">
+        <div class="flex flex-col gap-1.5">
           {#each items as artifact}
-            <div class="code-item" class:expanded={expandedId === artifact.artifact_id}>
+            <div
+              class="code-item border border-border border-l-[3px] border-l-purple rounded-lg bg-bg-secondary overflow-hidden transition-all duration-100 ease-out"
+              class:expanded={expandedId === artifact.artifact_id}
+            >
               <button
-                class="code-item-header"
+                class="code-item-header flex items-center gap-3 w-full py-3 px-4 bg-none border-none text-left font-[inherit] transition-[background] duration-100 ease-out"
                 type="button"
                 onclick={() => toggleExpand(artifact)}
               >
-                <span class="code-icon">py</span>
-                <div class="code-info">
-                  <span class="code-filename">{artifact.filename}</span>
-                  <span class="code-path">{artifact.path}</span>
+                <span class="flex items-center justify-center w-[30px] h-[30px] rounded-md bg-[color-mix(in_srgb,var(--color-purple)_12%,var(--color-bg))] text-purple font-mono text-[0.72rem] font-bold shrink-0">py</span>
+                <div class="flex-1 flex flex-col gap-0.5 min-w-0">
+                  <span class="font-mono text-[0.88rem] font-semibold text-text">{artifact.filename}</span>
+                  <span class="font-mono text-[0.72rem] text-text-faint overflow-hidden text-ellipsis whitespace-nowrap">{artifact.path}</span>
                 </div>
                 {#if artifact.configLabels.length > 0}
-                  <span class="code-config">{artifact.configLabels[0]}</span>
+                  <span class="text-[0.68rem] font-semibold py-0.5 px-2 rounded-full bg-[color-mix(in_srgb,var(--color-cyan)_10%,var(--color-bg))] text-cyan whitespace-nowrap shrink-0">{artifact.configLabels[0]}</span>
                 {/if}
-                <span class="code-expand-icon">{expandedId === artifact.artifact_id ? "−" : "+"}</span>
+                <span class="w-6 h-6 flex items-center justify-center text-[1.1rem] font-light text-text-faint shrink-0">{expandedId === artifact.artifact_id ? "\u2212" : "+"}</span>
               </button>
 
               {#if expandedId === artifact.artifact_id}
-                <div class="code-item-body">
+                <div class="border-t border-border">
                   {#if loadedContent[artifact.artifact_id]}
                     <CodeBlock
                       code={loadedContent[artifact.artifact_id]}
@@ -110,7 +113,7 @@
                       maxLines={80}
                     />
                   {:else}
-                    <div class="code-loading">Loading...</div>
+                    <div class="py-5 text-center text-text-muted text-[0.85rem]">Loading...</div>
                   {/if}
                 </div>
               {/if}
@@ -123,167 +126,18 @@
 </div>
 
 <style>
-  .inspector {
-    display: flex;
-    flex-direction: column;
-    gap: 24px;
-  }
-
-  .inspector-controls {
-    display: flex;
-    gap: 12px;
-    align-items: flex-end;
-    flex-wrap: wrap;
-  }
-
-
-  .inspector-empty {
-    padding: 48px 24px;
-    text-align: center;
-    color: var(--text-muted);
-  }
-
-  /* ── Group ── */
-  .inspector-group-header {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding-bottom: 10px;
-    border-bottom: 1px solid var(--border);
-    margin-bottom: 8px;
-  }
-
-  .inspector-group-header h3 {
-    font-size: 0.92rem;
-    font-weight: 700;
-    text-transform: capitalize;
-    color: var(--text);
-    margin: 0;
-  }
-
-  .inspector-group-count {
-    font-size: 0.72rem;
-    font-weight: 700;
-    padding: 2px 9px;
-    border-radius: 999px;
-    background: color-mix(in srgb, var(--purple) 10%, var(--bg));
-    color: var(--purple);
-  }
-
-  /* ── List ── */
-  .inspector-list {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-  }
-
-  .code-item {
-    border: 1px solid var(--border);
-    border-left: 3px solid var(--purple);
-    border-radius: var(--radius);
-    background: var(--bg-secondary);
-    overflow: hidden;
-    transition: all var(--transition-fast);
-  }
-
   .code-item:hover {
-    border-color: color-mix(in srgb, var(--purple) 30%, var(--border));
-    border-left-color: var(--purple);
+    border-color: color-mix(in srgb, var(--color-purple) 30%, var(--color-border));
+    border-left-color: var(--color-purple);
   }
 
   .code-item.expanded {
-    border-color: var(--purple);
-    border-left-color: var(--purple);
-    box-shadow: 0 0 0 3px color-mix(in srgb, var(--purple) 6%, transparent);
-  }
-
-  .code-item-header {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    width: 100%;
-    padding: 12px 16px;
-    background: none;
-    border: none;
-    text-align: left;
-    font-family: inherit;
-    transition: background var(--transition-fast);
+    border-color: var(--color-purple);
+    border-left-color: var(--color-purple);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-purple) 6%, transparent);
   }
 
   .code-item-header:hover {
-    background: color-mix(in srgb, var(--purple) 3%, var(--bg-secondary));
-  }
-
-  .code-icon {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 30px;
-    height: 30px;
-    border-radius: 6px;
-    background: color-mix(in srgb, var(--purple) 12%, var(--bg));
-    color: var(--purple);
-    font-family: var(--font-mono);
-    font-size: 0.72rem;
-    font-weight: 700;
-    flex-shrink: 0;
-  }
-
-  .code-info {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-    min-width: 0;
-  }
-
-  .code-filename {
-    font-family: var(--font-mono);
-    font-size: 0.88rem;
-    font-weight: 600;
-    color: var(--text);
-  }
-
-  .code-path {
-    font-family: var(--font-mono);
-    font-size: 0.72rem;
-    color: var(--text-faint);
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  .code-config {
-    font-size: 0.68rem;
-    font-weight: 600;
-    padding: 2px 8px;
-    border-radius: 999px;
-    background: color-mix(in srgb, var(--cyan) 10%, var(--bg));
-    color: var(--cyan);
-    white-space: nowrap;
-    flex-shrink: 0;
-  }
-
-  .code-expand-icon {
-    width: 24px;
-    height: 24px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.1rem;
-    font-weight: 300;
-    color: var(--text-faint);
-    flex-shrink: 0;
-  }
-
-  .code-item-body {
-    border-top: 1px solid var(--border);
-  }
-
-  .code-loading {
-    padding: 20px;
-    text-align: center;
-    color: var(--text-muted);
-    font-size: 0.85rem;
+    background: color-mix(in srgb, var(--color-purple) 3%, var(--color-bg-secondary));
   }
 </style>

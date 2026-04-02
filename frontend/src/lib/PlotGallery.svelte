@@ -59,63 +59,64 @@
   }
 </script>
 
-<div class="gallery">
-  <div class="gallery-controls">
+<div class="flex flex-col gap-6">
+  <div class="flex flex-col gap-3">
     <input
-      class="gallery-search"
+      class="w-full px-3.5 py-2.5 bg-bg border border-border rounded-lg text-text text-[0.9rem] font-[inherit] outline-none transition-all duration-100 ease-out placeholder:text-text-faint focus:border-accent focus:shadow-[0_0_0_3px_color-mix(in_srgb,var(--color-accent)_10%,transparent)]"
       type="text"
       placeholder="Filter by filename, dataset, or config..."
       bind:value={search}
     />
-    <div class="gallery-filters">
-      <label class="filter-group">
-        <span>Dataset</span>
-        <select bind:value={filterDataset}>
+    <div class="flex gap-3 items-end flex-wrap">
+      <label class="flex flex-col gap-1.5">
+        <span class="text-[0.7rem] font-semibold uppercase tracking-[0.06em] text-text-muted">Dataset</span>
+        <select class="min-w-[180px] px-3 py-2 bg-bg border border-border rounded-lg text-text text-[0.85rem] transition-[border-color] duration-100 ease-out focus:border-accent focus:outline-none" bind:value={filterDataset}>
           <option value="all">All datasets</option>
           {#each datasets as ds}
             <option value={ds}>{ds.replace(/_/g, " ")}</option>
           {/each}
         </select>
       </label>
-      <label class="filter-group">
-        <span>Config</span>
-        <select bind:value={filterConfig}>
+      <label class="flex flex-col gap-1.5">
+        <span class="text-[0.7rem] font-semibold uppercase tracking-[0.06em] text-text-muted">Config</span>
+        <select class="min-w-[180px] px-3 py-2 bg-bg border border-border rounded-lg text-text text-[0.85rem] transition-[border-color] duration-100 ease-out focus:border-accent focus:outline-none" bind:value={filterConfig}>
           <option value="all">All configs</option>
           {#each configs as cfg}
             <option value={cfg}>{cfg}</option>
           {/each}
         </select>
       </label>
-      <span class="section-count">{totalCount} plots</span>
+      <span class="text-[0.82rem] font-semibold text-text-muted py-2 ml-auto tabular-nums">{totalCount} plots</span>
     </div>
   </div>
 
   {#if groups.length === 0}
-    <div class="gallery-empty">No plots match the current filters.</div>
+    <div class="py-12 px-6 text-center text-text-muted">No plots match the current filters.</div>
   {:else}
     {#each groups as [dataset, items]}
-      <div class="gallery-group">
-        <div class="gallery-group-header">
-          <h3>{dataset.replace(/_/g, " ")}</h3>
-          <span class="gallery-group-count">{items.length}</span>
+      <div>
+        <div class="flex items-center gap-2.5 pb-2.5 border-b border-border mb-3">
+          <h3 class="text-[0.92rem] font-bold capitalize text-text m-0">{dataset.replace(/_/g, " ")}</h3>
+          <span class="text-[0.72rem] font-bold px-[9px] py-0.5 rounded-full bg-accent-soft text-accent">{items.length}</span>
         </div>
-        <div class="gallery-grid">
+        <div class="grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-2.5">
           {#each items as plot}
             <button
-              class="gallery-thumb"
+              class="flex flex-col bg-bg-secondary border border-border rounded-lg overflow-hidden cursor-zoom-in transition-all duration-200 ease-out text-left hover:border-[color-mix(in_srgb,var(--color-accent)_40%,var(--color-border))] hover:shadow-md hover:-translate-y-0.5"
               type="button"
               onclick={() => openLightbox(plot)}
               title="{plot.filename} — {plot.configLabels.join(', ')}"
             >
               <img
+                class="w-full aspect-[4/3] object-contain bg-bg block"
                 src={plot.content_url}
                 alt={plot.filename}
                 loading="lazy"
               />
-              <div class="thumb-footer">
-                <span class="thumb-name">{plot.filename}</span>
+              <div class="flex justify-between items-center gap-1.5 px-2.5 py-1.5 border-t border-border min-h-[30px]">
+                <span class="text-[0.7rem] font-mono text-text-muted overflow-hidden text-ellipsis whitespace-nowrap">{plot.filename}</span>
                 {#if plot.configLabels.length > 0}
-                  <span class="thumb-config">{plot.configLabels[0]}</span>
+                  <span class="text-[0.65rem] font-semibold px-1.5 py-px rounded-full bg-cyan/10 text-cyan whitespace-nowrap shrink-0">{plot.configLabels[0]}</span>
                 {/if}
               </div>
             </button>
@@ -139,142 +140,3 @@
     hasNext={idx < filtered.length - 1}
   />
 {/if}
-
-<style>
-  .gallery {
-    display: flex;
-    flex-direction: column;
-    gap: 24px;
-  }
-
-  .gallery-controls {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-  }
-
-  .gallery-search {
-    width: 100%;
-    padding: 10px 14px;
-    background: var(--bg);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    color: var(--text);
-    font-size: 0.9rem;
-    font-family: inherit;
-    outline: none;
-    transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
-  }
-
-  .gallery-search::placeholder { color: var(--text-faint); }
-
-  .gallery-search:focus {
-    border-color: var(--accent);
-    box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 10%, transparent);
-  }
-
-  .gallery-filters {
-    display: flex;
-    gap: 12px;
-    align-items: flex-end;
-    flex-wrap: wrap;
-  }
-
-
-  .gallery-empty {
-    padding: 48px 24px;
-    text-align: center;
-    color: var(--text-muted);
-  }
-
-  /* ── Group ── */
-  .gallery-group-header {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding-bottom: 10px;
-    border-bottom: 1px solid var(--border);
-    margin-bottom: 12px;
-  }
-
-  .gallery-group-header h3 {
-    font-size: 0.92rem;
-    font-weight: 700;
-    text-transform: capitalize;
-    color: var(--text);
-    margin: 0;
-  }
-
-  .gallery-group-count {
-    font-size: 0.72rem;
-    font-weight: 700;
-    padding: 2px 9px;
-    border-radius: 999px;
-    background: var(--accent-soft);
-    color: var(--accent);
-  }
-
-  /* ── Thumbnail Grid ── */
-  .gallery-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-    gap: 10px;
-  }
-
-  .gallery-thumb {
-    display: flex;
-    flex-direction: column;
-    background: var(--bg-secondary);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    overflow: hidden;
-    cursor: zoom-in;
-    transition: all var(--transition-normal);
-    text-align: left;
-  }
-
-  .gallery-thumb:hover {
-    border-color: color-mix(in srgb, var(--accent) 40%, var(--border));
-    box-shadow: var(--shadow-md);
-    transform: translateY(-2px);
-  }
-
-  .gallery-thumb img {
-    width: 100%;
-    aspect-ratio: 4 / 3;
-    object-fit: contain;
-    background: var(--bg);
-    display: block;
-  }
-
-  .thumb-footer {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 6px;
-    padding: 6px 10px;
-    border-top: 1px solid var(--border);
-    min-height: 30px;
-  }
-
-  .thumb-name {
-    font-size: 0.7rem;
-    font-family: var(--font-mono);
-    color: var(--text-muted);
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  .thumb-config {
-    font-size: 0.65rem;
-    font-weight: 600;
-    padding: 1px 6px;
-    border-radius: 999px;
-    background: color-mix(in srgb, var(--cyan) 10%, var(--bg));
-    color: var(--cyan);
-    white-space: nowrap;
-    flex-shrink: 0;
-  }
-
-</style>

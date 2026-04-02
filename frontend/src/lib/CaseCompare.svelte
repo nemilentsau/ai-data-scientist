@@ -48,103 +48,100 @@
   }
 </script>
 
-<div class="compare">
-  <div class="compare-controls">
-    <label class="filter-group filter-group--wide">
+<div class="flex flex-col gap-5">
+  <div class="flex items-end gap-4 flex-wrap">
+    <label class="flex flex-col gap-1.5 text-[0.78rem] font-semibold text-text-muted">
       <span>Dataset</span>
-      <select bind:value={selectedDataset}>
+      <select class="min-w-[240px]" bind:value={selectedDataset}>
         {#each datasets as ds}
           <option value={ds}>{ds.replace(/_/g, " ")}</option>
         {/each}
       </select>
     </label>
 
-    <div class="compare-type-switch">
+    <div class="inline-flex gap-0.5 p-[3px] rounded-xl bg-bg-tertiary border border-border">
       <button
-        class="type-pill"
-        class:active={compareType === "plots"}
+        class="py-[7px] px-4 rounded-lg border border-transparent bg-transparent text-text-muted text-[0.8rem] font-semibold transition-all duration-100 ease-out hover:text-text {compareType === 'plots' ? 'text-text bg-bg-secondary shadow-sm !border-border-subtle' : ''}"
         onclick={() => (compareType = "plots")}
       >Plots</button>
       <button
-        class="type-pill"
-        class:active={compareType === "reports"}
+        class="py-[7px] px-4 rounded-lg border border-transparent bg-transparent text-text-muted text-[0.8rem] font-semibold transition-all duration-100 ease-out hover:text-text {compareType === 'reports' ? 'text-text bg-bg-secondary shadow-sm !border-border-subtle' : ''}"
         onclick={() => (compareType = "reports")}
       >Reports</button>
       <button
-        class="type-pill"
-        class:active={compareType === "code"}
+        class="py-[7px] px-4 rounded-lg border border-transparent bg-transparent text-text-muted text-[0.8rem] font-semibold transition-all duration-100 ease-out hover:text-text {compareType === 'code' ? 'text-text bg-bg-secondary shadow-sm !border-border-subtle' : ''}"
         onclick={() => (compareType = "code")}
       >Code</button>
     </div>
   </div>
 
   {#if columns.length === 0}
-    <div class="compare-empty">Select a dataset to compare configs.</div>
+    <div class="py-12 px-6 text-center text-text-muted">Select a dataset to compare configs.</div>
   {:else}
-    <div class="compare-grid" style="grid-template-columns: repeat({columns.length}, minmax(0, 1fr))">
+    <div class="grid gap-3.5 items-start" style="grid-template-columns: repeat({columns.length}, minmax(0, 1fr))">
       {#each columns as col}
-        <div class="compare-col">
-          <div class="col-header">
-            <span class="col-config">{col.config}</span>
+        <div class="flex flex-col border border-border rounded-xl bg-bg-secondary overflow-hidden shadow-sm">
+          <div class="flex flex-col gap-2 p-4 border-b border-border bg-bg">
+            <span class="text-[0.88rem] font-bold text-accent">{col.config}</span>
             {#if col.verdict}
               <span
-                class="col-verdict"
-                style="color: {verdictColors[col.verdict] ?? 'var(--text-muted)'}"
+                class="flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.04em]"
+                style="color: {verdictColors[col.verdict] ?? 'var(--color-text-muted)'}"
               >
-                <span class="col-verdict-dot" style="background: {verdictColors[col.verdict]}"></span>
+                <span class="w-[7px] h-[7px] rounded-full shrink-0" style="background: {verdictColors[col.verdict]}"></span>
                 {displayVerdict(col.verdict)}
                 {#if col.requiredCoverage != null && col.verdict !== "run_error"}
-                  <span class="col-coverage">{Math.round(col.requiredCoverage * 100)}%</span>
+                  <span class="font-mono font-semibold text-[0.78rem] text-text ml-1">{Math.round(col.requiredCoverage * 100)}%</span>
                 {/if}
               </span>
             {:else}
-              <span class="col-verdict" style="color: var(--text-faint)">no data</span>
+              <span class="flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.04em] text-text-faint">no data</span>
             {/if}
             {#if col.run && onSelectRun}
-              <button class="col-detail-btn" onclick={() => onSelectRun(col.run)}>
+              <button class="self-start py-[5px] px-3 text-xs font-semibold text-accent bg-accent-soft border border-[color-mix(in_srgb,var(--color-accent)_20%,var(--color-border))] rounded-full transition-all duration-100 ease-out hover:bg-[color-mix(in_srgb,var(--color-accent)_12%,var(--color-bg-secondary))] hover:border-accent" onclick={() => onSelectRun(col.run)}>
                 View detail
               </button>
             {/if}
           </div>
 
-          <div class="col-body">
+          <div class="p-3 flex flex-col gap-2 min-h-[120px]">
             {#if compareType === "plots"}
               {#if col.plots.length === 0}
-                <div class="col-empty">No plots</div>
+                <div class="flex items-center justify-center min-h-[100px] text-text-faint text-[0.82rem]">No plots</div>
               {:else}
-                <div class="col-plots">
+                <div class="flex flex-col gap-2">
                   {#each col.plots as plot}
                     <button
-                      class="col-plot-thumb"
+                      class="flex flex-col bg-bg border border-border rounded-lg overflow-hidden text-left cursor-zoom-in transition-all duration-100 ease-out hover:border-[color-mix(in_srgb,var(--color-accent)_40%,var(--color-border))] hover:shadow-sm"
                       type="button"
                       onclick={() => openLightbox(plot)}
                       title={plot.filename}
                     >
-                      <img src={plot.content_url} alt={plot.filename} loading="lazy" />
-                      <span class="col-plot-name">{plot.filename}</span>
+                      <img class="w-full h-auto block" src={plot.content_url} alt={plot.filename} loading="lazy" />
+                      <span class="px-2 py-[5px] text-[0.68rem] font-mono text-text-faint border-t border-border">{plot.filename}</span>
                     </button>
                   {/each}
                 </div>
               {/if}
             {:else if compareType === "reports"}
               {#if col.reports.length === 0}
-                <div class="col-empty">No reports</div>
+                <div class="flex items-center justify-center min-h-[100px] text-text-faint text-[0.82rem]">No reports</div>
               {:else}
                 {#each col.reports as report}
-                  <div class="col-report-card">
-                    <span class="col-report-title">{report.title}</span>
-                    <span class="col-report-preview">{report.previewText}</span>
+                  <div class="flex flex-col gap-1.5 p-3 bg-bg border border-border rounded-lg">
+                    <span class="text-[0.85rem] font-semibold text-text">{report.title}</span>
+                    <span class="text-[0.8rem] text-text-muted leading-normal line-clamp-4">{report.previewText}</span>
                   </div>
                 {/each}
               {/if}
             {:else if compareType === "code"}
               {#if col.code.length === 0}
-                <div class="col-empty">No generated code</div>
+                <div class="flex items-center justify-center min-h-[100px] text-text-faint text-[0.82rem]">No generated code</div>
               {:else}
                 {#each col.code as file}
-                  <div class="col-code-card">
-                    <span class="col-code-name">{file.filename}</span>
-                    <span class="col-code-path">{file.path}</span>
+                  <div class="flex flex-col gap-1 py-2.5 px-3 bg-bg border border-border rounded-lg">
+                    <span class="font-mono text-[0.82rem] font-semibold text-text">{file.filename}</span>
+                    <span class="font-mono text-[0.7rem] text-text-faint break-all">{file.path}</span>
                   </div>
                 {/each}
               {/if}
@@ -163,239 +160,3 @@
     onClose={() => (lightboxSrc = null)}
   />
 {/if}
-
-<style>
-  .compare {
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-  }
-
-  .compare-controls {
-    display: flex;
-    align-items: flex-end;
-    gap: 16px;
-    flex-wrap: wrap;
-  }
-
-  .filter-group--wide select {
-    min-width: 240px;
-  }
-
-  .compare-type-switch {
-    display: inline-flex;
-    gap: 2px;
-    padding: 3px;
-    border-radius: var(--radius-lg);
-    background: var(--bg-tertiary);
-    border: 1px solid var(--border);
-  }
-
-  .type-pill {
-    padding: 7px 16px;
-    border-radius: var(--radius);
-    border: 1px solid transparent;
-    background: transparent;
-    color: var(--text-muted);
-    font-size: 0.8rem;
-    font-weight: 600;
-    transition: all var(--transition-fast);
-  }
-
-  .type-pill:hover { color: var(--text); }
-
-  .type-pill.active {
-    color: var(--text);
-    background: var(--bg-secondary);
-    box-shadow: var(--shadow-sm);
-    border-color: var(--border-subtle);
-  }
-
-  .compare-empty {
-    padding: 48px 24px;
-    text-align: center;
-    color: var(--text-muted);
-  }
-
-  /* ── Grid ── */
-  .compare-grid {
-    display: grid;
-    gap: 14px;
-    align-items: start;
-  }
-
-  .compare-col {
-    display: flex;
-    flex-direction: column;
-    border: 1px solid var(--border);
-    border-radius: var(--radius-lg);
-    background: var(--bg-secondary);
-    overflow: hidden;
-    box-shadow: var(--shadow-sm);
-  }
-
-  .col-header {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    padding: 16px;
-    border-bottom: 1px solid var(--border);
-    background: var(--bg);
-  }
-
-  .col-config {
-    font-size: 0.88rem;
-    font-weight: 700;
-    color: var(--accent);
-  }
-
-  .col-verdict {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 0.75rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-  }
-
-  .col-verdict-dot {
-    width: 7px;
-    height: 7px;
-    border-radius: 50%;
-    flex-shrink: 0;
-  }
-
-  .col-coverage {
-    font-family: var(--font-mono);
-    font-weight: 600;
-    font-size: 0.78rem;
-    color: var(--text);
-    margin-left: 4px;
-  }
-
-  .col-detail-btn {
-    align-self: flex-start;
-    padding: 5px 12px;
-    font-size: 0.75rem;
-    font-weight: 600;
-    color: var(--accent);
-    background: var(--accent-soft);
-    border: 1px solid color-mix(in srgb, var(--accent) 20%, var(--border));
-    border-radius: 999px;
-    transition: all var(--transition-fast);
-  }
-
-  .col-detail-btn:hover {
-    background: color-mix(in srgb, var(--accent) 12%, var(--bg-secondary));
-    border-color: var(--accent);
-  }
-
-  .col-body {
-    padding: 12px;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    min-height: 120px;
-  }
-
-  .col-empty {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 100px;
-    color: var(--text-faint);
-    font-size: 0.82rem;
-  }
-
-  /* Plots in compare */
-  .col-plots {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-  }
-
-  .col-plot-thumb {
-    display: flex;
-    flex-direction: column;
-    background: var(--bg);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    overflow: hidden;
-    text-align: left;
-    cursor: zoom-in;
-    transition: all var(--transition-fast);
-  }
-
-  .col-plot-thumb:hover {
-    border-color: color-mix(in srgb, var(--accent) 40%, var(--border));
-    box-shadow: var(--shadow-sm);
-  }
-
-  .col-plot-thumb img {
-    width: 100%;
-    height: auto;
-    display: block;
-  }
-
-  .col-plot-name {
-    padding: 5px 8px;
-    font-size: 0.68rem;
-    font-family: var(--font-mono);
-    color: var(--text-faint);
-    border-top: 1px solid var(--border);
-  }
-
-  /* Reports in compare */
-  .col-report-card {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    padding: 12px;
-    background: var(--bg);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-  }
-
-  .col-report-title {
-    font-size: 0.85rem;
-    font-weight: 600;
-    color: var(--text);
-  }
-
-  .col-report-preview {
-    font-size: 0.8rem;
-    color: var(--text-muted);
-    line-height: 1.5;
-    display: -webkit-box;
-    -webkit-line-clamp: 4;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-  }
-
-  /* Code in compare */
-  .col-code-card {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-    padding: 10px 12px;
-    background: var(--bg);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-  }
-
-  .col-code-name {
-    font-family: var(--font-mono);
-    font-size: 0.82rem;
-    font-weight: 600;
-    color: var(--text);
-  }
-
-  .col-code-path {
-    font-family: var(--font-mono);
-    font-size: 0.7rem;
-    color: var(--text-faint);
-    overflow-wrap: anywhere;
-  }
-
-</style>

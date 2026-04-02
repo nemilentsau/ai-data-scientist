@@ -251,43 +251,51 @@
   });
 </script>
 
-<div class="app">
-  <header>
-    <div class="header-left">
+<div class="mx-auto max-w-[1440px] px-8 py-6 max-[900px]:px-[18px] max-[900px]:py-4">
+  <header class="flex items-start justify-between gap-4 mb-7 pb-5 border-b border-border max-[900px]:flex-col max-[900px]:items-stretch">
+    <div class="flex items-center gap-3.5">
       {#if selectedRun || selectedArtifact}
-        <button class="back-btn" onclick={goBack} aria-label="Go back">
+        <button
+          class="inline-flex items-center justify-center w-9 h-9 p-0 bg-bg-secondary border border-border rounded-lg text-text-muted shadow-xs transition-all duration-100 ease-out hover:text-accent hover:border-accent"
+          onclick={goBack}
+          aria-label="Go back"
+        >
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M10 12L6 8l4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
         </button>
       {/if}
       <div>
-        <div class="title-row">
-          <h1>Benchmark Dashboard</h1>
+        <div class="flex items-baseline gap-3 max-[900px]:flex-col max-[900px]:gap-1">
+          <h1 class="text-[1.4rem] font-extrabold text-text tracking-[-0.02em]">Benchmark Dashboard</h1>
           {#if selectedExperiment && !selectedRun && !selectedArtifact}
-            <span class="title-divider"></span>
-            <span class="title-experiment">{selectedExperiment.title}</span>
+            <span class="w-px h-4 bg-border self-center max-[900px]:hidden"></span>
+            <span class="text-[0.92rem] font-medium text-text-muted">{selectedExperiment.title}</span>
           {/if}
         </div>
         {#if selectedRun}
-          <nav class="breadcrumb">
-            <button class="breadcrumb-link" onclick={goBack}>Results</button>
-            <span class="breadcrumb-sep">/</span>
-            <span class="breadcrumb-current">{selectedRun.config} / {selectedRun.dataset.replace(/_/g, " ")}</span>
+          <nav class="flex items-center gap-1.5 mt-1.5 text-[0.82rem]">
+            <button class="bg-transparent border-none p-0 text-accent font-medium text-[inherit] font-[inherit] transition-colors duration-100 ease-out hover:text-accent-hover" onclick={goBack}>Results</button>
+            <span class="text-text-faint">/</span>
+            <span class="text-text-muted font-medium capitalize">{selectedRun.config} / {selectedRun.dataset.replace(/_/g, " ")}</span>
           </nav>
         {:else if selectedArtifact}
-          <nav class="breadcrumb">
-            <button class="breadcrumb-link" onclick={goBack}>Results</button>
-            <span class="breadcrumb-sep">/</span>
-            <span class="breadcrumb-current">{selectedArtifact.title ?? "Artifact"}</span>
+          <nav class="flex items-center gap-1.5 mt-1.5 text-[0.82rem]">
+            <button class="bg-transparent border-none p-0 text-accent font-medium text-[inherit] font-[inherit] transition-colors duration-100 ease-out hover:text-accent-hover" onclick={goBack}>Results</button>
+            <span class="text-text-faint">/</span>
+            <span class="text-text-muted font-medium capitalize">{selectedArtifact.title ?? "Artifact"}</span>
           </nav>
         {/if}
       </div>
     </div>
 
-    <div class="header-actions">
+    <div class="flex items-center gap-3 max-[900px]:flex-col max-[900px]:items-stretch">
       {#if !selectedRun && !selectedArtifact && experimentsPayload.experiments.length > 0}
-        <label class="selector">
+        <label class="flex flex-col gap-[5px] text-[0.7rem] font-semibold uppercase tracking-[0.05em] text-text-muted">
           <span>Experiment</span>
-          <select value={selectedExperimentId} onchange={handleExperimentChange}>
+          <select
+            class="min-w-[320px] px-3 py-[9px] bg-bg-secondary border border-border rounded-lg text-text text-[0.88rem] shadow-xs transition-[border-color,box-shadow] duration-100 ease-out focus:border-accent focus:shadow-[0_0_0_3px_var(--color-accent)/10] focus:outline-none max-[900px]:min-w-0 max-[900px]:w-full"
+            value={selectedExperimentId}
+            onchange={handleExperimentChange}
+          >
             {#each experimentsPayload.experiments as experiment}
               <option value={experiment.experiment_id}>
                 {experiment.title} ({experiment.experiment_id})
@@ -296,7 +304,10 @@
           </select>
         </label>
       {/if}
-      <button class="refresh-btn" onclick={refreshExperiments}>
+      <button
+        class="inline-flex items-center gap-1.5 px-4 py-[9px] bg-bg-secondary border border-border rounded-lg text-text-muted text-[0.85rem] font-medium shadow-xs transition-all duration-100 ease-out hover:text-text hover:border-accent"
+        onclick={refreshExperiments}
+      >
         <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M14 8A6 6 0 1 1 8 2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M14 2v4h-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
         Refresh
       </button>
@@ -304,29 +315,29 @@
   </header>
 
   {#if error}
-    <div class="error-banner">{error}</div>
+    <div class="mb-4 px-4 py-3 border border-[color-mix(in_srgb,var(--color-red)_30%,var(--color-border))] rounded-lg bg-red-soft text-red font-medium">{error}</div>
   {/if}
 
   {#if loading}
-    <div class="empty">
+    <div class="flex flex-col items-center justify-center min-h-[40vh] text-text-muted text-center gap-3">
       <p>Loading experiments...</p>
     </div>
   {:else if experimentsPayload.experiments.length === 0}
-    <div class="empty">
-      <div class="empty-icon">&#128202;</div>
+    <div class="flex flex-col items-center justify-center min-h-[40vh] text-text-muted text-center gap-3">
+      <div class="text-[3rem] opacity-25">&#128202;</div>
       <p>No imported experiments found</p>
-      <p class="hint">
+      <p class="text-[0.82rem] text-text-faint">
         Import legacy results with
-        <code>uv run python experiment_import.py --title "Imported benchmark"</code>
+        <code class="text-accent bg-bg-tertiary px-2 py-[2px] rounded font-mono text-[0.85rem]">uv run python experiment_import.py --title "Imported benchmark"</code>
       </p>
     </div>
   {:else if experimentLoading}
-    <div class="empty">
+    <div class="flex flex-col items-center justify-center min-h-[40vh] text-text-muted text-center gap-3">
       <p>Loading experiment...</p>
     </div>
   {:else if selectedRun || selectedArtifact}
     {#if detailLoading}
-      <div class="empty">
+      <div class="flex flex-col items-center justify-center min-h-[40vh] text-text-muted text-center gap-3">
         <p>Loading detail...</p>
       </div>
     {:else}
@@ -341,77 +352,77 @@
       {/if}
     {/if}
   {:else}
-    <section class="dashboard-hero">
-      <div class="stats-row">
-        <div class="stat-card stat-card--accent">
-          <span class="stat-label">Configs</span>
-          <span class="stat-value">{experimentView.configNames.length}</span>
+    <section class="flex flex-col gap-4 mb-6">
+      <div class="grid grid-cols-4 gap-3 max-[900px]:grid-cols-2">
+        <div class="flex flex-col gap-1.5 px-5 py-[18px] bg-bg-secondary border border-border rounded-xl shadow-sm border-t-[3px] border-t-accent transition-[transform,box-shadow] duration-100 ease-out hover:-translate-y-px hover:shadow">
+          <span class="text-[0.72rem] font-semibold uppercase tracking-[0.06em] text-text-muted">Configs</span>
+          <span class="text-[1.65rem] font-extrabold text-text tracking-[-0.03em] tabular-nums">{experimentView.configNames.length}</span>
         </div>
-        <div class="stat-card stat-card--purple">
-          <span class="stat-label">Datasets</span>
-          <span class="stat-value">{experimentView.datasets.length}</span>
+        <div class="flex flex-col gap-1.5 px-5 py-[18px] bg-bg-secondary border border-border rounded-xl shadow-sm border-t-[3px] border-t-purple transition-[transform,box-shadow] duration-100 ease-out hover:-translate-y-px hover:shadow">
+          <span class="text-[0.72rem] font-semibold uppercase tracking-[0.06em] text-text-muted">Datasets</span>
+          <span class="text-[1.65rem] font-extrabold text-text tracking-[-0.03em] tabular-nums">{experimentView.datasets.length}</span>
         </div>
-        <div class="stat-card stat-card--cyan">
-          <span class="stat-label">Cases</span>
-          <span class="stat-value">{experimentView.runs.length}</span>
+        <div class="flex flex-col gap-1.5 px-5 py-[18px] bg-bg-secondary border border-border rounded-xl shadow-sm border-t-[3px] border-t-cyan transition-[transform,box-shadow] duration-100 ease-out hover:-translate-y-px hover:shadow">
+          <span class="text-[0.72rem] font-semibold uppercase tracking-[0.06em] text-text-muted">Cases</span>
+          <span class="text-[1.65rem] font-extrabold text-text tracking-[-0.03em] tabular-nums">{experimentView.runs.length}</span>
         </div>
-        <div class="stat-card stat-card--muted">
-          <span class="stat-label">Total Cost</span>
-          <span class="stat-value">{totalCost > 0 ? `$${totalCost.toFixed(2)}` : "—"}</span>
+        <div class="flex flex-col gap-1.5 px-5 py-[18px] bg-bg-secondary border border-border rounded-xl shadow-sm border-t-[3px] border-t-text-faint transition-[transform,box-shadow] duration-100 ease-out hover:-translate-y-px hover:shadow">
+          <span class="text-[0.72rem] font-semibold uppercase tracking-[0.06em] text-text-muted">Total Cost</span>
+          <span class="text-[1.65rem] font-extrabold text-text tracking-[-0.03em] tabular-nums">{totalCost > 0 ? `$${totalCost.toFixed(2)}` : "—"}</span>
         </div>
       </div>
 
       {#if verdictCounts.scored > 0}
-        <div class="verdict-summary">
-          <div class="verdict-bar-container">
-            <div class="verdict-bar">
+        <div class="flex flex-col gap-3 px-[22px] py-[18px] bg-bg-secondary border border-border rounded-xl shadow-sm">
+          <div class="w-full">
+            <div class="flex h-2.5 rounded-full overflow-hidden bg-bg-tertiary gap-0.5">
               {#if verdictCounts.solved > 0}
                 <div
-                  class="verdict-segment verdict-solved"
+                  class="min-w-1 rounded-full bg-green transition-[width] duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)]"
                   style="width: {(verdictCounts.solved / verdictCounts.scored * 100)}%"
                   title="{verdictCounts.solved} solved"
                 ></div>
               {/if}
               {#if verdictCounts.partial > 0}
                 <div
-                  class="verdict-segment verdict-partial"
+                  class="min-w-1 rounded-full bg-orange transition-[width] duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)]"
                   style="width: {(verdictCounts.partial / verdictCounts.scored * 100)}%"
                   title="{verdictCounts.partial} partial"
                 ></div>
               {/if}
               {#if verdictCounts.wrong + verdictCounts.failed > 0}
                 <div
-                  class="verdict-segment verdict-wrong"
+                  class="min-w-1 rounded-full bg-red transition-[width] duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)]"
                   style="width: {((verdictCounts.wrong + verdictCounts.failed) / verdictCounts.scored * 100)}%"
                   title="{verdictCounts.wrong + verdictCounts.failed} wrong"
                 ></div>
               {/if}
               {#if verdictCounts.run_error > 0}
                 <div
-                  class="verdict-segment verdict-error"
+                  class="verdict-error-segment min-w-1 rounded-full transition-[width] duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)]"
                   style="width: {(verdictCounts.run_error / verdictCounts.scored * 100)}%"
                   title="{verdictCounts.run_error} run errors"
                 ></div>
               {/if}
             </div>
           </div>
-          <div class="verdict-legend">
-            <span class="verdict-item">
-              <span class="verdict-dot" style="background: var(--green)"></span>
-              <span class="verdict-count">{verdictCounts.solved}</span> solved
+          <div class="flex gap-5 flex-wrap">
+            <span class="flex items-center gap-1.5 text-[0.82rem] text-text-muted font-medium">
+              <span class="w-2 h-2 rounded-full shrink-0 bg-green"></span>
+              <span class="font-bold text-text tabular-nums">{verdictCounts.solved}</span> solved
             </span>
-            <span class="verdict-item">
-              <span class="verdict-dot" style="background: var(--orange)"></span>
-              <span class="verdict-count">{verdictCounts.partial}</span> partial
+            <span class="flex items-center gap-1.5 text-[0.82rem] text-text-muted font-medium">
+              <span class="w-2 h-2 rounded-full shrink-0 bg-orange"></span>
+              <span class="font-bold text-text tabular-nums">{verdictCounts.partial}</span> partial
             </span>
-            <span class="verdict-item">
-              <span class="verdict-dot" style="background: var(--red)"></span>
-              <span class="verdict-count">{verdictCounts.wrong + verdictCounts.failed}</span> wrong
+            <span class="flex items-center gap-1.5 text-[0.82rem] text-text-muted font-medium">
+              <span class="w-2 h-2 rounded-full shrink-0 bg-red"></span>
+              <span class="font-bold text-text tabular-nums">{verdictCounts.wrong + verdictCounts.failed}</span> wrong
             </span>
             {#if verdictCounts.run_error > 0}
-              <span class="verdict-item">
-                <span class="verdict-dot verdict-dot--striped"></span>
-                <span class="verdict-count">{verdictCounts.run_error}</span> errors
+              <span class="flex items-center gap-1.5 text-[0.82rem] text-text-muted font-medium">
+                <span class="verdict-dot-striped w-2 h-2 rounded-full shrink-0"></span>
+                <span class="font-bold text-text tabular-nums">{verdictCounts.run_error}</span> errors
               </span>
             {/if}
           </div>
@@ -419,17 +430,15 @@
       {/if}
     </section>
 
-    <div class="workspace-switch">
+    <div class="inline-flex gap-0.5 mb-[22px] p-[3px] rounded-xl bg-bg-tertiary border border-border">
       <button
-        class="workspace-pill"
-        class:active={activeSection === "overview"}
+        class="px-5 py-[9px] rounded-lg border border-transparent bg-transparent text-text-muted text-[0.82rem] font-semibold uppercase tracking-[0.06em] transition-all duration-200 ease-out hover:text-text {activeSection === 'overview' ? '!text-text !bg-bg-secondary !shadow-sm !border-border-subtle' : ''}"
         onclick={() => (activeSection = "overview")}
       >
         Results
       </button>
       <button
-        class="workspace-pill"
-        class:active={activeSection === "artifacts"}
+        class="px-5 py-[9px] rounded-lg border border-transparent bg-transparent text-text-muted text-[0.82rem] font-semibold uppercase tracking-[0.06em] transition-all duration-200 ease-out hover:text-text {activeSection === 'artifacts' ? '!text-text !bg-bg-secondary !shadow-sm !border-border-subtle' : ''}"
         onclick={() => (activeSection = "artifacts")}
       >
         Artifacts
@@ -437,9 +446,9 @@
     </div>
 
     {#if activeSection === "overview"}
-      <div class="controls">
+      <div class="mb-[18px]">
         <input
-          class="search"
+          class="w-full max-w-[440px] px-3.5 py-2.5 bg-bg-secondary border border-border rounded-lg text-text text-[0.9rem] font-[inherit] outline-none shadow-xs transition-[border-color,box-shadow] duration-100 ease-out placeholder:text-text-faint focus:border-accent focus:shadow-[0_0_0_3px_var(--color-accent)/10]"
           type="text"
           placeholder="Search datasets and verdict summaries..."
           bind:value={search}
@@ -447,18 +456,18 @@
       </div>
 
       {#if experimentView.experimentArtifacts.length > 0}
-        <section class="notes">
-          <div class="section-heading">
-            <h2>Experiment Notes</h2>
-            <span>{experimentView.experimentArtifacts.length}</span>
+        <section class="mb-7">
+          <div class="flex items-center justify-between gap-3 mb-4">
+            <h2 class="m-0 text-[0.82rem] font-bold uppercase tracking-[0.1em] text-text-muted">Experiment Notes</h2>
+            <span class="min-w-[30px] px-2.5 py-[3px] rounded-full bg-accent-soft text-accent text-[0.78rem] font-bold text-center">{experimentView.experimentArtifacts.length}</span>
           </div>
-          <div class="notes-grid">
+          <div class="grid grid-cols-[repeat(auto-fill,minmax(280px,1fr))] gap-3.5">
             {#each experimentView.experimentArtifacts as artifact}
-              <button class="note-card" onclick={() => selectArtifact(artifact)}>
-                <div class="note-type">{artifact.type?.replace(/_/g, " ") ?? "note"}</div>
-                <div class="note-title">{artifact.title ?? artifact.artifact_id}</div>
+              <button class="flex flex-col gap-2.5 min-h-[150px] p-5 bg-bg-secondary border border-border border-l-[3px] border-l-accent rounded-xl text-left cursor-pointer shadow-xs transition-all duration-200 ease-out hover:-translate-y-0.5 hover:border-[color-mix(in_srgb,var(--color-accent)_40%,var(--color-border))] hover:border-l-accent hover:shadow-md" onclick={() => selectArtifact(artifact)}>
+                <div class="text-[0.7rem] font-bold uppercase tracking-[0.1em] text-accent">{artifact.type?.replace(/_/g, " ") ?? "note"}</div>
+                <div class="text-[1.02rem] font-bold leading-[1.25] text-text">{artifact.title ?? artifact.artifact_id}</div>
                 {#if artifact.summary}
-                  <div class="note-summary">{artifact.summary}</div>
+                  <div class="text-text-muted leading-[1.55] text-[0.88rem]">{artifact.summary}</div>
                 {/if}
               </button>
             {/each}
@@ -475,37 +484,34 @@
       />
 
       {#if filteredDatasets.length === 0 && search}
-        <div class="empty compact-empty">
+        <div class="flex flex-col items-center justify-center min-h-[16vh] text-text-muted text-center gap-3">
           <p>No datasets match "{search}"</p>
         </div>
       {/if}
     {:else}
-      <section class="artifact-browser">
-        <div class="artifact-header-row">
-          <h2 class="artifact-section-title">Artifact Explorer</h2>
-          <div class="artifact-sub-switch">
+      <section class="mb-7 p-6 border border-border rounded-2xl bg-bg-secondary shadow-sm">
+        <div class="flex items-center justify-between gap-4 mb-[22px] flex-wrap">
+          <h2 class="text-[0.82rem] font-bold uppercase tracking-[0.1em] text-text-muted m-0">Artifact Explorer</h2>
+          <div class="inline-flex gap-0.5 p-[3px] rounded-xl bg-bg-tertiary border border-border">
             <button
-              class="sub-pill"
-              class:active={artifactSubView === "gallery"}
+              class="inline-flex items-center gap-1.5 px-4 py-[7px] rounded-lg border border-transparent bg-transparent text-text-muted text-[0.8rem] font-semibold transition-all duration-100 ease-out hover:text-text {artifactSubView === 'gallery' ? '!text-text !bg-bg-secondary !shadow-sm !border-border-subtle' : ''}"
               onclick={() => (artifactSubView = "gallery")}
             >
               Gallery
-              <span class="sub-pill-count">{plotArtifacts.length}</span>
+              <span class="text-[0.68rem] font-bold px-1.5 py-px rounded-full bg-[color-mix(in_srgb,var(--color-accent)_8%,var(--color-bg-tertiary))] text-accent tabular-nums {artifactSubView === 'gallery' ? '!bg-accent-soft' : ''}">{plotArtifacts.length}</span>
             </button>
             <button
-              class="sub-pill"
-              class:active={artifactSubView === "compare"}
+              class="inline-flex items-center gap-1.5 px-4 py-[7px] rounded-lg border border-transparent bg-transparent text-text-muted text-[0.8rem] font-semibold transition-all duration-100 ease-out hover:text-text {artifactSubView === 'compare' ? '!text-text !bg-bg-secondary !shadow-sm !border-border-subtle' : ''}"
               onclick={() => (artifactSubView = "compare")}
             >
               Compare
             </button>
             <button
-              class="sub-pill"
-              class:active={artifactSubView === "code"}
+              class="inline-flex items-center gap-1.5 px-4 py-[7px] rounded-lg border border-transparent bg-transparent text-text-muted text-[0.8rem] font-semibold transition-all duration-100 ease-out hover:text-text {artifactSubView === 'code' ? '!text-text !bg-bg-secondary !shadow-sm !border-border-subtle' : ''}"
               onclick={() => (artifactSubView = "code")}
             >
               Code
-              <span class="sub-pill-count">{codeArtifacts.length}</span>
+              <span class="text-[0.68rem] font-bold px-1.5 py-px rounded-full bg-[color-mix(in_srgb,var(--color-accent)_8%,var(--color-bg-tertiary))] text-accent tabular-nums {artifactSubView === 'code' ? '!bg-accent-soft' : ''}">{codeArtifacts.length}</span>
             </button>
           </div>
         </div>
@@ -537,582 +543,11 @@
 </div>
 
 <style>
-  .app {
-    max-width: 1440px;
-    margin: 0 auto;
-    padding: 24px 32px;
-  }
-
-  /* ── Header ── */
-  header {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: 16px;
-    margin-bottom: 28px;
-    padding-bottom: 20px;
-    border-bottom: 1px solid var(--border);
-  }
-
-  .header-left {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-  }
-
-  .title-row {
-    display: flex;
-    align-items: baseline;
-    gap: 12px;
-  }
-
-  h1 {
-    font-size: 1.4rem;
-    font-weight: 800;
-    color: var(--text);
-    letter-spacing: -0.02em;
-  }
-
-  .title-divider {
-    width: 1px;
-    height: 16px;
-    background: var(--border);
-    align-self: center;
-  }
-
-  .title-experiment {
-    font-size: 0.92rem;
-    font-weight: 500;
-    color: var(--text-muted);
-  }
-
-  .breadcrumb {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    margin-top: 6px;
-    font-size: 0.82rem;
-  }
-
-  .breadcrumb-link {
-    background: none;
-    border: none;
-    padding: 0;
-    color: var(--accent);
-    font-weight: 500;
-    font-size: inherit;
-    font-family: inherit;
-    transition: color var(--transition-fast);
-  }
-
-  .breadcrumb-link:hover {
-    color: var(--accent-hover);
-  }
-
-  .breadcrumb-sep {
-    color: var(--text-faint);
-  }
-
-  .breadcrumb-current {
-    color: var(--text-muted);
-    font-weight: 500;
-    text-transform: capitalize;
-  }
-
-  .header-actions {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-  }
-
-  .selector {
-    display: flex;
-    flex-direction: column;
-    gap: 5px;
-    font-size: 0.7rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    color: var(--text-muted);
-  }
-
-  .selector select {
-    min-width: 320px;
-    padding: 9px 12px;
-    background: var(--bg-secondary);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    color: var(--text);
-    font-size: 0.88rem;
-    box-shadow: var(--shadow-xs);
-    transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
-  }
-
-  .selector select:focus {
-    border-color: var(--accent);
-    box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 10%, transparent);
-    outline: none;
-  }
-
-  .refresh-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 9px 16px;
-    background: var(--bg-secondary);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    color: var(--text-muted);
-    font-size: 0.85rem;
-    font-weight: 500;
-    box-shadow: var(--shadow-xs);
-    transition: all var(--transition-fast);
-  }
-
-  .refresh-btn:hover {
-    color: var(--text);
-    border-color: var(--accent);
-    background: var(--bg-secondary);
-  }
-
-  .back-btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 36px;
-    height: 36px;
-    padding: 0;
-    background: var(--bg-secondary);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    color: var(--text-muted);
-    box-shadow: var(--shadow-xs);
-    transition: all var(--transition-fast);
-  }
-
-  .back-btn:hover {
-    color: var(--accent);
-    border-color: var(--accent);
-  }
-
-  .error-banner {
-    margin-bottom: 16px;
-    padding: 12px 16px;
-    border: 1px solid color-mix(in srgb, var(--red) 30%, var(--border));
-    border-radius: var(--radius);
-    background: var(--red-soft);
-    color: var(--red);
-    font-weight: 500;
-  }
-
-  /* ── Dashboard Hero ── */
-  .dashboard-hero {
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-    margin-bottom: 24px;
-  }
-
-  .stats-row {
-    display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 12px;
-  }
-
-  .stat-card {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    padding: 18px 20px;
-    background: var(--bg-secondary);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-lg);
-    box-shadow: var(--shadow-sm);
-    border-top: 3px solid var(--border);
-    transition: transform var(--transition-fast), box-shadow var(--transition-fast);
-  }
-
-  .stat-card:hover {
-    transform: translateY(-1px);
-    box-shadow: var(--shadow);
-  }
-
-  .stat-card--accent { border-top-color: var(--accent); }
-  .stat-card--purple { border-top-color: var(--purple); }
-  .stat-card--cyan   { border-top-color: var(--cyan); }
-  .stat-card--muted  { border-top-color: var(--text-faint); }
-
-  .stat-label {
-    font-size: 0.72rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    color: var(--text-muted);
-  }
-
-  .stat-value {
-    font-size: 1.65rem;
-    font-weight: 800;
-    color: var(--text);
-    letter-spacing: -0.03em;
-    font-variant-numeric: tabular-nums;
-  }
-
-  /* ── Verdict Distribution ── */
-  .verdict-summary {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    padding: 18px 22px;
-    background: var(--bg-secondary);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-lg);
-    box-shadow: var(--shadow-sm);
-  }
-
-  .verdict-bar-container {
-    width: 100%;
-  }
-
-  .verdict-bar {
-    display: flex;
-    height: 10px;
-    border-radius: 100px;
-    overflow: hidden;
-    background: var(--bg-tertiary);
-    gap: 2px;
-  }
-
-  .verdict-segment {
-    min-width: 4px;
-    border-radius: 100px;
-    transition: width 400ms cubic-bezier(0.4, 0, 0.2, 1);
-  }
-
-  .verdict-solved  { background: var(--green); }
-  .verdict-partial { background: var(--orange); }
-  .verdict-wrong   { background: var(--red); }
-  .verdict-error   { background: repeating-linear-gradient(-45deg, var(--red), var(--red) 2px, transparent 2px, transparent 5px); }
-
-  .verdict-legend {
-    display: flex;
-    gap: 20px;
-    flex-wrap: wrap;
-  }
-
-  .verdict-item {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 0.82rem;
-    color: var(--text-muted);
-    font-weight: 500;
-  }
-
-  .verdict-dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    flex-shrink: 0;
-  }
-
-  .verdict-dot--striped {
-    background: repeating-linear-gradient(-45deg, var(--red), var(--red) 1.5px, transparent 1.5px, transparent 3px);
-  }
-
-  .verdict-count {
-    font-weight: 700;
-    color: var(--text);
-    font-variant-numeric: tabular-nums;
-  }
-
-  /* ── Controls ── */
-  .controls {
-    margin-bottom: 18px;
-  }
-
-  .workspace-switch {
-    display: inline-flex;
-    gap: 2px;
-    margin: 0 0 22px;
-    padding: 3px;
-    border-radius: var(--radius-lg);
-    background: var(--bg-tertiary);
-    border: 1px solid var(--border);
-  }
-
-  .workspace-pill {
-    padding: 9px 20px;
-    border-radius: var(--radius);
-    border: 1px solid transparent;
-    background: transparent;
-    color: var(--text-muted);
-    font-size: 0.82rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    transition: all var(--transition-normal);
-  }
-
-  .workspace-pill:hover {
-    color: var(--text);
-  }
-
-  .workspace-pill.active {
-    color: var(--text);
-    background: var(--bg-secondary);
-    box-shadow: var(--shadow-sm);
-    border-color: var(--border-subtle);
-  }
-
-  /* ── Notes ── */
-  .notes {
-    margin: 0 0 28px;
-  }
-
-  /* ── Artifact Browser ── */
-  .artifact-browser {
-    margin: 0 0 28px;
-    padding: 24px;
-    border: 1px solid var(--border);
-    border-radius: var(--radius-xl);
-    background: var(--bg-secondary);
-    box-shadow: var(--shadow-sm);
-  }
-
-  .artifact-header-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 16px;
-    margin-bottom: 22px;
-    flex-wrap: wrap;
-  }
-
-  .artifact-section-title {
-    font-size: 0.82rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    color: var(--text-muted);
-    margin: 0;
-  }
-
-  .artifact-sub-switch {
-    display: inline-flex;
-    gap: 2px;
-    padding: 3px;
-    border-radius: var(--radius-lg);
-    background: var(--bg-tertiary);
-    border: 1px solid var(--border);
-  }
-
-  .sub-pill {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 7px 16px;
-    border-radius: var(--radius);
-    border: 1px solid transparent;
-    background: transparent;
-    color: var(--text-muted);
-    font-size: 0.8rem;
-    font-weight: 600;
-    transition: all var(--transition-fast);
-  }
-
-  .sub-pill:hover { color: var(--text); }
-
-  .sub-pill.active {
-    color: var(--text);
-    background: var(--bg-secondary);
-    box-shadow: var(--shadow-sm);
-    border-color: var(--border-subtle);
-  }
-
-  .sub-pill-count {
-    font-size: 0.68rem;
-    font-weight: 700;
-    padding: 1px 6px;
-    border-radius: 999px;
-    background: color-mix(in srgb, var(--accent) 8%, var(--bg-tertiary));
-    color: var(--accent);
-    font-variant-numeric: tabular-nums;
-  }
-
-  .sub-pill.active .sub-pill-count {
-    background: var(--accent-soft);
-  }
-
-  /* ── Section Heading ── */
-  .section-heading {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-    margin-bottom: 16px;
-  }
-
-  .section-heading h2 {
-    margin: 0;
-    font-size: 0.82rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    color: var(--text-muted);
-  }
-
-  .section-heading span {
-    min-width: 30px;
-    padding: 3px 10px;
-    border-radius: 999px;
-    background: var(--accent-soft);
-    color: var(--accent);
-    font-size: 0.78rem;
-    font-weight: 700;
-    text-align: center;
-  }
-
-  .notes-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: 14px;
-  }
-
-  .note-card {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    min-height: 150px;
-    padding: 20px;
-    background: var(--bg-secondary);
-    border: 1px solid var(--border);
-    border-left: 3px solid var(--accent);
-    border-radius: var(--radius-lg);
-    text-align: left;
-    cursor: pointer;
-    box-shadow: var(--shadow-xs);
-    transition: all var(--transition-normal);
-  }
-
-  .note-card:hover {
-    transform: translateY(-2px);
-    border-color: color-mix(in srgb, var(--accent) 40%, var(--border));
-    border-left-color: var(--accent);
-    box-shadow: var(--shadow-md);
-  }
-
-  .note-type {
-    font-size: 0.7rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    color: var(--accent);
-  }
-
-  .note-title {
-    font-size: 1.02rem;
-    font-weight: 700;
-    line-height: 1.25;
-    color: var(--text);
-  }
-
-  .note-summary {
-    color: var(--text-muted);
-    line-height: 1.55;
-    font-size: 0.88rem;
-  }
-
-  /* ── Search ── */
-  .search {
-    width: 100%;
-    max-width: 440px;
-    padding: 10px 14px;
-    background: var(--bg-secondary);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    color: var(--text);
-    font-size: 0.9rem;
-    font-family: inherit;
-    outline: none;
-    box-shadow: var(--shadow-xs);
-    transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
-  }
-
-  .search::placeholder {
-    color: var(--text-faint);
-  }
-
-  .search:focus {
-    border-color: var(--accent);
-    box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 10%, transparent);
-  }
-
-  /* ── Empty States ── */
-  .empty {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    min-height: 40vh;
-    color: var(--text-muted);
-    text-align: center;
-    gap: 12px;
-  }
-
-  .compact-empty {
-    min-height: 16vh;
-  }
-
-  .empty-icon {
-    font-size: 3rem;
-    opacity: 0.25;
-  }
-
-  .empty code {
-    color: var(--accent);
-    background: var(--bg-tertiary);
-    padding: 2px 8px;
-    border-radius: 4px;
-    font-size: 0.85rem;
-  }
-
-  .hint {
-    font-size: 0.82rem;
-    color: var(--text-faint);
-  }
-
-  @media (max-width: 900px) {
-    .app {
-      padding: 16px 18px;
-    }
-
-    header {
-      flex-direction: column;
-      align-items: stretch;
-    }
-
-    .title-row {
-      flex-direction: column;
-      gap: 4px;
-    }
-
-    .title-divider {
-      display: none;
-    }
-
-    .header-actions {
-      flex-direction: column;
-      align-items: stretch;
-    }
-
-    .selector select {
-      min-width: 0;
-      width: 100%;
-    }
-
-    .stats-row {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
+  /* Repeating gradient patterns that can't be expressed as Tailwind utilities */
+  .verdict-error-segment {
+    background: repeating-linear-gradient(-45deg, var(--color-red), var(--color-red) 2px, transparent 2px, transparent 5px);
+  }
+  .verdict-dot-striped {
+    background: repeating-linear-gradient(-45deg, var(--color-red), var(--color-red) 1.5px, transparent 1.5px, transparent 3px);
   }
 </style>

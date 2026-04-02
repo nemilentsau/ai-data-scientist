@@ -19,163 +19,54 @@
 
 <!-- svelte-ignore a11y_click_events_have_key_events a11y_interactive_supports_focus -->
 <div
-  class="lb-backdrop"
+  class="fixed inset-0 z-[1000] bg-[rgba(10,12,20,0.75)] backdrop-blur-[8px] flex items-center justify-center p-6 animate-fade-in"
   role="dialog"
   aria-modal="true"
   tabindex="-1"
   onclick={(e) => e.target === e.currentTarget && onClose()}
   onkeydown={handleKeydown}
 >
-  <div class="lb-content">
-    <div class="lb-header">
-      <div class="lb-title">
+  <div class="flex flex-col max-w-[95vw] max-h-[92vh] bg-bg-secondary border border-border rounded-2xl overflow-hidden shadow-lg animate-scale-in">
+    <div class="flex items-center justify-between px-[18px] py-3 border-b border-border bg-bg shrink-0 gap-4">
+      <div class="flex items-center gap-1.5 overflow-hidden">
         {#if sublabel}
-          <span class="lb-sublabel">{sublabel}</span>
-          <span class="lb-sep">/</span>
+          <span class="text-[0.82rem] font-semibold text-text-muted capitalize">{sublabel}</span>
+          <span class="text-text-faint">/</span>
         {/if}
-        <span class="lb-label">{label}</span>
+        <span class="font-mono text-[0.8rem] text-text-muted">{label}</span>
       </div>
-      <div class="lb-actions">
+      <div class="flex gap-1.5 shrink-0">
         {#if onPrev}
-          <button class="lb-nav" onclick={onPrev} aria-label="Previous" disabled={!hasPrev}>
+          <button
+            class="flex items-center justify-center w-8 h-8 border border-border rounded-lg bg-bg-secondary text-text-muted transition-all duration-100 ease-out disabled:opacity-30 disabled:cursor-default hover:enabled:text-accent hover:enabled:border-accent"
+            onclick={onPrev}
+            aria-label="Previous"
+            disabled={!hasPrev}
+          >
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M10 12L6 8l4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
           </button>
         {/if}
         {#if onNext}
-          <button class="lb-nav" onclick={onNext} aria-label="Next" disabled={!hasNext}>
+          <button
+            class="flex items-center justify-center w-8 h-8 border border-border rounded-lg bg-bg-secondary text-text-muted transition-all duration-100 ease-out disabled:opacity-30 disabled:cursor-default hover:enabled:text-accent hover:enabled:border-accent"
+            onclick={onNext}
+            aria-label="Next"
+            disabled={!hasNext}
+          >
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M6 4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
           </button>
         {/if}
-        <button class="lb-close" onclick={onClose} aria-label="Close">
+        <button
+          class="flex items-center justify-center w-8 h-8 border border-border rounded-lg bg-bg-secondary text-text-muted transition-all duration-100 ease-out hover:text-red hover:border-red hover:bg-red-soft"
+          onclick={onClose}
+          aria-label="Close"
+        >
           <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M13 5L5 13M5 5l8 8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
         </button>
       </div>
     </div>
-    <div class="lb-body">
-      <img {src} alt={label} />
+    <div class="overflow-auto p-4 flex items-center justify-center bg-bg">
+      <img class="max-w-full max-h-[82vh] object-contain rounded-lg" {src} alt={label} />
     </div>
   </div>
 </div>
-
-<style>
-  .lb-backdrop {
-    position: fixed;
-    inset: 0;
-    z-index: 1000;
-    background: rgba(10, 12, 20, 0.75);
-    backdrop-filter: blur(8px);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 24px;
-    animation: lbFade 150ms ease;
-  }
-
-  @keyframes lbFade {
-    from { opacity: 0; }
-    to { opacity: 1; }
-  }
-
-  .lb-content {
-    display: flex;
-    flex-direction: column;
-    max-width: 95vw;
-    max-height: 92vh;
-    background: var(--bg-secondary);
-    border: 1px solid var(--border);
-    border-radius: 16px;
-    overflow: hidden;
-    box-shadow: var(--shadow-lg, var(--shadow-md));
-    animation: lbScale 200ms cubic-bezier(0.16, 1, 0.3, 1);
-  }
-
-  @keyframes lbScale {
-    from { opacity: 0; transform: scale(0.95); }
-    to { opacity: 1; transform: scale(1); }
-  }
-
-  .lb-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 12px 18px;
-    border-bottom: 1px solid var(--border);
-    background: var(--bg);
-    flex-shrink: 0;
-    gap: 16px;
-  }
-
-  .lb-title {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    overflow: hidden;
-  }
-
-  .lb-sublabel {
-    font-size: 0.82rem;
-    font-weight: 600;
-    color: var(--text-muted);
-    text-transform: capitalize;
-  }
-
-  .lb-sep { color: var(--text-faint, var(--text-muted)); }
-
-  .lb-label {
-    font-family: var(--font-mono);
-    font-size: 0.8rem;
-    color: var(--text-muted);
-  }
-
-  .lb-actions {
-    display: flex;
-    gap: 6px;
-    flex-shrink: 0;
-  }
-
-  .lb-nav,
-  .lb-close {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 32px;
-    height: 32px;
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    background: var(--bg-secondary);
-    color: var(--text-muted);
-    transition: all var(--transition-fast, 120ms ease);
-  }
-
-  .lb-nav:disabled {
-    opacity: 0.3;
-    cursor: default;
-  }
-
-  .lb-nav:not(:disabled):hover {
-    color: var(--accent);
-    border-color: var(--accent);
-  }
-
-  .lb-close:hover {
-    color: var(--red);
-    border-color: var(--red);
-    background: var(--red-soft, color-mix(in srgb, var(--red) 5%, var(--bg-secondary)));
-  }
-
-  .lb-body {
-    overflow: auto;
-    padding: 16px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: var(--bg);
-  }
-
-  .lb-body img {
-    max-width: 100%;
-    max-height: 82vh;
-    object-fit: contain;
-    border-radius: var(--radius, 8px);
-  }
-</style>
