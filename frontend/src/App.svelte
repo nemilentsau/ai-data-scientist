@@ -3,6 +3,9 @@
   import ComparisonMatrix from "./lib/ComparisonMatrix.svelte";
   import ArtifactDetail from "./lib/ArtifactDetail.svelte";
   import RunDetail from "./lib/RunDetail.svelte";
+  import PlotGallery from "./lib/PlotGallery.svelte";
+  import CaseCompare from "./lib/CaseCompare.svelte";
+  import CodeInspector from "./lib/CodeInspector.svelte";
   import {
     buildExperimentView,
     filterArtifacts,
@@ -17,6 +20,7 @@
   let selectedArtifact = $state(null);
   let activeSection = $state("overview");
   let search = $state("");
+  let artifactSubView = $state("gallery");
   let artifactQuery = $state("");
   let artifactCategory = $state("analysis");
   let artifactDataset = $state("all");
@@ -215,6 +219,14 @@
 
   let visibleArtifacts = $derived.by(() =>
     filteredArtifacts.slice(0, artifactVisibleCount),
+  );
+
+  let plotArtifacts = $derived.by(() =>
+    experimentView.artifactCatalog.filter((a) => a.category === "plots"),
+  );
+
+  let codeArtifacts = $derived.by(() =>
+    experimentView.artifactCatalog.filter((a) => a.category === "generated_code"),
   );
 
   let verdictCounts = $derived.by(() => {
@@ -469,91 +481,55 @@
       {/if}
     {:else}
       <section class="artifact-browser">
-        <div class="section-heading">
-          <div>
-            <h2>Artifact Explorer</h2>
-            <p class="artifact-browser-copy">
-              Use this for raw reports, plots, traces, generated code, and notes. Analysis
-              artifacts are shown by default; switch categories when you need lower-level harness
-              outputs.
-            </p>
+        <div class="artifact-header-row">
+          <h2 class="artifact-section-title">Artifact Explorer</h2>
+          <div class="artifact-sub-switch">
+            <button
+              class="sub-pill"
+              class:active={artifactSubView === "gallery"}
+              onclick={() => (artifactSubView = "gallery")}
+            >
+              Gallery
+              <span class="sub-pill-count">{plotArtifacts.length}</span>
+            </button>
+            <button
+              class="sub-pill"
+              class:active={artifactSubView === "compare"}
+              onclick={() => (artifactSubView = "compare")}
+            >
+              Compare
+            </button>
+            <button
+              class="sub-pill"
+              class:active={artifactSubView === "code"}
+              onclick={() => (artifactSubView = "code")}
+            >
+              Code
+              <span class="sub-pill-count">{codeArtifacts.length}</span>
+            </button>
           </div>
-          <span>{filteredArtifacts.length}</span>
         </div>
 
-        <div class="artifact-controls">
-          <input
-            class="search artifact-search"
-            type="text"
-            placeholder="Search artifact titles, summaries, datasets, and configs..."
-            bind:value={artifactQuery}
+        {#if artifactSubView === "gallery"}
+          <PlotGallery
+            plots={plotArtifacts}
+            datasets={experimentView.datasets}
+            configs={experimentView.configNames}
           />
-
-          <div class="artifact-filters">
-            <label class="artifact-filter">
-              <span>Category</span>
-              <select bind:value={artifactCategory}>
-                {#each experimentView.artifactCategories as option}
-                  <option value={option}>{option.replace(/_/g, " ")}</option>
-                {/each}
-              </select>
-            </label>
-
-            <label class="artifact-filter">
-              <span>Dataset</span>
-              <select bind:value={artifactDataset}>
-                {#each experimentView.artifactDatasets as option}
-                  <option value={option}>{option}</option>
-                {/each}
-              </select>
-            </label>
-
-            <label class="artifact-filter">
-              <span>Config</span>
-              <select bind:value={artifactConfig}>
-                {#each experimentView.artifactConfigs as option}
-                  <option value={option}>{option}</option>
-                {/each}
-              </select>
-            </label>
-          </div>
-        </div>
-
-        {#if visibleArtifacts.length > 0}
-          <div class="artifact-grid">
-            {#each visibleArtifacts as artifact}
-              <button class="artifact-card" onclick={() => selectArtifact(artifact)}>
-                <div class="artifact-card-top">
-                  <span class="artifact-category">{artifact.category.replace(/_/g, " ")}</span>
-                  <span class="artifact-scope">{artifact.type.replace(/_/g, " ")}</span>
-                </div>
-                <div class="artifact-card-title">{artifact.title}</div>
-                <div class="artifact-card-summary">{artifact.previewText}</div>
-                <div class="artifact-meta-row">
-                  {#if artifact.datasetLabels.length > 0}
-                    <span class="artifact-chip">{artifact.datasetLabels.join(", ")}</span>
-                  {/if}
-                  {#if artifact.configLabels.length > 0}
-                    <span class="artifact-chip artifact-chip--config">
-                      {artifact.configLabels.join(", ")}
-                    </span>
-                  {/if}
-                </div>
-              </button>
-            {/each}
-          </div>
-          {#if filteredArtifacts.length > visibleArtifacts.length}
-            <div class="artifact-browser-footer">
-              <button class="show-more-btn" onclick={showMoreArtifacts}>
-                Show {Math.min(12, filteredArtifacts.length - visibleArtifacts.length)} more
-              </button>
-            </div>
-          {/if}
-        {:else}
-          <div class="empty compact-empty">
-            <p>No artifacts match the current filters.</p>
-            <p class="hint">Analysis is the default category. Switch to plots, diagnostics, or generated code for raw harness outputs.</p>
-          </div>
+        {:else if artifactSubView === "compare"}
+          <CaseCompare
+            artifactCatalog={experimentView.artifactCatalog}
+            datasets={experimentView.datasets}
+            configNames={experimentView.configNames}
+            runMap={experimentView.runMap}
+            onSelectRun={selectRun}
+          />
+        {:else if artifactSubView === "code"}
+          <CodeInspector
+            {codeArtifacts}
+            datasets={experimentView.datasets}
+            configs={experimentView.configNames}
+          />
         {/if}
       </section>
     {/if}
@@ -904,169 +880,68 @@
     box-shadow: var(--shadow-sm);
   }
 
-  .artifact-controls {
+  .artifact-header-row {
     display: flex;
-    flex-direction: column;
-    gap: 14px;
-    margin-bottom: 20px;
-  }
-
-  .artifact-search {
-    max-width: none;
-  }
-
-  .artifact-filters {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 12px;
-  }
-
-  .artifact-browser-copy {
-    margin: 8px 0 0;
-    max-width: 72ch;
-    color: var(--text-muted);
-    line-height: 1.55;
-    font-size: 0.92rem;
-    text-transform: none;
-    letter-spacing: normal;
-  }
-
-  .artifact-filter {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-  }
-
-  .artifact-filter span {
-    font-size: 0.7rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    color: var(--text-muted);
-  }
-
-  .artifact-filter select {
-    min-width: 0;
-    padding: 9px 12px;
-    background: var(--bg);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    color: var(--text);
-    font-size: 0.88rem;
-    transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
-  }
-
-  .artifact-filter select:focus {
-    border-color: var(--accent);
-    box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 10%, transparent);
-    outline: none;
-  }
-
-  .artifact-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: 14px;
-  }
-
-  .artifact-card {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    min-height: 180px;
-    padding: 20px;
-    text-align: left;
-    border-radius: var(--radius-lg);
-    border: 1px solid var(--border);
-    border-left: 3px solid var(--accent);
-    background: var(--bg-secondary);
-    box-shadow: var(--shadow-xs);
-    transition: all var(--transition-normal);
-  }
-
-  .artifact-card:hover {
-    transform: translateY(-2px);
-    border-color: color-mix(in srgb, var(--accent) 40%, var(--border));
-    border-left-color: var(--accent);
-    box-shadow: var(--shadow-md);
-  }
-
-  .artifact-card-top {
-    display: flex;
-    justify-content: space-between;
-    gap: 10px;
     align-items: center;
-    color: var(--text-muted);
-    font-size: 0.7rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-  }
-
-  .artifact-category {
-    color: var(--accent);
-  }
-
-  .artifact-card-title {
-    font-size: 0.98rem;
-    font-weight: 700;
-    line-height: 1.3;
-    color: var(--text);
-  }
-
-  .artifact-card-summary {
-    color: var(--text-muted);
-    line-height: 1.55;
-    font-size: 0.85rem;
-    display: -webkit-box;
-    -webkit-line-clamp: 3;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-  }
-
-  .artifact-meta-row {
-    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 22px;
     flex-wrap: wrap;
-    gap: 6px;
-    margin-top: auto;
   }
 
-  .artifact-chip {
-    padding: 3px 9px;
-    border-radius: 999px;
-    background: var(--accent-soft);
-    color: var(--accent);
-    font-size: 0.7rem;
-    font-weight: 600;
-    line-height: 1.2;
+  .artifact-section-title {
+    font-size: 0.82rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--text-muted);
+    margin: 0;
   }
 
-  .artifact-chip--config {
-    background: color-mix(in srgb, var(--cyan) 10%, var(--bg));
-    color: var(--cyan);
-  }
-
-  .artifact-browser-footer {
-    display: flex;
-    justify-content: center;
-    margin-top: 20px;
-  }
-
-  .show-more-btn {
-    padding: 10px 24px;
+  .artifact-sub-switch {
+    display: inline-flex;
+    gap: 2px;
+    padding: 3px;
+    border-radius: var(--radius-lg);
+    background: var(--bg-tertiary);
     border: 1px solid var(--border);
-    border-radius: 999px;
-    background: var(--bg-secondary);
-    color: var(--accent);
+  }
+
+  .sub-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 16px;
+    border-radius: var(--radius);
+    border: 1px solid transparent;
+    background: transparent;
+    color: var(--text-muted);
+    font-size: 0.8rem;
     font-weight: 600;
-    font-size: 0.85rem;
-    box-shadow: var(--shadow-xs);
     transition: all var(--transition-fast);
   }
 
-  .show-more-btn:hover {
-    border-color: var(--accent);
-    background: var(--accent-soft);
+  .sub-pill:hover { color: var(--text); }
+
+  .sub-pill.active {
+    color: var(--text);
+    background: var(--bg-secondary);
     box-shadow: var(--shadow-sm);
+    border-color: var(--border-subtle);
+  }
+
+  .sub-pill-count {
+    font-size: 0.68rem;
+    font-weight: 700;
+    padding: 1px 6px;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--accent) 8%, var(--bg-tertiary));
+    color: var(--accent);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .sub-pill.active .sub-pill-count {
+    background: var(--accent-soft);
   }
 
   /* ── Section Heading ── */
@@ -1238,10 +1113,6 @@
 
     .stats-row {
       grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-
-    .artifact-filters {
-      grid-template-columns: 1fr;
     }
   }
 </style>
