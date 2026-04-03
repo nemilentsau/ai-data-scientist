@@ -1,0 +1,16 @@
+name: solo-v2
+description: Single Claude agent with hypothesis-driven prompt and visual self-review
+created: "2026-04-02"
+team:
+  - role: claude
+    model: claude-opus-4-6
+    prompt: prompts/analyst-v2.md
+    max_turns: 30
+    tools:
+      - Bash
+      - Read
+      - Write
+      - Edit
+      - Glob
+      - Grep
+harness: harness/run_claude.sh

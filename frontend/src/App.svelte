@@ -11,6 +11,7 @@
     hydrateArtifactDetail,
     hydrateCaseDetail,
   } from "./lib/experiments.js";
+  import { parseHash, buildHash } from "./lib/router.js";
 
   let experimentsPayload = $state({ experiments: [] });
   let selectedExperimentId = $state("");
@@ -25,9 +26,86 @@
   let detailLoading = $state(false);
   let error = $state("");
 
+  // Route state tracked separately so we can detect external navigation
+  let suppressHashSync = false;
+  let pendingRoute = null;
+
   onMount(() => {
+    pendingRoute = parseHash(location.hash);
     void refreshExperiments();
+
+    function onNavigate() {
+      const route = parseHash(location.hash);
+      lastPushedHash = location.hash.replace(/^#\/?/, "");
+      suppressHashSync = true;
+      void applyRoute(route).finally(() => { suppressHashSync = false; });
+    }
+    window.addEventListener("popstate", onNavigate);
+    return () => window.removeEventListener("popstate", onNavigate);
   });
+
+  // Sync state → hash whenever routable state changes
+  let lastPushedHash = "";
+  $effect(() => {
+    const hash = buildHash({
+      experimentId: selectedExperimentId,
+      selectedRun,
+      selectedArtifact,
+      activeSection,
+      artifactSubView,
+    });
+    if (!suppressHashSync) {
+      const current = location.hash.replace(/^#\/?/, "");
+      if (hash !== current) {
+        const url = hash ? `#/${hash}` : window.location.pathname;
+        if (hash !== lastPushedHash) {
+          history.pushState(null, "", url);
+          lastPushedHash = hash;
+        } else {
+          history.replaceState(null, "", url);
+        }
+      }
+    }
+  });
+
+  async function applyRoute(route) {
+    if (!route.experimentId) return;
+
+    // Switch experiment if needed
+    if (route.experimentId !== selectedExperimentId && experimentManifest != null) {
+      selectedExperimentId = route.experimentId;
+      await loadExperiment(route.experimentId);
+    }
+
+    // Wait for manifest to be available
+    if (!experimentManifest) return;
+
+    if (route.view === "run" && route.config && route.dataset) {
+      const key = `${route.config}/${route.dataset}`;
+      const run = experimentView.runMap[key];
+      if (run) {
+        activeSection = "overview";
+        await selectRun(run);
+      }
+    } else if (route.view === "artifact" && route.artifactId) {
+      const allArtifacts = [
+        ...(experimentManifest.artifacts ?? []),
+      ];
+      const artifact = allArtifacts.find((a) => a.artifact_id === route.artifactId);
+      if (artifact) {
+        await selectArtifact(artifact);
+      }
+    } else if (route.view === "artifacts") {
+      selectedRun = null;
+      selectedArtifact = null;
+      activeSection = "artifacts";
+      artifactSubView = route.subView || "gallery";
+    } else {
+      selectedRun = null;
+      selectedArtifact = null;
+      activeSection = "overview";
+    }
+  }
 
   async function refreshExperiments() {
     loading = true;
@@ -49,15 +127,29 @@
         return;
       }
 
-      const nextExperimentId = availableExperiments.some(
-        (experiment) => experiment.experiment_id === selectedExperimentId,
-      )
-        ? selectedExperimentId
-        : availableExperiments[0].experiment_id;
+      // Use experiment from URL hash if available, otherwise first experiment
+      const routeExperimentId = pendingRoute?.experimentId;
+      const hasRouteExperiment = routeExperimentId && availableExperiments.some(
+        (e) => e.experiment_id === routeExperimentId,
+      );
+
+      const nextExperimentId = hasRouteExperiment
+        ? routeExperimentId
+        : availableExperiments.some((e) => e.experiment_id === selectedExperimentId)
+          ? selectedExperimentId
+          : availableExperiments[0].experiment_id;
 
       if (nextExperimentId !== selectedExperimentId || experimentManifest == null) {
         selectedExperimentId = nextExperimentId;
         await loadExperiment(nextExperimentId);
+      }
+
+      // Apply the full route (run/artifact/section) after experiment is loaded
+      if (pendingRoute?.experimentId) {
+        suppressHashSync = true;
+        await applyRoute(pendingRoute);
+        suppressHashSync = false;
+        pendingRoute = null;
       }
     } catch (err) {
       error = err instanceof Error ? err.message : "Failed to load experiments";

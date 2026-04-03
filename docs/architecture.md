@@ -107,11 +107,31 @@ Artifact contents are loaded lazily from the original files referenced by artifa
 The current app:
 
 1. fetches the experiment list
-2. selects one experiment
+2. selects one experiment (restored from URL hash on refresh)
 3. fetches that experiment manifest
 4. defaults to a results overview with experiment notes and the comparison matrix
-5. exposes raw artifact exploration in a separate artifact view
+5. exposes three purpose-built artifact views: Plot Gallery, Case Compare, Code Inspector
 6. hydrates case detail and artifact detail views from artifact URLs
+7. preserves navigation state in `location.hash` so refresh and back/forward work
+
+### URL Routing
+
+The app uses hash-based routing (`router.js`). Routes:
+
+- `#/{experimentId}` — overview with comparison matrix
+- `#/{experimentId}/artifacts/{gallery|compare|code}` — artifact explorer sub-view
+- `#/{experimentId}/run/{config}/{dataset}` — case detail
+- `#/{experimentId}/artifact/{artifactId}` — artifact detail
+
+State changes push browser history entries; back/forward triggers `popstate` and re-applies the route.
+
+### Frontend Stack
+
+- **Svelte 5** with runes (`$state`, `$derived`, `$effect`, `$props`)
+- **Vite 6** with `@tailwindcss/vite` plugin and a custom manifest plugin for API middleware
+- **Tailwind CSS v4** with a `@theme` block defining the full design system (colors, fonts, shadows, animations)
+- Shared utilities: `parse.js` (trace/tool/verdict), `experiments.js` (manifest hydration), `router.js` (URL routing)
+- Shared components: `Lightbox.svelte` (reusable image modal with keyboard nav)
 
 ## Why This Shape
 
@@ -129,36 +149,37 @@ Implemented:
 - SQLite-backed experiment catalog
 - import CLI for legacy runs
 - fresh-run experiment refresh from `run_benchmark.py`
-- minimal experiment manifest export
-- experiment-aware frontend API
-- experiment-aware frontend UI
+- experiment manifest export (index + per-experiment JSON)
+- experiment-aware frontend API (Vite dev middleware)
+- experiment-aware frontend UI (Svelte 5 + Tailwind CSS v4)
+- hash-based URL routing with browser history support
 - experiment-scoped synthesis notes
 - dataset/config-scoped notes linked to matching cases
 - case-detail note navigation
-- secondary artifact explorer with metadata filters and search
+- comparison matrix with verdict coloring, coverage bars, and aggregate stats
+- plot gallery with search, dataset/config filters, and lightbox navigation
+- case comparison view (side-by-side configs with plots, reports, code)
+- code inspector with lazy-loading inline preview
 - generic artifact detail for markdown, images, JSON, traces, logs, and code
+- centralized verdict colors and display logic (`parse.js`)
+- shared Lightbox component with keyboard navigation
 
 Not implemented yet:
 
 - real multi-agent workflow ingestion from the harness
-- richer experiment navigation and comparison views in the frontend
+- cross-experiment comparison
 
 ## Remaining Work
 
-Yes, there is still unfinished work.
-
-The main remaining items are:
-
 ### 1. Experiment-linked synthesis artifacts
 
-The catalog now supports experiment-level and scoped markdown notes, but the
-authoring model is still lightweight.
+The catalog supports experiment-level and scoped markdown notes. The authoring
+model is lightweight (YAML front-matter in `docs/artifacts/`).
 
 Still needed:
 
 - a cleaner convention for deep-dives and comparison notes
 - richer scopes such as cross-dataset or cross-experiment comparisons
-- better discoverability than the current note strips and tabs
 
 ### 2. Richer multi-agent support
 
@@ -170,15 +191,13 @@ Still needed:
 - richer provenance between agent runs and artifacts
 - optional stage-level structure only if the harness truly emits it
 
-### 3. Deeper frontend UX
+### 3. Cross-experiment comparison
 
-The frontend now works on the experiment model, but it is still the first useful slice.
+The frontend is single-experiment. Cross-experiment comparison would require:
 
-Still needed:
-
-- cross-experiment comparison
-- deeper navigation and routing
-- richer saved views or faceted browsing for very large experiments
+- multi-experiment selection UI
+- a comparison view showing the same datasets across experiments
+- performance trend tracking across runs
 
 ## Non-Negotiable Constraints
 
