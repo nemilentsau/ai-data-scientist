@@ -5,13 +5,13 @@
   let { events, allEvents, showResponses, onSelect } = $props();
 </script>
 
-<div class="timeline">
+<div class="flex flex-col gap-1">
   {#each events as event, i (i)}
     {@const prevTs = i > 0 ? events[i - 1].timestamp : null}
     {@const delta = deltaSeconds(prevTs, event.timestamp)}
     {#if delta !== null && Number(delta) > 5}
-      <div class="time-gap">
-        <span>{delta}s gap</span>
+      <div class="flex items-center justify-center py-1.5">
+        <span class="text-[0.72rem] font-medium text-text-muted bg-bg-tertiary px-3 py-[3px] rounded-[10px]">{delta}s gap</span>
       </div>
     {/if}
     <TraceEvent
@@ -23,36 +23,6 @@
     />
   {/each}
   {#if events.length === 0}
-    <div class="no-events">No matching events</div>
+    <div class="text-center p-10 text-text-muted">No matching events</div>
   {/if}
 </div>
-
-<style>
-  .timeline {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-  }
-
-  .time-gap {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 4px 0;
-  }
-
-  .time-gap span {
-    font-size: 0.7rem;
-    color: var(--text-muted);
-    background: var(--bg-tertiary);
-    padding: 2px 10px;
-    border-radius: 10px;
-    opacity: 0.7;
-  }
-
-  .no-events {
-    text-align: center;
-    padding: 40px;
-    color: var(--text-muted);
-  }
-</style>

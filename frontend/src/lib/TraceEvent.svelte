@@ -24,7 +24,7 @@
 </script>
 
 <div
-  class="event"
+  class="event bg-bg-secondary rounded-lg border border-border transition-all duration-100 ease-out cursor-pointer shadow-xs hover:shadow-sm"
   class:error={isError}
   style="--event-color: {color}"
   role="button"
@@ -32,23 +32,26 @@
   onclick={() => (expanded = !expanded)}
   onkeydown={(e) => e.key === "Enter" && (expanded = !expanded)}
 >
-  <div class="event-header">
-    <span class="time">{formatTime(event.timestamp)}</span>
+  <div class="flex items-center gap-2 px-3.5 py-2.5 min-h-[42px]">
+    <span class="font-mono text-[0.75rem] text-text-faint min-w-[65px] tabular-nums">{formatTime(event.timestamp)}</span>
     {#if delta !== null}
-      <span class="delta">+{delta}s</span>
+      <span class="font-mono text-[0.65rem] text-text-faint opacity-50 min-w-[45px] tabular-nums">+{delta}s</span>
     {/if}
-    <span class="icon" style="background: color-mix(in srgb, {color} 20%, transparent); color: {color}">
+    <span
+      class="flex items-center justify-center w-7 h-7 rounded-[6px] font-mono text-[0.8rem] font-bold shrink-0"
+      style="background: color-mix(in srgb, {color} 20%, transparent); color: {color}"
+    >
       {icon}
     </span>
-    <span class="tool-name" style="color: {color}">{event.tool}</span>
+    <span class="font-semibold text-[0.85rem] min-w-[50px]" style="color: {color}">{event.tool}</span>
     {#if isError}
-      <span class="badge error-badge">FAIL</span>
+      <span class="text-[0.6rem] font-bold px-[7px] py-0.5 rounded-full uppercase tracking-wide shrink-0 bg-red/10 text-red">FAIL</span>
     {:else}
-      <span class="badge ok-badge">OK</span>
+      <span class="text-[0.6rem] font-bold px-[7px] py-0.5 rounded-full uppercase tracking-wide shrink-0 bg-green/10 text-green">OK</span>
     {/if}
-    <span class="summary-text">{summary}</span>
+    <span class="flex-1 font-mono text-[0.78rem] text-text-muted overflow-hidden text-ellipsis whitespace-nowrap">{summary}</span>
     <button
-      class="json-btn"
+      class="px-2.5 py-1 font-mono text-[0.72rem] bg-bg-tertiary border border-border rounded-[6px] text-text-faint shrink-0 transition-all duration-100 ease-out hover:text-accent hover:border-accent hover:bg-accent-soft"
       title="View raw JSON"
       onclick={(e) => { e.stopPropagation(); onSelect(); }}
     >
@@ -57,22 +60,22 @@
   </div>
 
   {#if expanded}
-    <div class="event-body">
+    <div class="px-3.5 pb-3.5 flex flex-col gap-2.5">
       {#if codeInfo}
-        <div class="section">
-          <div class="section-label">Input</div>
+        <div class="flex flex-col gap-1">
+          <div class="text-[0.7rem] uppercase tracking-[0.06em] text-text-faint font-semibold">Input</div>
           <CodeBlock code={codeInfo.code} language={codeInfo.language} />
         </div>
       {:else if event.tool_input}
-        <div class="section">
-          <div class="section-label">Input</div>
+        <div class="flex flex-col gap-1">
+          <div class="text-[0.7rem] uppercase tracking-[0.06em] text-text-faint font-semibold">Input</div>
           <CodeBlock code={JSON.stringify(event.tool_input, null, 2)} language="json" />
         </div>
       {/if}
 
       {#if showResponses && isError && event.error}
-        <div class="section">
-          <div class="section-label error-label">Error</div>
+        <div class="flex flex-col gap-1">
+          <div class="text-[0.7rem] uppercase tracking-[0.06em] text-red font-semibold">Error</div>
           <CodeBlock
             code={typeof event.error === "string" ? event.error : JSON.stringify(event.error, null, 2)}
             language="text"
@@ -81,8 +84,8 @@
       {/if}
 
       {#if showResponses && responseText}
-        <div class="section">
-          <div class="section-label">Response</div>
+        <div class="flex flex-col gap-1">
+          <div class="text-[0.7rem] uppercase tracking-[0.06em] text-text-faint font-semibold">Response</div>
           <CodeBlock code={responseText} language="text" maxLines={50} />
         </div>
       {/if}
@@ -92,136 +95,16 @@
 
 <style>
   .event {
-    background: var(--bg-secondary);
-    border-radius: var(--radius);
-    border-left: 3px solid transparent;
-    transition: all 0.1s;
-    cursor: pointer;
+    border-left: 3px solid var(--event-color);
   }
 
   .event:hover {
-    background: var(--bg-tertiary);
-  }
-
-  .event.error {
-    border-left-color: var(--red);
-  }
-
-  .event:not(.error) {
+    border-color: color-mix(in srgb, var(--event-color) 35%, var(--color-border));
     border-left-color: var(--event-color);
   }
 
-  .event-header {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 8px 12px;
-    min-height: 40px;
-  }
-
-  .time {
-    font-family: var(--font-mono);
-    font-size: 0.75rem;
-    color: var(--text-muted);
-    min-width: 65px;
-  }
-
-  .delta {
-    font-family: var(--font-mono);
-    font-size: 0.65rem;
-    color: var(--text-muted);
-    opacity: 0.5;
-    min-width: 45px;
-  }
-
-  .icon {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 28px;
-    height: 28px;
-    border-radius: var(--radius);
-    font-family: var(--font-mono);
-    font-size: 0.8rem;
-    font-weight: 700;
-    flex-shrink: 0;
-  }
-
-  .tool-name {
-    font-weight: 600;
-    font-size: 0.85rem;
-    min-width: 50px;
-  }
-
-  .badge {
-    font-size: 0.6rem;
-    font-weight: 700;
-    padding: 1px 6px;
-    border-radius: 3px;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    flex-shrink: 0;
-  }
-
-  .ok-badge {
-    background: color-mix(in srgb, var(--green) 15%, transparent);
-    color: var(--green);
-  }
-
-  .error-badge {
-    background: color-mix(in srgb, var(--red) 15%, transparent);
-    color: var(--red);
-  }
-
-  .summary-text {
-    flex: 1;
-    font-family: var(--font-mono);
-    font-size: 0.8rem;
-    color: var(--text-muted);
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  .json-btn {
-    padding: 4px 8px;
-    font-family: var(--font-mono);
-    font-size: 0.75rem;
-    background: var(--bg-tertiary);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    color: var(--text-muted);
-    flex-shrink: 0;
-    transition: all 0.1s;
-  }
-
-  .json-btn:hover {
-    color: var(--accent);
-    border-color: var(--accent);
-  }
-
-  .event-body {
-    padding: 0 12px 12px;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-  }
-
-  .section {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-  }
-
-  .section-label {
-    font-size: 0.7rem;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    color: var(--text-muted);
-    font-weight: 600;
-  }
-
-  .error-label {
-    color: var(--red);
+  .event.error {
+    border-left-color: var(--color-red);
+    background: color-mix(in srgb, var(--color-red) 2%, var(--color-bg-secondary));
   }
 </style>

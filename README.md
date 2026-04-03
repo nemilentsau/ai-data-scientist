@@ -1,6 +1,6 @@
 # AI Data Scientist Benchmark
 
-Benchmark harness that compares Claude Code and OpenAI Codex CLI as autonomous data scientists. Each agent runs headless against 20 curated datasets, each hiding a specific statistical pattern. An LLM reviewer scores each agent's analysis against a ground-truth rubric.
+Benchmark harness that compares Claude Code and OpenAI Codex CLI as autonomous data scientists. Each agent runs headless against 20 curated datasets, each hiding a specific statistical pattern. An LLM reviewer scores each agent's analysis against a ground-truth rubric. Legacy run outputs can then be imported into an experiment catalog for frontend browsing and cross-run comparison.
 
 ## What it measures
 
@@ -50,6 +50,38 @@ This will:
 2. Run the selected agent config in an isolated temp directory per dataset
 3. Score each agent's output using the LLM reviewer
 4. Produce a per-config report at `results/runs/<config>/benchmark_report.md`
+5. Refresh an experiment manifest in `results/experiments/...`
+
+The runner refreshes experiment metadata automatically unless you pass `--skip-import`.
+By default it creates a new experiment per invocation. To compare multiple configs inside the same experiment, reuse `--experiment-id` across runs and set `--experiment-title` on the first one.
+
+```bash
+uv run python run_benchmark.py --config solo-baseline --experiment-id exp_solo_compare --experiment-title "Solo compare"
+uv run python run_benchmark.py --config solo-codex --experiment-id exp_solo_compare
+```
+
+### Import legacy runs into the experiment catalog
+
+Use the import CLI for existing run folders that were created before automatic experiment refresh existed, or when you want to rebuild metadata from `results/runs/...`.
+
+```bash
+uv run python experiment_import.py --title "Legacy Solo Benchmark Import"
+```
+
+This creates:
+
+- `results/experiments/catalog.sqlite` — SQLite metadata catalog
+- `results/experiments/index.json` — experiment list export for the frontend
+- `results/experiments/<experiment_id>/manifest.json` — per-experiment export used by the frontend
+
+The import is metadata-only. Reports, traces, plots, session logs, and generated Python files remain in `results/runs/...` and are referenced from the catalog.
+
+Experiment-scoped markdown notes can also be surfaced in the dashboard by
+placing them under `docs/artifacts/` with YAML front matter that includes
+matching `experiment_ids`.
+
+Optional `datasets` and `config_names` front-matter fields let one note attach
+to the matching case details inside that experiment.
 
 ### Run a single agent on a single dataset
 
@@ -111,18 +143,22 @@ ai-data-scientist/
 │   ├── rubric.py             # 7-dimension scoring rubric (0-5 each)
 │   ├── scorer.py             # LLM-based reviewer (reads trace.jsonl)
 │   └── report.py             # Markdown comparison report generator
+├── experiment_catalog.py     # SQLite-backed experiment metadata catalog
+├── experiment_import.py      # Imports legacy run folders into the catalog + manifest exports
 ├── tests/                    # pytest suite
 ├── frontend/
-│   ├── src/                  # Svelte 5 trace viewer
+│   ├── src/                  # Svelte 5 experiment dashboard
 │   │   ├── App.svelte
 │   │   ├── main.js
 │   │   ├── global.css
-│   │   └── lib/              # Components + parsing logic
-│   ├── serve.py              # Production server (serves dist/)
+│   │   └── lib/              # Components + experiment/trace view-model logic
+│   ├── serve.py              # Production server (serves built dashboard)
 │   ├── package.json
 │   └── vite.config.js
-├── results/                  # Agent outputs + scores (git-ignored)
-└── run_benchmark.py          # Orchestrator
+├── results/
+│   ├── runs/                 # Raw harness outputs
+│   └── experiments/          # SQLite catalog + JSON exports for the frontend
+└── run_benchmark.py          # Orchestrator + fresh-run experiment refresh
 ```
 
 ## Scoring
@@ -141,12 +177,12 @@ Each analysis is scored on 7 dimensions (0-5 each, max 35):
 
 Bonus/penalty modifiers (up to +/-3) for proactive exploration, catching secondary patterns, hallucinating nonexistent patterns, or crashing.
 
-## Trace viewer
+## Experiment dashboard
 
 Built with Svelte 5 + Vite.
 
 ```bash
-# Production (serves built assets)
+# Production (serves built assets and exported experiment API files)
 cd frontend && npm install && npm run build
 uv run python frontend/serve.py
 
@@ -154,23 +190,29 @@ uv run python frontend/serve.py
 cd frontend && npm run dev
 ```
 
-Opens `http://localhost:8080` (production) or `http://localhost:5173` (dev). Drop `trace.jsonl` and `analysis_report.md` files to load.
+Opens `http://localhost:8080` (production) or `http://localhost:5173` (dev).
+
+The dashboard expects imported experiments in `results/experiments/...`. In dev and build mode, Vite serves:
+
+- `/api/experiments.json`
+- `/api/experiments/<experiment_id>.json`
+- `/api/artifacts/<experiment_id>/<artifact_id>/content.<ext>`
 
 Features:
-- Timeline of every tool call with timestamps and deltas between steps
-- Color-coded icons per tool type (Bash, Read, Write, Edit, Grep, Glob)
-- Expandable code blocks with line numbers, diff highlighting, language detection
-- Rendered analysis report with tables, code blocks, markdown
-- Plot gallery with file paths extracted from trace
-- Error highlighting with inline error messages
-- Click any event for the full raw JSON
-- Filter by tool type, toggle responses, or show errors only
-- Summary bar with events, errors, duration, cost, and turns
+- Experiment selector and case comparison matrix
+- Artifact browser with search and filters by category, dataset, config, and scope
+- Lazy-loaded case detail from imported artifact metadata
+- Generic artifact detail for markdown, images, JSON, traces, logs, and generated code
+- Timeline of tool calls with timestamps and deltas between steps
+- Rendered analysis report and plot gallery
+- Summary bar with verdict, coverage, cost, duration, and turns
+- Artifact-backed trace and session hydration from imported experiments
 
 ## Tests
 
 ```bash
 uv run pytest tests/ -v
+npm --prefix frontend test
 ```
 
 ## Requirements

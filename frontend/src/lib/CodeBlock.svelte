@@ -8,112 +8,32 @@
     isTruncated ? lines.slice(0, maxLines).join("\n") : code
   );
 
-  let lineNumbers = $derived(
-    displayCode.split("\n").map((_, i) => i + 1)
-  );
-
+  let displayLines = $derived(displayCode.split("\n"));
+  let lineNumbers = $derived(displayLines.map((_, i) => i + 1));
   let isDiff = $derived(language === "diff");
 </script>
 
-<div class="code-block">
-  <div class="code-header">
-    <span class="lang">{language}</span>
-    <span class="line-count">{lines.length} lines</span>
+<div class="border border-border rounded-lg overflow-hidden bg-bg">
+  <div class="flex justify-between px-3 py-1.5 bg-bg-tertiary text-[0.67rem] font-semibold uppercase tracking-[0.06em] text-text-faint border-b border-border">
+    <span>{language}</span>
+    <span>{lines.length} lines</span>
   </div>
-  <div class="code-content">
-    <div class="line-nums" aria-hidden="true">
+  <div class="flex overflow-x-auto">
+    <div class="flex flex-col py-2.5 min-w-[42px] text-right select-none text-text-muted opacity-40 font-mono text-[0.8rem] leading-[1.5] border-r border-border bg-bg-tertiary" aria-hidden="true">
       {#each lineNumbers as n}
-        <span>{n}</span>
+        <span class="px-2">{n}</span>
       {/each}
     </div>
-    <pre class="code-pre"><code>{#each displayCode.split("\n") as line, i}{#if isDiff}<span
-      class={line.startsWith("+") ? "diff-add" : line.startsWith("-") ? "diff-del" : ""}
-    >{line}</span>{:else}<span>{line}</span>{/if}{#if i < displayCode.split("\n").length - 1}{"\n"}{/if}{/each}</code></pre>
+    <pre class="flex-1 px-3.5 py-2.5 m-0 overflow-x-auto text-[0.8rem] leading-[1.5] whitespace-pre tab-[4] text-text"><code>{#each displayLines as line, i}{#if isDiff}<span
+      class={line.startsWith("+") ? "bg-green/10 text-green" : line.startsWith("-") ? "bg-red/10 text-red" : ""}
+    >{line}</span>{:else}<span>{line}</span>{/if}{#if i < displayLines.length - 1}{"\n"}{/if}{/each}</code></pre>
   </div>
   {#if isTruncated}
-    <button class="show-more" onclick={() => (showAll = true)}>
+    <button
+      class="block w-full py-[7px] bg-bg-tertiary border-0 border-t border-solid border-border text-accent text-[0.78rem] font-semibold transition-[background] duration-100 hover:bg-[color-mix(in_srgb,var(--color-accent)_5%,var(--color-bg-secondary))]"
+      onclick={() => (showAll = true)}
+    >
       Show all {lines.length} lines
     </button>
   {/if}
 </div>
-
-<style>
-  .code-block {
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    overflow: hidden;
-    background: var(--bg);
-  }
-
-  .code-header {
-    display: flex;
-    justify-content: space-between;
-    padding: 4px 10px;
-    background: var(--bg-tertiary);
-    font-size: 0.65rem;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    color: var(--text-muted);
-  }
-
-  .code-content {
-    display: flex;
-    overflow-x: auto;
-  }
-
-  .line-nums {
-    display: flex;
-    flex-direction: column;
-    padding: 8px 0;
-    min-width: 40px;
-    text-align: right;
-    user-select: none;
-    color: var(--text-muted);
-    opacity: 0.4;
-    font-family: var(--font-mono);
-    font-size: 0.8rem;
-    line-height: 1.5;
-    border-right: 1px solid var(--border);
-  }
-
-  .line-nums span {
-    padding: 0 8px;
-  }
-
-  .code-pre {
-    flex: 1;
-    padding: 8px 12px;
-    margin: 0;
-    overflow-x: auto;
-    font-size: 0.8rem;
-    line-height: 1.5;
-    white-space: pre;
-    tab-size: 4;
-  }
-
-  .diff-add {
-    background: color-mix(in srgb, var(--green) 12%, transparent);
-    color: var(--green);
-  }
-
-  .diff-del {
-    background: color-mix(in srgb, var(--red) 12%, transparent);
-    color: var(--red);
-  }
-
-  .show-more {
-    display: block;
-    width: 100%;
-    padding: 6px;
-    background: var(--bg-tertiary);
-    border: none;
-    border-top: 1px solid var(--border);
-    color: var(--accent);
-    font-size: 0.75rem;
-    transition: background 0.1s;
-  }
-
-  .show-more:hover {
-    background: var(--bg-secondary);
-  }
-</style>

@@ -1,3 +1,11 @@
+---
+title: General Overview
+artifact_type: synthesis_note
+summary: Cross-case synthesis of shared failure modes and mitigation directions.
+experiment_ids:
+  - exp_20260401_181245_legacy-solo-benchmark-import
+---
+
 # General Overview
 
 Run ID: `20260401-081508`

@@ -107,9 +107,12 @@ def generate_report(results: list[ScoreResult], output_path: Path) -> str:
 
     lines.append("## Agent Metrics\n")
     lines.append(
-        "| Agent | Solve Rate | Wrong Rate | Run Error Rate | Avg Required | Avg Supporting | Avg Oracle |"
+        "| Agent | Solve Rate | Wrong Rate | Run Error Rate | "
+        "Avg Required | Avg Supporting | Avg Oracle |"
     )
-    lines.append("|-------|------------|------------|----------------|--------------|----------------|-----------|")
+    lines.append(
+        "|-------|------------|------------|----------------|--------------|----------------|-----------|"
+    )
     for agent_name in sorted(by_agent):
         agent_results = by_agent[agent_name]
         completed_results = [

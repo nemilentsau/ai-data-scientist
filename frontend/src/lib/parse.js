@@ -62,17 +62,6 @@ export function parseTrace(text) {
   return { events, meta: hasMeta ? meta : null };
 }
 
-/** Parse a session.json file (Claude CLI output). */
-export function parseSession(text) {
-  try {
-    const data = JSON.parse(text);
-    // session.json is the raw Claude CLI JSON output
-    return { session: data };
-  } catch {
-    return { session: null };
-  }
-}
-
 /** Extract unique tool names from events. */
 export function extractTools(events) {
   const tools = new Set();
@@ -132,24 +121,49 @@ export function deltaSeconds(ts1, ts2) {
   return ((new Date(ts2).getTime() - new Date(ts1).getTime()) / 1000).toFixed(1);
 }
 
+/** Verdict → CSS color variable mapping. */
+export const VERDICT_COLORS = {
+  solved: "var(--color-green)",
+  pass: "var(--color-green)",
+  partial: "var(--color-orange)",
+  wrong: "var(--color-red)",
+  failed: "var(--color-red)",
+  run_error: "var(--color-red)",
+};
+
+/** Verdict → soft background color mapping. */
+export const VERDICT_BG = {
+  solved: "var(--color-green-soft)",
+  pass: "var(--color-green-soft)",
+  partial: "var(--color-orange-soft)",
+  wrong: "var(--color-red-soft)",
+  failed: "var(--color-red-soft)",
+  run_error: "var(--color-red-soft)",
+};
+
+/** Display-friendly verdict label. */
+export function displayVerdict(verdict) {
+  return verdict === "run_error" ? "run error" : verdict;
+}
+
 /** Tool name to color mapping. */
 const TOOL_COLORS = {
-  Bash: "var(--green)",
-  Read: "var(--accent)",
-  Write: "var(--purple)",
-  Edit: "var(--orange)",
-  Glob: "var(--cyan)",
-  Grep: "var(--cyan)",
-  Agent: "var(--pink)",
-  Reasoning: "var(--text-muted)",
-  MCP: "var(--accent)",
-  Web: "var(--cyan)",
-  Plan: "var(--orange)",
-  System: "var(--red)",
+  Bash: "var(--color-green)",
+  Read: "var(--color-accent)",
+  Write: "var(--color-purple)",
+  Edit: "var(--color-orange)",
+  Glob: "var(--color-cyan)",
+  Grep: "var(--color-cyan)",
+  Agent: "var(--color-pink)",
+  Reasoning: "var(--color-text-muted)",
+  MCP: "var(--color-accent)",
+  Web: "var(--color-cyan)",
+  Plan: "var(--color-orange)",
+  System: "var(--color-red)",
 };
 
 export function toolColor(tool) {
-  return TOOL_COLORS[tool] ?? "var(--text-muted)";
+  return TOOL_COLORS[tool] ?? "var(--color-text-muted)";
 }
 
 /** Tool name to icon mapping. */

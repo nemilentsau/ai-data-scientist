@@ -4,13 +4,18 @@
   let { tools, activeTools, onToggle, onSelectAll, onSelectNone } = $props();
 </script>
 
-<div class="filters">
-  <button class="meta-btn" onclick={onSelectAll}>All</button>
-  <button class="meta-btn" onclick={onSelectNone}>None</button>
+<div class="flex gap-1.5 flex-wrap items-center">
+  <button
+    class="px-[11px] py-[5px] text-xs font-semibold bg-bg-secondary border border-border rounded-md text-text-faint transition-all duration-100 ease-out hover:text-text hover:border-accent hover:bg-accent-soft"
+    onclick={onSelectAll}
+  >All</button>
+  <button
+    class="px-[11px] py-[5px] text-xs font-semibold bg-bg-secondary border border-border rounded-md text-text-faint transition-all duration-100 ease-out hover:text-text hover:border-accent hover:bg-accent-soft"
+    onclick={onSelectNone}
+  >None</button>
   {#each tools as tool}
     <button
-      class="tool-btn"
-      class:inactive={!activeTools.has(tool)}
+      class="tool-btn px-3 py-[5px] text-[0.78rem] font-semibold rounded-md transition-all duration-100 ease-out {activeTools.has(tool) ? 'hover:-translate-y-px' : 'opacity-30 bg-bg border-border text-text-muted'}"
       style="--tool-color: {toolColor(tool)}"
       onclick={() => onToggle(tool)}
     >
@@ -20,47 +25,19 @@
 </div>
 
 <style>
-  .filters {
-    display: flex;
-    gap: 6px;
-    flex-wrap: wrap;
-    align-items: center;
-  }
-
-  .meta-btn {
-    padding: 4px 10px;
-    font-size: 0.75rem;
-    background: var(--bg-tertiary);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    color: var(--text-muted);
-    transition: all 0.15s;
-  }
-
-  .meta-btn:hover {
-    color: var(--text);
-    border-color: var(--text-muted);
-  }
-
-  .tool-btn {
-    padding: 4px 12px;
-    font-size: 0.8rem;
-    font-weight: 500;
-    background: color-mix(in srgb, var(--tool-color) 15%, transparent);
-    border: 1px solid color-mix(in srgb, var(--tool-color) 40%, transparent);
-    border-radius: var(--radius);
+  .tool-btn:not(.opacity-30) {
+    background: color-mix(in srgb, var(--tool-color) 8%, var(--color-bg-secondary));
+    border: 1px solid color-mix(in srgb, var(--tool-color) 25%, var(--color-border));
     color: var(--tool-color);
-    transition: all 0.15s;
   }
 
-  .tool-btn:hover {
-    background: color-mix(in srgb, var(--tool-color) 25%, transparent);
+  .tool-btn:not(.opacity-30):hover {
+    background: color-mix(in srgb, var(--tool-color) 14%, var(--color-bg-secondary));
+    border-color: var(--tool-color);
   }
 
-  .tool-btn.inactive {
-    opacity: 0.3;
-    background: var(--bg-tertiary);
-    border-color: var(--border);
-    color: var(--text-muted);
+  .tool-btn.opacity-30 {
+    border: 1px solid var(--color-border);
+    transform: none;
   }
 </style>

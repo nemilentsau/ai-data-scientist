@@ -3,9 +3,9 @@
   let expandedId = $state(null);
 
   const statusColors = {
-    hit: "var(--green)",
-    miss: "var(--red)",
-    partial: "var(--orange)",
+    hit: "var(--color-green)",
+    miss: "var(--color-red)",
+    partial: "var(--color-orange)",
   };
 
   const groupOrder = ["must_have", "supporting", "forbidden"];
@@ -28,48 +28,46 @@
   });
 </script>
 
-<div class="criteria">
+<div class="flex flex-col gap-[22px]">
   {#each grouped as group}
-    <div class="group">
-      <div class="group-header">
-        <span class="group-name">{group.label}</span>
-        <span class="group-count">
-          {group.items.filter((c) => c.status === "hit").length}/{group.items.length}
-        </span>
+    <div>
+      <div class="flex justify-between items-center px-1 pb-2.5 border-b-2 border-border mb-1">
+        <span class="text-[0.78rem] font-bold uppercase tracking-[0.06em] text-text">{group.label}</span>
+        <span class="text-[0.78rem] font-mono font-bold text-text-muted tabular-nums">{group.items.filter((c) => c.status === "hit").length}/{group.items.length}</span>
       </div>
 
       {#each group.items as criterion}
         <button
-          class="criterion"
+          class="criterion flex flex-col w-full text-left py-3 px-4 bg-bg-secondary border border-border border-l-[3px] border-l-transparent rounded-lg shadow-xs transition-all duration-100 ease-out"
           class:expanded={expandedId === criterion.criterion_id}
           onclick={() =>
             (expandedId = expandedId === criterion.criterion_id ? null : criterion.criterion_id)}
         >
-          <div class="criterion-header">
+          <div class="flex items-center gap-2.5">
             <span
-              class="status-dot"
-              style="background: {statusColors[criterion.status] ?? 'var(--text-muted)'}"
+              class="w-[9px] h-[9px] rounded-full shrink-0 shadow-[0_0_0_3px_color-mix(in_srgb,currentColor_10%,transparent)]"
+              style="background: {statusColors[criterion.status] ?? 'var(--color-text-muted)'}"
             ></span>
-            <span class="criterion-name">
+            <span class="flex-1 text-[0.88rem] font-medium capitalize text-text">
               {criterion.criterion_id.replace(/_/g, " ")}
             </span>
             <span
-              class="status-label"
-              style="color: {statusColors[criterion.status] ?? 'var(--text-muted)'}"
+              class="text-[0.7rem] font-bold uppercase tracking-[0.05em] py-0.5 px-2 rounded-full bg-[color-mix(in_srgb,currentColor_8%,var(--color-bg))]"
+              style="color: {statusColors[criterion.status] ?? 'var(--color-text-muted)'}"
             >
               {criterion.status}
             </span>
           </div>
           {#if expandedId === criterion.criterion_id}
-            <div class="criterion-body">
-              <div class="field">
-                <span class="field-label">Justification</span>
-                <p>{criterion.justification}</p>
+            <div class="mt-3.5 pt-3.5 border-t border-border flex flex-col gap-3">
+              <div>
+                <span class="block text-[0.68rem] font-semibold uppercase tracking-[0.06em] text-text-faint mb-1">Justification</span>
+                <p class="text-[0.88rem] leading-[1.65] text-text-muted">{criterion.justification}</p>
               </div>
               {#if criterion.evidence}
-                <div class="field">
-                  <span class="field-label">Evidence</span>
-                  <p class="evidence">{criterion.evidence}</p>
+                <div>
+                  <span class="block text-[0.68rem] font-semibold uppercase tracking-[0.06em] text-text-faint mb-1">Evidence</span>
+                  <p class="font-mono text-[0.82rem] bg-bg py-3 px-3.5 rounded-lg border border-border whitespace-pre-wrap break-words leading-[1.6]">{criterion.evidence}</p>
                 </div>
               {/if}
             </div>
@@ -81,112 +79,15 @@
 </div>
 
 <style>
-  .criteria {
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-  }
-
-  .group-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 0 4px 6px;
-    border-bottom: 1px solid var(--border);
-    margin-bottom: 4px;
-  }
-
-  .group-name {
-    font-size: 0.75rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    color: var(--text-muted);
-  }
-
-  .group-count {
-    font-size: 0.75rem;
-    font-family: var(--font-mono);
-    color: var(--text-muted);
-  }
-
-  .criterion {
-    display: flex;
-    flex-direction: column;
-    width: 100%;
-    text-align: left;
-    padding: 8px 12px;
-    background: var(--bg-secondary);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    transition: all 0.1s;
-  }
-
   .criterion:hover {
-    background: var(--bg-tertiary);
+    border-color: color-mix(in srgb, var(--color-accent) 25%, var(--color-border));
+    border-left-color: color-mix(in srgb, var(--color-accent) 25%, var(--color-border));
+    box-shadow: var(--shadow-sm);
   }
 
   .criterion.expanded {
-    border-color: var(--text-muted);
-  }
-
-  .criterion-header {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
-
-  .status-dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    flex-shrink: 0;
-  }
-
-  .criterion-name {
-    flex: 1;
-    font-size: 0.85rem;
-    text-transform: capitalize;
-  }
-
-  .status-label {
-    font-size: 0.7rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-  }
-
-  .criterion-body {
-    margin-top: 10px;
-    padding-top: 10px;
-    border-top: 1px solid var(--border);
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-  }
-
-  .field-label {
-    display: block;
-    font-size: 0.65rem;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    color: var(--text-muted);
-    margin-bottom: 4px;
-  }
-
-  .criterion-body p {
-    font-size: 0.85rem;
-    line-height: 1.6;
-    color: var(--text-muted);
-  }
-
-  .evidence {
-    font-family: var(--font-mono);
-    font-size: 0.8rem;
-    background: var(--bg);
-    padding: 8px 12px;
-    border-radius: var(--radius);
-    white-space: pre-wrap;
-    word-break: break-word;
+    border-color: var(--color-accent);
+    border-left-color: var(--color-accent);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-accent) 6%, transparent);
   }
 </style>
