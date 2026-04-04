@@ -183,13 +183,15 @@ ai-data-scientist/
 │   ├── analyst-generic.md
 │   ├── analyst-v2.md
 │   └── visual-review.md
-├── benchmark_orchestrator.py # Shared workflow runner + backend adapters
+├── ai_data_scientist/
+│   ├── cli/                  # Benchmark + import CLIs
+│   ├── orchestration/        # Workflow runner, workspace prep, backend adapters
+│   └── experiments/          # SQLite catalog, import pipeline, dashboard export
 ├── reviewer/
 │   ├── rubric.py             # 7-dimension scoring rubric (0-5 each)
 │   ├── scorer.py             # LLM-based reviewer (reads trace.jsonl)
 │   └── report.py             # Markdown comparison report generator
-├── experiment_catalog.py     # SQLite-backed experiment metadata catalog
-├── experiment_import.py      # Imports legacy run folders into the catalog + manifest exports
+├── experiment_import.py      # Thin wrapper for the import CLI
 ├── tests/                    # pytest suite
 ├── frontend/
 │   ├── src/                  # Svelte 5 experiment dashboard
@@ -203,7 +205,7 @@ ai-data-scientist/
 ├── results/
 │   ├── runs/                 # Raw harness outputs
 │   └── experiments/          # SQLite catalog + JSON exports for the frontend
-└── run_benchmark.py          # Benchmark entrypoint + experiment refresh
+└── run_benchmark.py          # Thin wrapper for the benchmark CLI
 ```
 
 ## Scoring

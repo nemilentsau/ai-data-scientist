@@ -1,5 +1,0 @@
-Wrote the analysis to [analysis_report.md](/var/folders/j_/dt6mk_nd7tbfpyx2v5z_lv6c0000gn/T/tmpjt_ydnir/analysis_report.md) and saved the plots in [/var/folders/j_/dt6mk_nd7tbfpyx2v5z_lv6c0000gn/T/tmpjt_ydnir/plots](/var/folders/j_/dt6mk_nd7tbfpyx2v5z_lv6c0000gn/T/tmpjt_ydnir/plots).
-
-The main finding is that `ad_spend_usd` almost completely determines scale outcomes: a spend-only revenue model reached `R^2 = 0.945` with an estimated slope of about `2.495` revenue dollars per extra spend dollar. Channel, region, month, and spend tier showed very small efficiency differences, while a few campaign-level outliers stood out in the residual analysis.
-
-Verification: I ran `python analysis.py`, generated all four PNGs, and reviewed the saved images to correct labeling and color-scale issues before finalizing the report.

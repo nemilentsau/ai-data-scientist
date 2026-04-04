@@ -5,9 +5,11 @@ import sqlite3
 from datetime import UTC, datetime
 from pathlib import Path
 
+import experiment_import as experiment_import_wrapper
 import yaml
-
-from experiment_import import build_experiment_id, import_legacy_experiment, main
+from ai_data_scientist.cli import experiment_import as experiment_import_cli
+from ai_data_scientist.experiments.ids import build_experiment_id
+from ai_data_scientist.experiments.importer import import_legacy_experiment
 
 
 def _write_json(path: Path, payload: dict) -> None:
@@ -80,6 +82,10 @@ def test_build_experiment_id_slugifies_title_and_can_omit_slug():
         == "exp_20260401_081508_imported-solo-comparison"
     )
     assert build_experiment_id(fixed_time) == "exp_20260401_081508"
+
+
+def test_root_wrapper_exposes_package_main():
+    assert experiment_import_wrapper.main is experiment_import_cli.main
 
 
 def test_import_records_normalized_entities_and_preserves_paths(tmp_path: Path):
@@ -462,7 +468,7 @@ def test_cli_writes_metadata_for_requested_filters_and_explicit_id(
     _write_run(repo_root / "results" / "runs" / "solo-codex" / "multimodal")
     _write_run(repo_root / "results" / "runs" / "solo-codex" / "mnar")
 
-    exit_code = main(
+    exit_code = experiment_import_cli.main(
         [
             "--repo-root",
             str(repo_root),
@@ -503,9 +509,12 @@ def test_cli_generates_experiment_id_when_not_provided(
         {"name": "solo-baseline", "team": [{"role": "claude"}]},
     )
     _write_run(repo_root / "results" / "runs" / "solo-baseline" / "concept_drift")
-    monkeypatch.setattr("experiment_import.build_experiment_id", lambda slug=None: "exp_auto_id")
+    monkeypatch.setattr(
+        "ai_data_scientist.cli.experiment_import.build_experiment_id",
+        lambda slug=None: "exp_auto_id",
+    )
 
-    exit_code = main(
+    exit_code = experiment_import_cli.main(
         [
             "--repo-root",
             str(repo_root),
@@ -524,7 +533,7 @@ def test_cli_generates_experiment_id_when_not_provided(
 
 def test_cli_requires_title_argument():
     try:
-        main([])
+        experiment_import_cli.main([])
     except SystemExit as exc:
         assert exc.code == 2
     else:

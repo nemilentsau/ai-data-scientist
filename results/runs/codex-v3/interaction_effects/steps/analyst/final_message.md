@@ -1,5 +1,0 @@
-The analysis is complete. I wrote the report to [analysis_report.md](/var/folders/j_/dt6mk_nd7tbfpyx2v5z_lv6c0000gn/T/tmpis8z0vei/analysis_report.md) and saved the plots in [/var/folders/j_/dt6mk_nd7tbfpyx2v5z_lv6c0000gn/T/tmpis8z0vei/plots](/var/folders/j_/dt6mk_nd7tbfpyx2v5z_lv6c0000gn/T/tmpis8z0vei/plots).
-
-The main result is that conversion is most strongly associated with `time_of_day_hour` and `channel_score`. Late-day sessions convert at 42.0% versus 15.2% in the 0-6 band, and the top `channel_score` quartile converts at 43.5% versus 17.9% in the bottom quartile. In the adjusted logistic model, both effects remain strong at about 1.7x higher odds per 1 standard deviation increase, while `ad_budget_usd`, `device`, `page_load_time_sec`, and `previous_visits` do not show strong independent effects in this sample.
-
-I also did the required plot self-review and corrected one issue: the interaction heatmap’s color scale was initially capped too low relative to the highest cell, so I regenerated it with the full range. A reproducible script is in [analysis.py](/var/folders/j_/dt6mk_nd7tbfpyx2v5z_lv6c0000gn/T/tmpis8z0vei/analysis.py).

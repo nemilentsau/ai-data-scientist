@@ -6,7 +6,10 @@ import os
 import uuid
 from pathlib import Path
 
-import benchmark_orchestrator as orchestrator
+import ai_data_scientist.orchestration as orchestrator
+from ai_data_scientist.orchestration import runner as orchestration_runner
+from ai_data_scientist.orchestration import workspace as orchestration_workspace
+from ai_data_scientist.orchestration.adapters import claude_cli, codex_cli
 
 
 def _write_file(path: Path, text: str) -> None:
@@ -119,9 +122,9 @@ def test_codex_resume_command_uses_thread_id_instead_of_last(tmp_path: Path, mon
         stdout_handle.flush()
         return type("Completed", (), {"returncode": 0})()
 
-    monkeypatch.setattr(orchestrator.subprocess, "run", fake_run)
+    monkeypatch.setattr(codex_cli.subprocess, "run", fake_run)
 
-    adapter = orchestrator.CodexCliAdapter(root)
+    adapter = codex_cli.CodexCliAdapter(root)
     analyst = orchestrator.WorkflowStep(
         id="analyst",
         role="analyst",
@@ -147,6 +150,18 @@ def test_codex_resume_command_uses_thread_id_instead_of_last(tmp_path: Path, mon
     assert "resume" in recorded_commands[1]
     assert "thread-123" in recorded_commands[1]
     assert "--last" not in recorded_commands[1]
+    assert recorded_commands[1][:7] == [
+        "codex",
+        "-a",
+        "never",
+        "-s",
+        "workspace-write",
+        "-C",
+        str(work_dir),
+    ]
+    assert "--disable" in recorded_commands[1]
+    assert "plugins" in recorded_commands[1]
+    assert "shell_snapshot" in recorded_commands[1]
 
 
 def test_claude_followup_reuses_generated_session_uuid(tmp_path: Path, monkeypatch):
@@ -171,7 +186,7 @@ def test_claude_followup_reuses_generated_session_uuid(tmp_path: Path, monkeypat
     context.step_dir("visual_review")
 
     session_uuid = uuid.UUID("11111111-1111-1111-1111-111111111111")
-    monkeypatch.setattr(orchestrator.uuid, "uuid4", lambda: session_uuid)
+    monkeypatch.setattr(claude_cli.uuid, "uuid4", lambda: session_uuid)
 
     recorded_commands: list[list[str]] = []
 
@@ -183,9 +198,9 @@ def test_claude_followup_reuses_generated_session_uuid(tmp_path: Path, monkeypat
         kwargs["stdout"].flush()
         return type("Completed", (), {"returncode": 0})()
 
-    monkeypatch.setattr(orchestrator.subprocess, "run", fake_run)
+    monkeypatch.setattr(claude_cli.subprocess, "run", fake_run)
 
-    adapter = orchestrator.ClaudeCliAdapter(root)
+    adapter = claude_cli.ClaudeCliAdapter(root)
     analyst = orchestrator.WorkflowStep(id="analyst", role="analyst", prompt="Analyze")
     review = orchestrator.WorkflowStep(id="visual_review", role="visual_reviewer", prompt="Review")
     context.matched_inputs["analyst"] = []
@@ -213,6 +228,9 @@ class _FakeClaudeWorkflowAdapter(orchestrator.BackendAdapter):
             supports_resume=True,
             supports_image_attachments=False,
         )
+
+    def prepare_context(self, context: orchestrator.RunContext) -> None:
+        context.top_session_json_path = context.results_dir / "session.json"
 
     def start_step(
         self,
@@ -292,7 +310,7 @@ def _make_workflow_root(tmp_path: Path) -> tuple[Path, Path]:
 
 
 def _fake_shared_venv(root: Path) -> Path:
-    venv_dir = root / orchestrator.BENCHMARK_VENV_DIRNAME
+    venv_dir = root / orchestration_workspace.BENCHMARK_VENV_DIRNAME
     (venv_dir / "bin").mkdir(parents=True, exist_ok=True)
     return venv_dir
 
@@ -319,8 +337,12 @@ def test_step_traces_append_in_order_and_outputs_publish_after_final_step(
         },
     }
 
-    monkeypatch.setattr(orchestrator, "ensure_shared_benchmark_venv", _fake_shared_venv)
-    monkeypatch.setitem(orchestrator.BACKEND_ADAPTERS, "claude_cli", _FakeClaudeWorkflowAdapter)
+    monkeypatch.setattr(orchestration_workspace, "ensure_shared_benchmark_venv", _fake_shared_venv)
+    monkeypatch.setitem(
+        orchestration_runner.BACKEND_ADAPTERS,
+        "claude_cli",
+        _FakeClaudeWorkflowAdapter,
+    )
     _FakeClaudeWorkflowAdapter.saw_second_step_workspace = False
 
     succeeded = orchestrator.run_workflow(
@@ -379,8 +401,8 @@ def test_required_visual_review_failure_marks_run_failed_when_no_images_exist(
         },
     }
 
-    monkeypatch.setattr(orchestrator, "ensure_shared_benchmark_venv", _fake_shared_venv)
-    monkeypatch.setitem(orchestrator.BACKEND_ADAPTERS, "claude_cli", NoPlotAdapter)
+    monkeypatch.setattr(orchestration_workspace, "ensure_shared_benchmark_venv", _fake_shared_venv)
+    monkeypatch.setitem(orchestration_runner.BACKEND_ADAPTERS, "claude_cli", NoPlotAdapter)
 
     succeeded = orchestrator.run_workflow(
         config=config,
@@ -429,8 +451,8 @@ def test_optional_visual_review_skips_cleanly_when_no_images_exist(
         },
     }
 
-    monkeypatch.setattr(orchestrator, "ensure_shared_benchmark_venv", _fake_shared_venv)
-    monkeypatch.setitem(orchestrator.BACKEND_ADAPTERS, "claude_cli", NoPlotAdapter)
+    monkeypatch.setattr(orchestration_workspace, "ensure_shared_benchmark_venv", _fake_shared_venv)
+    monkeypatch.setitem(orchestration_runner.BACKEND_ADAPTERS, "claude_cli", NoPlotAdapter)
 
     succeeded = orchestrator.run_workflow(
         config=config,

@@ -1,2 +1,0 @@
-2026-04-04T15:30:11.910806Z ERROR codex_core::tools::router: error=apply_patch verification failed: Failed to find expected lines in /var/folders/j_/dt6mk_nd7tbfpyx2v5z_lv6c0000gn/T/tmpjt_ydnir/analysis.py:
-+- [`plots/monthly_roas_heatmap.png`]({(PLOTS / 'monthly_roas_heatmap.png').resolve()}) shows channel-month averages clustering tightly around 2.5 rather than separating into seasonal or channel-specific regimes.

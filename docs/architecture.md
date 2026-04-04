@@ -94,6 +94,10 @@ Fresh benchmark runs now refresh experiment metadata automatically through
 `--experiment-id` across benchmark invocations merges the requested config into
 the existing experiment instead of dropping earlier cases.
 
+The Python runtime now lives under the first-party package `ai_data_scientist/`.
+Root scripts such as `run_benchmark.py` and `experiment_import.py` are thin
+compatibility wrappers.
+
 ## Frontend Contract
 
 The frontend is experiment-only and reads:
@@ -191,7 +195,18 @@ Still needed:
 - richer provenance between agent runs and artifacts
 - optional stage-level structure only if the harness truly emits it
 
-### 3. Cross-experiment comparison
+### 3. Package consolidation follow-up
+
+Phase 1 moved orchestration and experiment metadata code into
+`ai_data_scientist/`. `datasets/` and `reviewer/` still live at repo root.
+
+Still needed:
+
+- move dataset and reviewer modules under the package once the core split is stable
+- trim oversized importer/store modules further if those areas keep growing
+- keep root limited to documented entrypoints and project metadata
+
+### 4. Cross-experiment comparison
 
 The frontend is single-experiment. Cross-experiment comparison would require:
 
