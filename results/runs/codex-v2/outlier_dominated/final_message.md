@@ -1,0 +1,3 @@
+Findings are in [analysis_report.md](/var/folders/j_/dt6mk_nd7tbfpyx2v5z_lv6c0000gn/T/tmp.kDpQNzQa1w/analysis_report.md). Plots are in [/var/folders/j_/dt6mk_nd7tbfpyx2v5z_lv6c0000gn/T/tmp.kDpQNzQa1w/plots](/var/folders/j_/dt6mk_nd7tbfpyx2v5z_lv6c0000gn/T/tmp.kDpQNzQa1w/plots).
+
+Main result: the strongest signal in this dataset is a data-quality problem, not a customer-behavior pattern. `order_total_usd` is inconsistent with the basket fields, includes 28 impossible negative totals, and materially changes revenue summaries; by contrast, returns are weakly explained by the available features and a 5-fold CV logistic model was effectively chance-level (`AUC = 0.492`).

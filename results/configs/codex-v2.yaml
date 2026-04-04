@@ -1,0 +1,8 @@
+name: codex-v2
+description: Single Codex CLI agent with hypothesis-driven prompt and visual self-review
+created: "2026-04-03"
+team:
+  - role: codex
+    prompt: prompts/analyst-v2.md
+    max_turns: 30
+harness: harness/run_codex.sh

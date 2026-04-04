@@ -1,0 +1,8 @@
+dataset=anscombes_quartet
+project_root=/Users/andreinemilentsau/Projects/ai-data-scientist
+work_dir=/var/folders/j_/dt6mk_nd7tbfpyx2v5z_lv6c0000gn/T/tmp.WIBV1updrO
+codex_home=/var/folders/j_/dt6mk_nd7tbfpyx2v5z_lv6c0000gn/T/tmp.WIBV1updrO/.codex-home
+max_turns=30
+tools=
+codex-cli 0.117.0
+

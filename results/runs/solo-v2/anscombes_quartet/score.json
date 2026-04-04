@@ -1,0 +1,81 @@
+{
+  "dataset": "anscombes_quartet",
+  "config": "solo-v2",
+  "agent": "claude",
+  "verdict": "solved",
+  "run_status": "completed",
+  "rerun_recommended": false,
+  "run_error_reasons": [],
+  "core_insight_pass": true,
+  "required_coverage": 1.0,
+  "supporting_coverage": 1.0,
+  "oracle_attainment": null,
+  "oracle_metric_name": null,
+  "oracle_agent_value": 1.0,
+  "fatal_errors": [],
+  "efficiency": {
+    "transcript_chars": 64239.0,
+    "trace_events": 21.0,
+    "report_chars": 8827.0
+  },
+  "criterion_results": [
+    {
+      "criterion_id": "anscombes_quartet_visualized_all_batches",
+      "group": "must_have",
+      "status": "hit",
+      "justification": "The agent created a 2x2 scatter plot grid (plots/01_anscombe_quartet_overview.png) showing each batch separately, plus residual diagnostics per batch (plots/02_residual_diagnostics.png) and individual batch-level plots.",
+      "evidence": "Section 2.2 analyzes each batch individually; the session transcript shows creation of '01_anscombe_quartet_overview.png' with four separate panels for Q1-Q4."
+    },
+    {
+      "criterion_id": "anscombes_quartet_identical_summaries_noted",
+      "group": "must_have",
+      "status": "hit",
+      "justification": "The agent presents a detailed table showing identical means, variances, correlations, slopes, intercepts, and R-squared values across all four batches, and explicitly calls this out.",
+      "evidence": "Section 2.1 'The Statistical Illusion': 'All four batches share identical summary statistics to two decimal places' followed by a full comparison table."
+    },
+    {
+      "criterion_id": "anscombes_quartet_different_shapes_identified",
+      "group": "must_have",
+      "status": "hit",
+      "justification": "The agent explicitly identifies four materially different shapes: genuine linear (Q1), curvilinear/quadratic (Q2), linear corrupted by outlier (Q3), and leverage-point artifact with no real relationship (Q4).",
+      "evidence": "Section 2.2: 'Batch Q1: Genuine Linear Relationship', 'Batch Q2: Curvilinear (Quadratic) Relationship', 'Batch Q3: Linear Relationship Corrupted by a Single Outlier', 'Batch Q4: No Dose-Response Relationship (Leverage Point Artifact)'. Also: 'This conclusion would be wrong for three out of four batches.'"
+    },
+    {
+      "criterion_id": "anscombes_quartet_distinct_patterns_described",
+      "group": "supporting",
+      "status": "hit",
+      "justification": "The agent describes all four patterns in substantial detail, including specific statistical evidence for each (quadratic coefficients for Q2, outlier residual of +3.24 for Q3, all-same-dosage structure for Q4).",
+      "evidence": "Q2: 'A quadratic model fits perfectly (R\u00b2=1.000): response = -0.127*dosage\u00b2 + 2.781*dosage - 5.996'. Q3: 'One observation (dosage=13 mg, response=12.74) is a dramatic outlier with a residual of +3.24'. Q4: 'Ten of eleven observations have dosage = 8 mg... A single observation at dosage = 19 mg with response = 12.50 creates the illusion.'"
+    },
+    {
+      "criterion_id": "anscombes_quartet_summary_only_is_inadequate",
+      "group": "supporting",
+      "status": "hit",
+      "justification": "The agent explicitly argues that summary statistics alone are inadequate, dedicating an entire implications section to this point.",
+      "evidence": "Section 4: 'Never trust summary statistics alone. Four datasets with identical means, variances, correlations, and regression lines tell four completely different stories.' Also: 'Any automated pipeline that reports only regression coefficients and R-squared would conclude these four batches are equivalent. They are not.'"
+    },
+    {
+      "criterion_id": "anscombes_quartet_named_anscombe",
+      "group": "supporting",
+      "status": "hit",
+      "justification": "The agent explicitly names the dataset as Anscombe's Quartet with the original citation year.",
+      "evidence": "Section 2: 'this dataset is a domain-dressed version of Anscombe's Quartet (1973) \u2014 a classic statistical demonstration that identical summary statistics can describe fundamentally different data structures.'"
+    },
+    {
+      "criterion_id": "anscombes_quartet_summary_only_conclusion",
+      "group": "forbidden",
+      "status": "miss",
+      "justification": "The agent does not conclude the batches are the same. It explicitly states the opposite: the identical summaries mask fundamentally different structures.",
+      "evidence": "'This conclusion would be wrong for three out of four batches.' and 'They are not [equivalent].'"
+    },
+    {
+      "criterion_id": "anscombes_quartet_pooled_identically",
+      "group": "forbidden",
+      "status": "miss",
+      "justification": "The agent analyzes each batch individually with distinct conclusions and recommendations, never pooling them or treating them as interchangeable.",
+      "evidence": "Section 4.2 gives batch-specific recommendations: 'Q1: Linear regression is appropriate', 'Q2: Use polynomial or nonlinear regression', 'Q3: Investigate the outlier', 'Q4: Redesign the experiment.'"
+    }
+  ],
+  "summary": "This is an outstanding analysis that fully solves the evaluation contract. The agent immediately recognized the dataset as a domain-dressed Anscombe's Quartet, visualized all four batches separately, documented their identical summary statistics in a clear table, and provided detailed characterizations of each batch's distinct shape (linear, quadratic, outlier-driven, leverage-point artifact). It went beyond the minimum by performing residual analysis, fitting alternative models (quadratic for Q2, with/without outlier for Q3), and examining auxiliary variables. The conclusion explicitly warns against relying on summary statistics alone and provides batch-specific analytical recommendations.",
+  "raw_response": "```json\n{\n  \"must_have\": {\n    \"anscombes_quartet_visualized_all_batches\": {\n      \"status\": \"hit\",\n      \"justification\": \"The agent created a 2x2 scatter plot grid (plots/01_anscombe_quartet_overview.png) showing each batch separately, plus residual diagnostics per batch (plots/02_residual_diagnostics.png) and individual batch-level plots.\",\n      \"evidence\": \"Section 2.2 analyzes each batch individually; the session transcript shows creation of '01_anscombe_quartet_overview.png' with four separate panels for Q1-Q4.\"\n    },\n    \"anscombes_quartet_identical_summaries_noted\": {\n      \"status\": \"hit\",\n      \"justification\": \"The agent presents a detailed table showing identical means, variances, correlations, slopes, intercepts, and R-squared values across all four batches, and explicitly calls this out.\",\n      \"evidence\": \"Section 2.1 'The Statistical Illusion': 'All four batches share identical summary statistics to two decimal places' followed by a full comparison table.\"\n    },\n    \"anscombes_quartet_different_shapes_identified\": {\n      \"status\": \"hit\",\n      \"justification\": \"The agent explicitly identifies four materially different shapes: genuine linear (Q1), curvilinear/quadratic (Q2), linear corrupted by outlier (Q3), and leverage-point artifact with no real relationship (Q4).\",\n      \"evidence\": \"Section 2.2: 'Batch Q1: Genuine Linear Relationship', 'Batch Q2: Curvilinear (Quadratic) Relationship', 'Batch Q3: Linear Relationship Corrupted by a Single Outlier', 'Batch Q4: No Dose-Response Relationship (Leverage Point Artifact)'. Also: 'This conclusion would be wrong for three out of four batches.'\"\n    }\n  },\n  \"supporting\": {\n    \"anscombes_quartet_distinct_patterns_described\": {\n      \"status\": \"hit\",\n      \"justification\": \"The agent describes all four patterns in substantial detail, including specific statistical evidence for each (quadratic coefficients for Q2, outlier residual of +3.24 for Q3, all-same-dosage structure for Q4).\",\n      \"evidence\": \"Q2: 'A quadratic model fits perfectly (R\u00b2=1.000): response = -0.127*dosage\u00b2 + 2.781*dosage - 5.996'. Q3: 'One observation (dosage=13 mg, response=12.74) is a dramatic outlier with a residual of +3.24'. Q4: 'Ten of eleven observations have dosage = 8 mg... A single observation at dosage = 19 mg with response = 12.50 creates the illusion.'\"\n    },\n    \"anscombes_quartet_summary_only_is_inadequate\": {\n      \"status\": \"hit\",\n      \"justification\": \"The agent explicitly argues that summary statistics alone are inadequate, dedicating an entire implications section to this point.\",\n      \"evidence\": \"Section 4: 'Never trust summary statistics alone. Four datasets with identical means, variances, correlations, and regression lines tell four completely different stories.' Also: 'Any automated pipeline that reports only regression coefficients and R-squared would conclude these four batches are equivalent. They are not.'\"\n    },\n    \"anscombes_quartet_named_anscombe\": {\n      \"status\": \"hit\",\n      \"justification\": \"The agent explicitly names the dataset as Anscombe's Quartet with the original citation year.\",\n      \"evidence\": \"Section 2: 'this dataset is a domain-dressed version of Anscombe's Quartet (1973) \u2014 a classic statistical demonstration that identical summary statistics can describe fundamentally different data structures.'\"\n    }\n  },\n  \"forbidden\": {\n    \"anscombes_quartet_summary_only_conclusion\": {\n      \"status\": \"miss\",\n      \"justification\": \"The agent does not conclude the batches are the same. It explicitly states the opposite: the identical summaries mask fundamentally different structures.\",\n      \"evidence\": \"'This conclusion would be wrong for three out of four batches.' and 'They are not [equivalent].'\"\n    },\n    \"anscombes_quartet_pooled_identically\": {\n      \"status\": \"miss\",\n      \"justification\": \"The agent analyzes each batch individually with distinct conclusions and recommendations, never pooling them or treating them as interchangeable.\",\n      \"evidence\": \"Section 4.2 gives batch-specific recommendations: 'Q1: Linear regression is appropriate', 'Q2: Use polynomial or nonlinear regression', 'Q3: Investigate the outlier', 'Q4: Redesign the experiment.'\"\n    }\n  },\n  \"oracle_metric\": {\n    \"agent_value\": 1.0,\n    \"justification\": \"All three must-have criteria are hit, all three supporting criteria are hit, and no forbidden criteria are triggered. The analysis is exemplary \u2014 it identifies Anscombe's Quartet by name, visualizes all batches, documents the identical statistics, characterizes each batch's distinct shape with statistical evidence, and clearly articulates why summary statistics alone are inadequate. Verdict: solved.\"\n  },\n  \"summary\": \"This is an outstanding analysis that fully solves the evaluation contract. The agent immediately recognized the dataset as a domain-dressed Anscombe's Quartet, visualized all four batches separately, documented their identical summary statistics in a clear table, and provided detailed characterizations of each batch's distinct shape (linear, quadratic, outlier-driven, leverage-point artifact). It went beyond the minimum by performing residual analysis, fitting alternative models (quadratic for Q2, with/without outlier for Q3), and examining auxiliary variables. The conclusion explicitly warns against relying on summary statistics alone and provides batch-specific analytical recommendations.\"\n}"
+}

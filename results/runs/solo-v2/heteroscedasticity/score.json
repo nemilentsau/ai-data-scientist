@@ -1,0 +1,84 @@
+{
+  "dataset": "heteroscedasticity",
+  "config": "solo-v2",
+  "agent": "claude",
+  "verdict": "wrong",
+  "run_status": "completed",
+  "rerun_recommended": false,
+  "run_error_reasons": [],
+  "core_insight_pass": false,
+  "required_coverage": 0.16666666666666666,
+  "supporting_coverage": 0.16666666666666666,
+  "oracle_attainment": null,
+  "oracle_metric_name": null,
+  "oracle_agent_value": 0.0,
+  "fatal_errors": [
+    "Assume constant variance without checking residual behavior.",
+    "Report OLS significance or confidence as trustworthy without caveats."
+  ],
+  "efficiency": {
+    "transcript_chars": 94992.0,
+    "trace_events": 26.0,
+    "report_chars": 10064.0
+  },
+  "criterion_results": [
+    {
+      "criterion_id": "heteroscedasticity_residual_diagnostics_run",
+      "group": "must_have",
+      "status": "partial",
+      "justification": "The agent produced a log-log model residual diagnostics plot and checked correlation of residuals with features, but never examined residual spread versus fitted values for the linear model. The residual analysis was done in log space, which inherently masks the heteroscedasticity present in the original scale.",
+      "evidence": "Report: 'Residuals show no systematic pattern' (log-log model). 'residual standard deviation is $8,666 \u2014 about 14% of mean revenue. This residual variation appears random: it does not correlate with any measured feature (all |r| < 0.05, all p > 0.20).'"
+    },
+    {
+      "criterion_id": "heteroscedasticity_non_constant_variance_identified",
+      "group": "must_have",
+      "status": "miss",
+      "justification": "The agent never identified that residual variance increases with ad spend or fitted values. In fact, the agent's own ROAS-by-spend-decile analysis shows std dropping from 0.584 (lowest decile) to 0.283 (highest decile) \u2014 a 2:1 ratio \u2014 but this was never flagged. The agent explicitly claimed the opposite: that residual variation is random.",
+      "evidence": "Report: 'This residual variation appears random: it does not correlate with any measured feature.' Transcript data shows ROAS std by spend decile: 0.584 (decile 0) vs 0.283 (decile 9) \u2014 pattern completely ignored."
+    },
+    {
+      "criterion_id": "heteroscedasticity_remedy_suggested",
+      "group": "must_have",
+      "status": "miss",
+      "justification": "The agent never recommended robust standard errors, weighted regression, or a variance-stabilizing transform as a remedy for heteroscedasticity. While the agent did use a log-log transform, it was motivated by fit quality (R\u00b2 improvement), not as a remedy for non-constant variance.",
+      "evidence": "No mention of weighted regression, robust standard errors, or variance-stabilizing transforms in the report or session."
+    },
+    {
+      "criterion_id": "heteroscedasticity_residual_plot_used",
+      "group": "supporting",
+      "status": "partial",
+      "justification": "A residual plot was produced for the log-log model (plots/loglog_model_diagnostics.png), but this was in log space which stabilizes variance by construction. No residual-vs-fitted plot for the linear model was produced, and no formal heteroscedasticity test (Breusch-Pagan, White's) was run.",
+      "evidence": "Report references 'plots/loglog_model_diagnostics.png' with caption 'Right: Residuals show no systematic pattern.' No Breusch-Pagan or White's test in the session."
+    },
+    {
+      "criterion_id": "heteroscedasticity_inference_risk_noted",
+      "group": "supporting",
+      "status": "miss",
+      "justification": "The agent never mentioned that standard OLS inference could be unreliable under heteroscedasticity. The Limitations section discusses causality, independence, and stationarity \u2014 but not variance assumptions or their effect on inference.",
+      "evidence": "Limitations section covers causal direction, independence, and stationarity. No mention of heteroscedasticity-related inference risk."
+    },
+    {
+      "criterion_id": "heteroscedasticity_linear_mean_trend_preserved",
+      "group": "supporting",
+      "status": "miss",
+      "justification": "The agent never distinguished the mean trend from the variance problem because it never identified a variance problem. The strong linear/log-linear mean trend was well-characterized, but the increasing-variance pattern was not recognized as a separate issue.",
+      "evidence": "No discussion of mean trend being valid while variance structure is problematic."
+    },
+    {
+      "criterion_id": "heteroscedasticity_assumes_constant_variance",
+      "group": "forbidden",
+      "status": "hit",
+      "justification": "For the linear model, the agent reported a single residual standard deviation ($8,666) and declared the variation 'random' without examining whether variance changes across the fitted-value range. The only residual plot was in log space, which masks heteroscedasticity. The agent's own decile analysis showed a 2:1 variance ratio that went unremarked.",
+      "evidence": "Report: 'the residual standard deviation is $8,666 \u2014 about 14% of mean revenue. This residual variation appears random.' ROAS std by spend decile: 0.584 (low spend) vs 0.283 (high spend) \u2014 never flagged."
+    },
+    {
+      "criterion_id": "heteroscedasticity_uses_ols_uncritically",
+      "group": "forbidden",
+      "status": "hit",
+      "justification": "The agent presented OLS regression results (R\u00b2 = 0.945, coefficient = 2.49), ANOVA F-tests, and multiple pairwise t-tests with p-values as trustworthy, without any caveat about heteroscedasticity potentially invalidating standard errors and test statistics.",
+      "evidence": "Report: 'The linear model (Revenue ~ Ad Spend) achieves R\u00b2 = 0.945 with a coefficient of 2.49.' West vs North: 't = 2.518, p = 0.012.' ANOVA results presented at face value. No heteroscedasticity caveat in the Limitations section."
+    }
+  ],
+  "summary": "The agent conducted a thorough and well-structured marketing campaign analysis but completely missed the dataset's key pattern: heteroscedasticity (residual spread increasing with fitted values). Ironically, the agent's own ROAS-by-spend-decile analysis revealed the signal \u2014 standard deviation of 0.584 in the lowest spend decile versus 0.283 in the highest \u2014 but this was never examined or commented upon. The agent's use of a log-log model inadvertently applied a variance-stabilizing transform, which masked the heteroscedasticity in the residual diagnostics. Because the agent assumed constant variance and presented OLS results without heteroscedasticity caveats, both forbidden criteria are triggered, resulting in a verdict of 'wrong' despite the otherwise high-quality descriptive analysis.",
+  "raw_response": "```json\n{\n  \"must_have\": {\n    \"heteroscedasticity_residual_diagnostics_run\": {\n      \"status\": \"partial\",\n      \"justification\": \"The agent produced a log-log model residual diagnostics plot and checked correlation of residuals with features, but never examined residual spread versus fitted values for the linear model. The residual analysis was done in log space, which inherently masks the heteroscedasticity present in the original scale.\",\n      \"evidence\": \"Report: 'Residuals show no systematic pattern' (log-log model). 'residual standard deviation is $8,666 \u2014 about 14% of mean revenue. This residual variation appears random: it does not correlate with any measured feature (all |r| < 0.05, all p > 0.20).'\"\n    },\n    \"heteroscedasticity_non_constant_variance_identified\": {\n      \"status\": \"miss\",\n      \"justification\": \"The agent never identified that residual variance increases with ad spend or fitted values. In fact, the agent's own ROAS-by-spend-decile analysis shows std dropping from 0.584 (lowest decile) to 0.283 (highest decile) \u2014 a 2:1 ratio \u2014 but this was never flagged. The agent explicitly claimed the opposite: that residual variation is random.\",\n      \"evidence\": \"Report: 'This residual variation appears random: it does not correlate with any measured feature.' Transcript data shows ROAS std by spend decile: 0.584 (decile 0) vs 0.283 (decile 9) \u2014 pattern completely ignored.\"\n    },\n    \"heteroscedasticity_remedy_suggested\": {\n      \"status\": \"miss\",\n      \"justification\": \"The agent never recommended robust standard errors, weighted regression, or a variance-stabilizing transform as a remedy for heteroscedasticity. While the agent did use a log-log transform, it was motivated by fit quality (R\u00b2 improvement), not as a remedy for non-constant variance.\",\n      \"evidence\": \"No mention of weighted regression, robust standard errors, or variance-stabilizing transforms in the report or session.\"\n    }\n  },\n  \"supporting\": {\n    \"heteroscedasticity_residual_plot_used\": {\n      \"status\": \"partial\",\n      \"justification\": \"A residual plot was produced for the log-log model (plots/loglog_model_diagnostics.png), but this was in log space which stabilizes variance by construction. No residual-vs-fitted plot for the linear model was produced, and no formal heteroscedasticity test (Breusch-Pagan, White's) was run.\",\n      \"evidence\": \"Report references 'plots/loglog_model_diagnostics.png' with caption 'Right: Residuals show no systematic pattern.' No Breusch-Pagan or White's test in the session.\"\n    },\n    \"heteroscedasticity_inference_risk_noted\": {\n      \"status\": \"miss\",\n      \"justification\": \"The agent never mentioned that standard OLS inference could be unreliable under heteroscedasticity. The Limitations section discusses causality, independence, and stationarity \u2014 but not variance assumptions or their effect on inference.\",\n      \"evidence\": \"Limitations section covers causal direction, independence, and stationarity. No mention of heteroscedasticity-related inference risk.\"\n    },\n    \"heteroscedasticity_linear_mean_trend_preserved\": {\n      \"status\": \"miss\",\n      \"justification\": \"The agent never distinguished the mean trend from the variance problem because it never identified a variance problem. The strong linear/log-linear mean trend was well-characterized, but the increasing-variance pattern was not recognized as a separate issue.\",\n      \"evidence\": \"No discussion of mean trend being valid while variance structure is problematic.\"\n    }\n  },\n  \"forbidden\": {\n    \"heteroscedasticity_assumes_constant_variance\": {\n      \"status\": \"hit\",\n      \"justification\": \"For the linear model, the agent reported a single residual standard deviation ($8,666) and declared the variation 'random' without examining whether variance changes across the fitted-value range. The only residual plot was in log space, which masks heteroscedasticity. The agent's own decile analysis showed a 2:1 variance ratio that went unremarked.\",\n      \"evidence\": \"Report: 'the residual standard deviation is $8,666 \u2014 about 14% of mean revenue. This residual variation appears random.' ROAS std by spend decile: 0.584 (low spend) vs 0.283 (high spend) \u2014 never flagged.\"\n    },\n    \"heteroscedasticity_uses_ols_uncritically\": {\n      \"status\": \"hit\",\n      \"justification\": \"The agent presented OLS regression results (R\u00b2 = 0.945, coefficient = 2.49), ANOVA F-tests, and multiple pairwise t-tests with p-values as trustworthy, without any caveat about heteroscedasticity potentially invalidating standard errors and test statistics.\",\n      \"evidence\": \"Report: 'The linear model (Revenue ~ Ad Spend) achieves R\u00b2 = 0.945 with a coefficient of 2.49.' West vs North: 't = 2.518, p = 0.012.' ANOVA results presented at face value. No heteroscedasticity caveat in the Limitations section.\"\n    }\n  },\n  \"oracle_metric\": {\n    \"agent_value\": 0.0,\n    \"justification\": \"Both forbidden criteria are hit: the agent assumed constant variance (reporting a single residual SD and calling variation 'random' despite clear evidence of non-constant variance in its own decile analysis) and used OLS inference uncritically. None of the three must-have criteria were fully met \u2014 residual diagnostics were only partial (log-space only), heteroscedasticity was never identified, and no remedy was suggested. Verdict: wrong.\"\n  },\n  \"summary\": \"The agent conducted a thorough and well-structured marketing campaign analysis but completely missed the dataset's key pattern: heteroscedasticity (residual spread increasing with fitted values). Ironically, the agent's own ROAS-by-spend-decile analysis revealed the signal \u2014 standard deviation of 0.584 in the lowest spend decile versus 0.283 in the highest \u2014 but this was never examined or commented upon. The agent's use of a log-log model inadvertently applied a variance-stabilizing transform, which masked the heteroscedasticity in the residual diagnostics. Because the agent assumed constant variance and presented OLS results without heteroscedasticity caveats, both forbidden criteria are triggered, resulting in a verdict of 'wrong' despite the otherwise high-quality descriptive analysis.\"\n}\n```"
+}

@@ -1,0 +1,5 @@
+Wrote the report to [analysis_report.md](/var/folders/j_/dt6mk_nd7tbfpyx2v5z_lv6c0000gn/T/tmp.vHvxcVatlI/analysis_report.md) and saved the plots in [plots/](/var/folders/j_/dt6mk_nd7tbfpyx2v5z_lv6c0000gn/T/tmp.vHvxcVatlI/plots).
+
+Main result: this dataset is dominated by three very clean customer behavior segments, and the middle segment is far more valuable than either extreme. The balanced mid-range group averages `$3,601` lifetime spend versus `$2,248` and `$2,196` for the two extreme groups, about `62%` higher than the non-mid customers combined. A segment-only model predicts spend better (`CV R^2 = 0.913`) than a smooth quadratic regression (`0.858`) or a linear model (`0.438`), which suggests the data are governed by discrete regimes rather than one continuous trend.
+
+I also found no useful evidence that `support_contacts` or `account_age_months` explain spend after accounting for the main behavior structure. The report includes the self-critique and caveat that the equal-sized, unusually clean segments make this look plausibly synthetic or pre-segmented rather than organically sampled customer data.

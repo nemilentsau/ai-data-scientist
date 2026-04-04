@@ -1,0 +1,5 @@
+Wrote the analysis to [analysis_report.md](/var/folders/j_/dt6mk_nd7tbfpyx2v5z_lv6c0000gn/T/tmp.8CjRh3Lue7/analysis_report.md) and saved the reviewed plots in [/var/folders/j_/dt6mk_nd7tbfpyx2v5z_lv6c0000gn/T/tmp.8CjRh3Lue7/plots]( /var/folders/j_/dt6mk_nd7tbfpyx2v5z_lv6c0000gn/T/tmp.8CjRh3Lue7/plots ).
+
+Main conclusions: the dataset looks HR-like but behaves unusually. Salary band is not related to experience (`p=0.746`), remote share is not meaningfully related to satisfaction (`p=0.930`) and only weakly related to commute (`rho=-0.049`, `p=0.166`), team size has a small negative association with performance in multivariable OLS (`coef=-0.129`, 95% CI `[-0.237, -0.020]`), and the available features do not predict performance out of sample (5-fold CV ridge `R²=-0.019`, RMSE `10.055` vs target SD `10.017`).
+
+I also left a reproducible script at [analyze.py](/var/folders/j_/dt6mk_nd7tbfpyx2v5z_lv6c0000gn/T/tmp.8CjRh3Lue7/analyze.py).

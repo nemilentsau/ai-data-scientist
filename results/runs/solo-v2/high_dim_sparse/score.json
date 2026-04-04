@@ -1,0 +1,88 @@
+{
+  "dataset": "high_dim_sparse",
+  "config": "solo-v2",
+  "agent": "claude",
+  "verdict": "solved",
+  "run_status": "completed",
+  "rerun_recommended": false,
+  "run_error_reasons": [],
+  "core_insight_pass": true,
+  "required_coverage": 1.0,
+  "supporting_coverage": 1.0,
+  "oracle_attainment": 0.806,
+  "oracle_metric_name": "roc_auc",
+  "oracle_agent_value": 0.903,
+  "fatal_errors": [],
+  "efficiency": {
+    "transcript_chars": 75987.0,
+    "trace_events": 23.0,
+    "report_chars": 9411.0
+  },
+  "criterion_results": [
+    {
+      "criterion_id": "high_dim_sparse_feature_selection_used",
+      "group": "must_have",
+      "status": "hit",
+      "justification": "The agent performed systematic univariate t-tests across all 100 genes with both Bonferroni and FDR correction, then compared full-feature vs. reduced-feature models. This is explicit feature selection rather than trusting all features equally.",
+      "evidence": "Univariate t-tests across all 100 genes, corrected for multiple comparisons (Bonferroni and Benjamini-Hochberg FDR), identified exactly three genes with statistically significant associations with outcome"
+    },
+    {
+      "criterion_id": "high_dim_sparse_small_signal_set_identified",
+      "group": "must_have",
+      "status": "hit",
+      "justification": "Finding 1 is titled 'Only 3 of 100 Genes Are Associated with Outcome' and the agent explicitly characterizes this as a 'sparse signal structure.'",
+      "evidence": "The remaining 97 genes show no association with outcome (lowest p-value among non-significant genes: 0.014 uncorrected, FDR q = 0.34). The volcano plot dramatically illustrates this sparse signal structure."
+    },
+    {
+      "criterion_id": "high_dim_sparse_true_genes_recovered",
+      "group": "must_have",
+      "status": "hit",
+      "justification": "The agent correctly identified exactly gene_000, gene_001, and gene_002 as the three predictive features, matching the ground truth precisely.",
+      "evidence": "gene_001 (Cohen's d = -1.01, p = 1.7e-31), gene_000 (Cohen's d = +0.89, p = 2.6e-25), gene_002 (Cohen's d = +0.50, p = 1.4e-9)"
+    },
+    {
+      "criterion_id": "high_dim_sparse_reduced_model_benefit_shown",
+      "group": "must_have",
+      "status": "hit",
+      "justification": "The agent showed a clear cross-validated AUC comparison: 3-gene LR (0.903) vs all-100-gene LR (0.854), demonstrating a ~5-point improvement from feature reduction.",
+      "evidence": "The top-3-gene logistic regression achieves the best performance. Including the 97 noise genes hurts performance by ~5 AUC points due to overfitting to irrelevant features."
+    },
+    {
+      "criterion_id": "high_dim_sparse_overfitting_risk_noted",
+      "group": "supporting",
+      "status": "hit",
+      "justification": "The agent explicitly explains that including noise features degrades performance due to overfitting.",
+      "evidence": "Including the 97 noise genes hurts performance by ~5 AUC points due to overfitting to irrelevant features."
+    },
+    {
+      "criterion_id": "high_dim_sparse_sparse_method_named",
+      "group": "supporting",
+      "status": "hit",
+      "justification": "The agent used feature ranking via univariate t-tests with multiple comparison correction, which is one of the named sparse methods in the criterion ('feature ranking').",
+      "evidence": "Univariate t-tests across all 100 genes, corrected for multiple comparisons (Bonferroni and Benjamini-Hochberg FDR)"
+    },
+    {
+      "criterion_id": "high_dim_sparse_noise_features_deemphasized",
+      "group": "supporting",
+      "status": "hit",
+      "justification": "The agent clearly separates the 3 signal genes from the 97 noise genes and does not present any noise features as important predictors.",
+      "evidence": "The remaining 97 genes show no association with outcome (lowest p-value among non-significant genes: 0.014 uncorrected, FDR q = 0.34)."
+    },
+    {
+      "criterion_id": "high_dim_sparse_uses_all_features_uncritically",
+      "group": "forbidden",
+      "status": "miss",
+      "justification": "The agent explicitly performs feature selection, identifies the sparse signal, and demonstrates that using all features is harmful. All features are not used uncritically.",
+      "evidence": "A parsimonious 3-gene panel (gene_000, gene_001, gene_002) is sufficient to predict outcome with AUC = 0.90. Adding more genes or clinical variables (age, sex) does not improve performance."
+    },
+    {
+      "criterion_id": "high_dim_sparse_hallucinates_many_predictors",
+      "group": "forbidden",
+      "status": "miss",
+      "justification": "The agent identifies exactly 3 predictors and explicitly states the remaining 97 genes are not significant. No noise features are claimed as predictive.",
+      "evidence": "Genes significant at Bonferroni p<0.05: 3; Genes significant at FDR<0.05: 3; Genes significant at FDR<0.10: 3"
+    }
+  ],
+  "summary": "This is an excellent analysis that fully meets all must-have and supporting criteria while avoiding both forbidden pitfalls. The agent correctly identified the sparse signal structure (3 of 100 genes), recovered exactly the true genes (gene_000, gene_001, gene_002), used proper feature selection with multiple comparison correction, and convincingly demonstrated that the reduced 3-gene model outperforms the full-feature model (AUC 0.903 vs 0.854). The analysis goes beyond the minimum requirements with thorough statistical testing (interaction terms, quadratic effects, calibration), insightful comparison of multiple model types, and honest limitations discussion. The achieved ROC-AUC of 0.903 is strong, well above the 0.5 baseline.",
+  "raw_response": "```json\n{\n  \"must_have\": {\n    \"high_dim_sparse_feature_selection_used\": {\n      \"status\": \"hit\",\n      \"justification\": \"The agent performed systematic univariate t-tests across all 100 genes with both Bonferroni and FDR correction, then compared full-feature vs. reduced-feature models. This is explicit feature selection rather than trusting all features equally.\",\n      \"evidence\": \"Univariate t-tests across all 100 genes, corrected for multiple comparisons (Bonferroni and Benjamini-Hochberg FDR), identified exactly three genes with statistically significant associations with outcome\"\n    },\n    \"high_dim_sparse_small_signal_set_identified\": {\n      \"status\": \"hit\",\n      \"justification\": \"Finding 1 is titled 'Only 3 of 100 Genes Are Associated with Outcome' and the agent explicitly characterizes this as a 'sparse signal structure.'\",\n      \"evidence\": \"The remaining 97 genes show no association with outcome (lowest p-value among non-significant genes: 0.014 uncorrected, FDR q = 0.34). The volcano plot dramatically illustrates this sparse signal structure.\"\n    },\n    \"high_dim_sparse_true_genes_recovered\": {\n      \"status\": \"hit\",\n      \"justification\": \"The agent correctly identified exactly gene_000, gene_001, and gene_002 as the three predictive features, matching the ground truth precisely.\",\n      \"evidence\": \"gene_001 (Cohen's d = -1.01, p = 1.7e-31), gene_000 (Cohen's d = +0.89, p = 2.6e-25), gene_002 (Cohen's d = +0.50, p = 1.4e-9)\"\n    },\n    \"high_dim_sparse_reduced_model_benefit_shown\": {\n      \"status\": \"hit\",\n      \"justification\": \"The agent showed a clear cross-validated AUC comparison: 3-gene LR (0.903) vs all-100-gene LR (0.854), demonstrating a ~5-point improvement from feature reduction.\",\n      \"evidence\": \"The top-3-gene logistic regression achieves the best performance. Including the 97 noise genes hurts performance by ~5 AUC points due to overfitting to irrelevant features.\"\n    }\n  },\n  \"supporting\": {\n    \"high_dim_sparse_overfitting_risk_noted\": {\n      \"status\": \"hit\",\n      \"justification\": \"The agent explicitly explains that including noise features degrades performance due to overfitting.\",\n      \"evidence\": \"Including the 97 noise genes hurts performance by ~5 AUC points due to overfitting to irrelevant features.\"\n    },\n    \"high_dim_sparse_sparse_method_named\": {\n      \"status\": \"hit\",\n      \"justification\": \"The agent used feature ranking via univariate t-tests with multiple comparison correction, which is one of the named sparse methods in the criterion ('feature ranking').\",\n      \"evidence\": \"Univariate t-tests across all 100 genes, corrected for multiple comparisons (Bonferroni and Benjamini-Hochberg FDR)\"\n    },\n    \"high_dim_sparse_noise_features_deemphasized\": {\n      \"status\": \"hit\",\n      \"justification\": \"The agent clearly separates the 3 signal genes from the 97 noise genes and does not present any noise features as important predictors.\",\n      \"evidence\": \"The remaining 97 genes show no association with outcome (lowest p-value among non-significant genes: 0.014 uncorrected, FDR q = 0.34).\"\n    }\n  },\n  \"forbidden\": {\n    \"high_dim_sparse_uses_all_features_uncritically\": {\n      \"status\": \"miss\",\n      \"justification\": \"The agent explicitly performs feature selection, identifies the sparse signal, and demonstrates that using all features is harmful. All features are not used uncritically.\",\n      \"evidence\": \"A parsimonious 3-gene panel (gene_000, gene_001, gene_002) is sufficient to predict outcome with AUC = 0.90. Adding more genes or clinical variables (age, sex) does not improve performance.\"\n    },\n    \"high_dim_sparse_hallucinates_many_predictors\": {\n      \"status\": \"miss\",\n      \"justification\": \"The agent identifies exactly 3 predictors and explicitly states the remaining 97 genes are not significant. No noise features are claimed as predictive.\",\n      \"evidence\": \"Genes significant at Bonferroni p<0.05: 3; Genes significant at FDR<0.05: 3; Genes significant at FDR<0.10: 3\"\n    }\n  },\n  \"oracle_metric\": {\n    \"agent_value\": 0.903,\n    \"justification\": \"The agent reports the 3-gene logistic regression cross-validated AUC as 0.903 \u00b1 0.033, which is the best reported ROC-AUC for the sparse classifier.\"\n  },\n  \"summary\": \"This is an excellent analysis that fully meets all must-have and supporting criteria while avoiding both forbidden pitfalls. The agent correctly identified the sparse signal structure (3 of 100 genes), recovered exactly the true genes (gene_000, gene_001, gene_002), used proper feature selection with multiple comparison correction, and convincingly demonstrated that the reduced 3-gene model outperforms the full-feature model (AUC 0.903 vs 0.854). The analysis goes beyond the minimum requirements with thorough statistical testing (interaction terms, quadratic effects, calibration), insightful comparison of multiple model types, and honest limitations discussion. The achieved ROC-AUC of 0.903 is strong, well above the 0.5 baseline.\"\n}\n```"
+}

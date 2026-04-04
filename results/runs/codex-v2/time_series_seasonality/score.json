@@ -1,0 +1,88 @@
+{
+  "dataset": "time_series_seasonality",
+  "config": "codex-v2",
+  "agent": "codex",
+  "verdict": "solved",
+  "run_status": "completed",
+  "rerun_recommended": false,
+  "run_error_reasons": [],
+  "core_insight_pass": true,
+  "required_coverage": 1.0,
+  "supporting_coverage": 0.8333333333333334,
+  "oracle_attainment": null,
+  "oracle_metric_name": null,
+  "oracle_agent_value": 0.85,
+  "fatal_errors": [],
+  "efficiency": {
+    "transcript_chars": 61124.0,
+    "trace_events": 57.0,
+    "report_chars": 7129.0
+  },
+  "criterion_results": [
+    {
+      "criterion_id": "time_series_seasonality_temporal_order_respected",
+      "group": "must_have",
+      "status": "hit",
+      "justification": "The agent treats the data as an ordered daily time series throughout: checks date continuity (1,095 consecutive days, 0 missing), analyzes year-over-year trends, computes rolling means, and builds models with temporal structure (year + dow + month).",
+      "evidence": "\"Mean daily pageviews rose from 647.1 in 2022 to 1239.8 in 2024, a 91.6% increase.\" Date range and continuity verified explicitly."
+    },
+    {
+      "criterion_id": "time_series_seasonality_weekly_seasonality_identified",
+      "group": "must_have",
+      "status": "hit",
+      "justification": "Weekly periodicity is explicitly identified with day-of-week means and included as a factor in the OLS model. The Monday-Thursday gap of 50.4% is highlighted as a key finding.",
+      "evidence": "\"Monday averages 1124.3 pageviews versus 747.7 on Thursday, a gap of 50.4%.\" C(dow) coefficients are significant in the traffic model (e.g., Monday coef=336.47, t=11.48)."
+    },
+    {
+      "criterion_id": "time_series_seasonality_yearly_seasonality_identified",
+      "group": "must_have",
+      "status": "hit",
+      "justification": "Annual/monthly periodicity is explicitly identified. Monthly means are computed, the annual cycle is modeled via C(month), and peak/trough months are named.",
+      "evidence": "\"Across calendar months, average traffic peaks in Apr (1265.1) and reaches its trough in Sep (616.5).\" C(month) coefficients in the OLS show the annual cycle (e.g., month 9 coef=-280.2, t=-7.31)."
+    },
+    {
+      "criterion_id": "time_series_seasonality_trend_and_seasonality_accounted_for",
+      "group": "must_have",
+      "status": "hit",
+      "justification": "The agent builds an explicit model decomposing pageviews into trend (year), weekly seasonality (dow), and annual seasonality (month), achieving R\u00b2=94.2%. Trend is quantified as year-over-year coefficients.",
+      "evidence": "\"The combined time-structure model pageviews ~ year + day_of_week + month explains 94.2% of pageview variance. 2023 adds 287.0 pageviews/day... 2024 adds 591.8 pageviews/day.\""
+    },
+    {
+      "criterion_id": "time_series_seasonality_decomposition_or_autocorrelation",
+      "group": "supporting",
+      "status": "partial",
+      "justification": "The agent uses OLS regression with year, dow, and month factors, which is a form of additive decomposition into trend + weekly + annual components. However, no formal seasonal decomposition (STL, seasonal_decompose) or autocorrelation/ACF analysis is performed. The regression approach is valid but not a standard time-series diagnostic.",
+      "evidence": "OLS model `pageviews ~ C(year) + C(dow) + C(month)` with R\u00b2=0.942. No mention of ACF, PACF, periodogram, or statsmodels seasonal_decompose."
+    },
+    {
+      "criterion_id": "time_series_seasonality_time_axis_visualized",
+      "group": "supporting",
+      "status": "hit",
+      "justification": "The agent creates time-axis plots including rolling means and monthly bar charts. Multiple plot files are referenced showing the series over time.",
+      "evidence": "\"see plots/traffic_seasonality.png. The year-to-year upward shift is visible in the rolling mean, while the monthly bar chart shows the persistent annual cycle.\""
+    },
+    {
+      "criterion_id": "time_series_seasonality_multiple_metrics_considered",
+      "group": "supporting",
+      "status": "hit",
+      "justification": "The agent analyzes all seven columns including pageviews, unique_visitors, bounce_rate, avg_session_duration_sec, new_signups, and support_tickets, examining their relationships while maintaining focus on the seasonal structure of traffic.",
+      "evidence": "Correlation matrix across all numeric columns; Poisson model for signups using log(unique_visitors), bounce_rate, avg_session_duration_sec; support ticket analysis with dispersion index."
+    },
+    {
+      "criterion_id": "time_series_seasonality_ignores_temporal_structure",
+      "group": "forbidden",
+      "status": "miss",
+      "justification": "The agent explicitly respects temporal structure throughout, modeling trends, weekly cycles, and annual cycles. Rows are never treated as exchangeable.",
+      "evidence": "Date continuity check, year-over-year trend analysis, day-of-week groupings, monthly seasonality modeling."
+    },
+    {
+      "criterion_id": "time_series_seasonality_no_seasonality_modeling",
+      "group": "forbidden",
+      "status": "miss",
+      "justification": "Seasonality is central to the analysis. Both weekly and yearly seasonal components are modeled explicitly in OLS and discussed as key findings.",
+      "evidence": "\"The combined time-structure model pageviews ~ year + day_of_week + month explains 94.2% of pageview variance.\""
+    }
+  ],
+  "summary": "The agent delivers a strong analysis that correctly identifies the dataset's core temporal structure: a clear upward trend over 2022\u20132024, strong weekly periodicity (Monday peak, Thursday trough), and annual seasonality (April peak, September trough). The additive OLS model capturing year + day-of-week + month explains 94.2% of pageview variance, which effectively decomposes trend and dual-frequency seasonality. All four must-have criteria are satisfied and no forbidden criteria are triggered. The main shortcoming is the reliance on categorical OLS rather than formal time-series decomposition or autocorrelation diagnostics, which would have more rigorously established the periodic structure. The agent also spends substantial effort on the signups/tickets analysis, which, while interesting, is secondary to the seasonal decomposition task.",
+  "raw_response": "```json\n{\n  \"must_have\": {\n    \"time_series_seasonality_temporal_order_respected\": {\n      \"status\": \"hit\",\n      \"justification\": \"The agent treats the data as an ordered daily time series throughout: checks date continuity (1,095 consecutive days, 0 missing), analyzes year-over-year trends, computes rolling means, and builds models with temporal structure (year + dow + month).\",\n      \"evidence\": \"\\\"Mean daily pageviews rose from 647.1 in 2022 to 1239.8 in 2024, a 91.6% increase.\\\" Date range and continuity verified explicitly.\"\n    },\n    \"time_series_seasonality_weekly_seasonality_identified\": {\n      \"status\": \"hit\",\n      \"justification\": \"Weekly periodicity is explicitly identified with day-of-week means and included as a factor in the OLS model. The Monday-Thursday gap of 50.4% is highlighted as a key finding.\",\n      \"evidence\": \"\\\"Monday averages 1124.3 pageviews versus 747.7 on Thursday, a gap of 50.4%.\\\" C(dow) coefficients are significant in the traffic model (e.g., Monday coef=336.47, t=11.48).\"\n    },\n    \"time_series_seasonality_yearly_seasonality_identified\": {\n      \"status\": \"hit\",\n      \"justification\": \"Annual/monthly periodicity is explicitly identified. Monthly means are computed, the annual cycle is modeled via C(month), and peak/trough months are named.\",\n      \"evidence\": \"\\\"Across calendar months, average traffic peaks in Apr (1265.1) and reaches its trough in Sep (616.5).\\\" C(month) coefficients in the OLS show the annual cycle (e.g., month 9 coef=-280.2, t=-7.31).\"\n    },\n    \"time_series_seasonality_trend_and_seasonality_accounted_for\": {\n      \"status\": \"hit\",\n      \"justification\": \"The agent builds an explicit model decomposing pageviews into trend (year), weekly seasonality (dow), and annual seasonality (month), achieving R\u00b2=94.2%. Trend is quantified as year-over-year coefficients.\",\n      \"evidence\": \"\\\"The combined time-structure model pageviews ~ year + day_of_week + month explains 94.2% of pageview variance. 2023 adds 287.0 pageviews/day... 2024 adds 591.8 pageviews/day.\\\"\"\n    }\n  },\n  \"supporting\": {\n    \"time_series_seasonality_decomposition_or_autocorrelation\": {\n      \"status\": \"partial\",\n      \"justification\": \"The agent uses OLS regression with year, dow, and month factors, which is a form of additive decomposition into trend + weekly + annual components. However, no formal seasonal decomposition (STL, seasonal_decompose) or autocorrelation/ACF analysis is performed. The regression approach is valid but not a standard time-series diagnostic.\",\n      \"evidence\": \"OLS model `pageviews ~ C(year) + C(dow) + C(month)` with R\u00b2=0.942. No mention of ACF, PACF, periodogram, or statsmodels seasonal_decompose.\"\n    },\n    \"time_series_seasonality_time_axis_visualized\": {\n      \"status\": \"hit\",\n      \"justification\": \"The agent creates time-axis plots including rolling means and monthly bar charts. Multiple plot files are referenced showing the series over time.\",\n      \"evidence\": \"\\\"see plots/traffic_seasonality.png. The year-to-year upward shift is visible in the rolling mean, while the monthly bar chart shows the persistent annual cycle.\\\"\"\n    },\n    \"time_series_seasonality_multiple_metrics_considered\": {\n      \"status\": \"hit\",\n      \"justification\": \"The agent analyzes all seven columns including pageviews, unique_visitors, bounce_rate, avg_session_duration_sec, new_signups, and support_tickets, examining their relationships while maintaining focus on the seasonal structure of traffic.\",\n      \"evidence\": \"Correlation matrix across all numeric columns; Poisson model for signups using log(unique_visitors), bounce_rate, avg_session_duration_sec; support ticket analysis with dispersion index.\"\n    }\n  },\n  \"forbidden\": {\n    \"time_series_seasonality_ignores_temporal_structure\": {\n      \"status\": \"miss\",\n      \"justification\": \"The agent explicitly respects temporal structure throughout, modeling trends, weekly cycles, and annual cycles. Rows are never treated as exchangeable.\",\n      \"evidence\": \"Date continuity check, year-over-year trend analysis, day-of-week groupings, monthly seasonality modeling.\"\n    },\n    \"time_series_seasonality_no_seasonality_modeling\": {\n      \"status\": \"miss\",\n      \"justification\": \"Seasonality is central to the analysis. Both weekly and yearly seasonal components are modeled explicitly in OLS and discussed as key findings.\",\n      \"evidence\": \"\\\"The combined time-structure model pageviews ~ year + day_of_week + month explains 94.2% of pageview variance.\\\"\"\n    }\n  },\n  \"oracle_metric\": {\n    \"agent_value\": 0.85,\n    \"justification\": \"The agent correctly identifies all key patterns: weekly seasonality, yearly seasonality, and upward trend, with a well-fitting additive model (R\u00b2=94.2%). It avoids all traps (no i.i.d. treatment, no seasonality-free modeling). The main gap is the absence of formal time-series decomposition or autocorrelation diagnostics \u2014 the agent relies on regression-based decomposition rather than STL/seasonal_decompose/ACF. The secondary analyses (signups, support tickets) are thorough but somewhat tangential to the core seasonal pattern the dataset was designed to test.\"\n  },\n  \"summary\": \"The agent delivers a strong analysis that correctly identifies the dataset's core temporal structure: a clear upward trend over 2022\u20132024, strong weekly periodicity (Monday peak, Thursday trough), and annual seasonality (April peak, September trough). The additive OLS model capturing year + day-of-week + month explains 94.2% of pageview variance, which effectively decomposes trend and dual-frequency seasonality. All four must-have criteria are satisfied and no forbidden criteria are triggered. The main shortcoming is the reliance on categorical OLS rather than formal time-series decomposition or autocorrelation diagnostics, which would have more rigorously established the periodic structure. The agent also spends substantial effort on the signups/tickets analysis, which, while interesting, is secondary to the seasonal decomposition task.\"\n}\n```"
+}

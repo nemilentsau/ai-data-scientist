@@ -1,0 +1,5 @@
+Completed the analysis and wrote the deliverables to [analysis_report.md](/var/folders/j_/dt6mk_nd7tbfpyx2v5z_lv6c0000gn/T/tmp.fBKzTnD4tR/analysis_report.md) and [plots](/var/folders/j_/dt6mk_nd7tbfpyx2v5z_lv6c0000gn/T/tmp.fBKzTnD4tR/plots).
+
+The main findings are that fraud in this dataset is concentrated in overnight transactions, long-distance transactions, and larger transaction amounts. The strongest continuous signal is distance from home: the farthest distance decile has a 29.2% fraud rate versus 2.3% for the other 90%, and night plus far-from-home reaches 69.4% fraud. Merchant category, international status, and card age add little signal here.
+
+I also left a reproducible script at [analysis_workflow.py](/var/folders/j_/dt6mk_nd7tbfpyx2v5z_lv6c0000gn/T/tmp.fBKzTnD4tR/analysis_workflow.py). I ran it, regenerated the report and PNGs, and visually reviewed the saved plots after rendering.

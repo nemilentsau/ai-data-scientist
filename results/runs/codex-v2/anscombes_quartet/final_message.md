@@ -1,0 +1,7 @@
+Created [`analysis_report.md`](/var/folders/j_/dt6mk_nd7tbfpyx2v5z_lv6c0000gn/T/tmp.WIBV1updrO/analysis_report.md) and the PNG plots in [`plots/`](/var/folders/j_/dt6mk_nd7tbfpyx2v5z_lv6c0000gn/T/tmp.WIBV1updrO/plots).
+
+Main conclusion: this is effectively an Anscombe-style dataset. The four batches have nearly identical means, standard deviations, correlations, and fitted slopes, but [`batch_scatter.png`](/var/folders/j_/dt6mk_nd7tbfpyx2v5z_lv6c0000gn/T/tmp.WIBV1updrO/plots/batch_scatter.png) shows very different underlying structures: one roughly linear, one curved, one outlier-driven, and one dominated by a single leverage point. A pooled model still estimates about `0.5` response units per additional mg, but that relationship is not equally trustworthy batch-by-batch.
+
+I also tested whether technician, lab temperature, or weight explained extra variation. [`adjusted_coefficients.png`](/var/folders/j_/dt6mk_nd7tbfpyx2v5z_lv6c0000gn/T/tmp.WIBV1updrO/plots/adjusted_coefficients.png) shows dosage is the only clearly supported predictor after adjustment; the others have wide CIs crossing zero. [`influence_diagnostic.png`](/var/folders/j_/dt6mk_nd7tbfpyx2v5z_lv6c0000gn/T/tmp.WIBV1updrO/plots/influence_diagnostic.png) highlights the influential observations behind the fragile batch-level fits.
+
+For reproducibility, I also added [`run_analysis.py`](/var/folders/j_/dt6mk_nd7tbfpyx2v5z_lv6c0000gn/T/tmp.WIBV1updrO/run_analysis.py), which regenerates the report and plots.

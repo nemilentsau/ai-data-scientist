@@ -1,0 +1,88 @@
+{
+  "dataset": "class_imbalance",
+  "config": "solo-v2",
+  "agent": "claude",
+  "verdict": "solved",
+  "run_status": "completed",
+  "rerun_recommended": false,
+  "run_error_reasons": [],
+  "core_insight_pass": true,
+  "required_coverage": 1.0,
+  "supporting_coverage": 0.6666666666666666,
+  "oracle_attainment": 0.758,
+  "oracle_metric_name": "roc_auc",
+  "oracle_agent_value": 0.879,
+  "fatal_errors": [],
+  "efficiency": {
+    "transcript_chars": 94811.0,
+    "trace_events": 28.0,
+    "report_chars": 10205.0
+  },
+  "criterion_results": [
+    {
+      "criterion_id": "class_imbalance_imbalance_identified",
+      "group": "must_have",
+      "status": "hit",
+      "justification": "The agent clearly identifies the 95/5 class split, noting 150 of 3,000 transactions (5.0%) are fraudulent. They call it 'moderate class imbalance' \u2014 the characterization could be stronger ('extreme'), but the ratio is correctly identified.",
+      "evidence": "Fraud prevalence: 150 of 3,000 transactions (5.0%) are fraudulent \u2014 a moderate class imbalance."
+    },
+    {
+      "criterion_id": "class_imbalance_balanced_metrics_reported",
+      "group": "must_have",
+      "status": "hit",
+      "justification": "The agent reports AUC-ROC, Average Precision (PR-AUC), Precision, and Recall for all three models. These are all minority-sensitive metrics.",
+      "evidence": "Model table with columns: AUC-ROC, Average Precision, Precision (0.5), Recall (0.5) \u2014 e.g., Random Forest: AUC-ROC 0.879, Average Precision 0.520, Precision 0.78, Recall 0.28."
+    },
+    {
+      "criterion_id": "class_imbalance_minority_class_evaluated",
+      "group": "must_have",
+      "status": "hit",
+      "justification": "The entire analysis is centered on fraud detection quality. The agent discusses precision-recall tradeoffs for catching fraud, feature importance for fraud prediction, and practical fraud-flagging rules \u2014 not just overall accuracy.",
+      "evidence": "The precision-recall tradeoff is the practical decision: Logistic Regression \u2026 favors recall (catches 75% of fraud but flags many false positives), while Random Forest favors precision (78% of flagged transactions are truly fraud, but misses 72% of fraud cases)."
+    },
+    {
+      "criterion_id": "class_imbalance_imbalance_strategy_used",
+      "group": "must_have",
+      "status": "hit",
+      "justification": "The agent uses stratified 5-fold cross-validation and applies balanced class weights in the Logistic Regression model \u2014 both standard strategies for addressing class imbalance.",
+      "evidence": "Three models were evaluated using stratified 5-fold cross-validation \u2026 Logistic Regression (with balanced class weights) favors recall."
+    },
+    {
+      "criterion_id": "class_imbalance_baseline_accuracy_trap_noted",
+      "group": "supporting",
+      "status": "miss",
+      "justification": "The agent never explicitly discusses why overall accuracy would be misleading under a 95/5 split. They correctly avoid reporting accuracy, but do not explain the trap (e.g., that a naive classifier predicting all-legitimate would achieve 95% accuracy).",
+      "evidence": "No mention of accuracy as a metric or discussion of why it would be deceptive in this setting."
+    },
+    {
+      "criterion_id": "class_imbalance_confusion_matrix_or_pr_curve",
+      "group": "supporting",
+      "status": "hit",
+      "justification": "The agent includes Precision-Recall curves and ROC curves in their model comparison plot, and reports Average Precision (area under PR curve) numerically.",
+      "evidence": "plots/07_model_comparison.png \u2014 ROC and Precision-Recall curves for three ML models; Average Precision reported for each model."
+    },
+    {
+      "criterion_id": "class_imbalance_stratified_validation",
+      "group": "supporting",
+      "status": "hit",
+      "justification": "The agent explicitly uses stratified cross-validation to preserve class proportions during evaluation.",
+      "evidence": "Three models were evaluated using stratified 5-fold cross-validation."
+    },
+    {
+      "criterion_id": "class_imbalance_accuracy_only_reporting",
+      "group": "forbidden",
+      "status": "miss",
+      "justification": "The agent does not report accuracy at all. All reported metrics are minority-sensitive: AUC-ROC, Average Precision, Precision, and Recall.",
+      "evidence": "Model evaluation table uses AUC-ROC, Average Precision, Precision, and Recall \u2014 accuracy is absent."
+    },
+    {
+      "criterion_id": "class_imbalance_ignores_minority_class",
+      "group": "forbidden",
+      "status": "miss",
+      "justification": "The entire analysis is focused on detecting and characterizing the minority fraud class. Fraud detection quality is the central concern throughout.",
+      "evidence": "All five key findings, the modeling section, and the practical implications section are oriented around fraud (minority class) detection."
+    }
+  ],
+  "summary": "The agent delivers a strong, thorough analysis that correctly identifies the 95/5 class imbalance, reports multiple minority-sensitive metrics (AUC-ROC, Average Precision, Precision, Recall), evaluates fraud detection quality in depth, and applies appropriate imbalance-handling strategies (stratified CV, balanced class weights). It avoids both forbidden pitfalls \u2014 accuracy is never reported as a success metric, and the minority class is the central focus. The only gap is the absence of an explicit explanation of why accuracy alone would be misleading under this class distribution. Overall, this is a solved evaluation: all must-have criteria are met and no forbidden criteria are triggered.",
+  "raw_response": "```json\n{\n  \"must_have\": {\n    \"class_imbalance_imbalance_identified\": {\n      \"status\": \"hit\",\n      \"justification\": \"The agent clearly identifies the 95/5 class split, noting 150 of 3,000 transactions (5.0%) are fraudulent. They call it 'moderate class imbalance' \u2014 the characterization could be stronger ('extreme'), but the ratio is correctly identified.\",\n      \"evidence\": \"Fraud prevalence: 150 of 3,000 transactions (5.0%) are fraudulent \u2014 a moderate class imbalance.\"\n    },\n    \"class_imbalance_balanced_metrics_reported\": {\n      \"status\": \"hit\",\n      \"justification\": \"The agent reports AUC-ROC, Average Precision (PR-AUC), Precision, and Recall for all three models. These are all minority-sensitive metrics.\",\n      \"evidence\": \"Model table with columns: AUC-ROC, Average Precision, Precision (0.5), Recall (0.5) \u2014 e.g., Random Forest: AUC-ROC 0.879, Average Precision 0.520, Precision 0.78, Recall 0.28.\"\n    },\n    \"class_imbalance_minority_class_evaluated\": {\n      \"status\": \"hit\",\n      \"justification\": \"The entire analysis is centered on fraud detection quality. The agent discusses precision-recall tradeoffs for catching fraud, feature importance for fraud prediction, and practical fraud-flagging rules \u2014 not just overall accuracy.\",\n      \"evidence\": \"The precision-recall tradeoff is the practical decision: Logistic Regression \u2026 favors recall (catches 75% of fraud but flags many false positives), while Random Forest favors precision (78% of flagged transactions are truly fraud, but misses 72% of fraud cases).\"\n    },\n    \"class_imbalance_imbalance_strategy_used\": {\n      \"status\": \"hit\",\n      \"justification\": \"The agent uses stratified 5-fold cross-validation and applies balanced class weights in the Logistic Regression model \u2014 both standard strategies for addressing class imbalance.\",\n      \"evidence\": \"Three models were evaluated using stratified 5-fold cross-validation \u2026 Logistic Regression (with balanced class weights) favors recall.\"\n    }\n  },\n  \"supporting\": {\n    \"class_imbalance_baseline_accuracy_trap_noted\": {\n      \"status\": \"miss\",\n      \"justification\": \"The agent never explicitly discusses why overall accuracy would be misleading under a 95/5 split. They correctly avoid reporting accuracy, but do not explain the trap (e.g., that a naive classifier predicting all-legitimate would achieve 95% accuracy).\",\n      \"evidence\": \"No mention of accuracy as a metric or discussion of why it would be deceptive in this setting.\"\n    },\n    \"class_imbalance_confusion_matrix_or_pr_curve\": {\n      \"status\": \"hit\",\n      \"justification\": \"The agent includes Precision-Recall curves and ROC curves in their model comparison plot, and reports Average Precision (area under PR curve) numerically.\",\n      \"evidence\": \"plots/07_model_comparison.png \u2014 ROC and Precision-Recall curves for three ML models; Average Precision reported for each model.\"\n    },\n    \"class_imbalance_stratified_validation\": {\n      \"status\": \"hit\",\n      \"justification\": \"The agent explicitly uses stratified cross-validation to preserve class proportions during evaluation.\",\n      \"evidence\": \"Three models were evaluated using stratified 5-fold cross-validation.\"\n    }\n  },\n  \"forbidden\": {\n    \"class_imbalance_accuracy_only_reporting\": {\n      \"status\": \"miss\",\n      \"justification\": \"The agent does not report accuracy at all. All reported metrics are minority-sensitive: AUC-ROC, Average Precision, Precision, and Recall.\",\n      \"evidence\": \"Model evaluation table uses AUC-ROC, Average Precision, Precision, and Recall \u2014 accuracy is absent.\"\n    },\n    \"class_imbalance_ignores_minority_class\": {\n      \"status\": \"miss\",\n      \"justification\": \"The entire analysis is focused on detecting and characterizing the minority fraud class. Fraud detection quality is the central concern throughout.\",\n      \"evidence\": \"All five key findings, the modeling section, and the practical implications section are oriented around fraud (minority class) detection.\"\n    }\n  },\n  \"oracle_metric\": {\n    \"agent_value\": 0.879,\n    \"justification\": \"The best reported ROC-AUC is 0.879 from the Random Forest model, among three models evaluated (Logistic Regression: 0.872, Random Forest: 0.879, Gradient Boosting: 0.850).\"\n  },\n  \"summary\": \"The agent delivers a strong, thorough analysis that correctly identifies the 95/5 class imbalance, reports multiple minority-sensitive metrics (AUC-ROC, Average Precision, Precision, Recall), evaluates fraud detection quality in depth, and applies appropriate imbalance-handling strategies (stratified CV, balanced class weights). It avoids both forbidden pitfalls \u2014 accuracy is never reported as a success metric, and the minority class is the central focus. The only gap is the absence of an explicit explanation of why accuracy alone would be misleading under this class distribution. Overall, this is a solved evaluation: all must-have criteria are met and no forbidden criteria are triggered.\"\n}"
+}

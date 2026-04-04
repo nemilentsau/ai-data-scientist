@@ -1,0 +1,81 @@
+{
+  "dataset": "overlapping_clusters",
+  "config": "codex-v2",
+  "agent": "codex",
+  "verdict": "failed",
+  "run_status": "completed",
+  "rerun_recommended": false,
+  "run_error_reasons": [],
+  "core_insight_pass": false,
+  "required_coverage": 0.0,
+  "supporting_coverage": 0.0,
+  "oracle_attainment": null,
+  "oracle_metric_name": null,
+  "oracle_agent_value": 0.0,
+  "fatal_errors": [],
+  "efficiency": {
+    "transcript_chars": 59152.0,
+    "trace_events": 38.0,
+    "report_chars": 7509.0
+  },
+  "criterion_results": [
+    {
+      "criterion_id": "overlapping_clusters_ambiguity_noted",
+      "group": "must_have",
+      "status": "miss",
+      "justification": "The agent never performed any clustering analysis. The entire report is a regression/prediction study examining whether workload variables predict GPA. Cluster ambiguity is never mentioned.",
+      "evidence": "The report contains no mention of clusters, clustering algorithms, or cluster overlap. The 'What I did not investigate' section even lists 'heterogeneity by latent student segments or clusters' as an unexplored avenue."
+    },
+    {
+      "criterion_id": "overlapping_clusters_validation_metric_used",
+      "group": "must_have",
+      "status": "miss",
+      "justification": "No silhouette score, gap statistic, or any clustering validation metric was computed. The only metrics reported are Pearson/Spearman correlations, R\u00b2, and ROC AUC \u2014 all regression/classification metrics.",
+      "evidence": "The analysis used OLS R\u00b2, cross-validated R\u00b2, and ROC AUC. No clustering validation metric appears anywhere in the report or session transcript."
+    },
+    {
+      "criterion_id": "overlapping_clusters_uncertainty_reported",
+      "group": "must_have",
+      "status": "miss",
+      "justification": "No clustering was performed, so no uncertainty in cluster assignments was reported. The uncertainty discussion in the report pertains to regression coefficient estimates, not cluster membership.",
+      "evidence": "The 'Limitations' section discusses regression assumptions and omitted variables, not cluster assignment uncertainty."
+    },
+    {
+      "criterion_id": "overlapping_clusters_low_quality_metric_interpreted",
+      "group": "supporting",
+      "status": "miss",
+      "justification": "No clustering quality metric (silhouette, etc.) was computed or interpreted.",
+      "evidence": "No silhouette score or equivalent metric appears in the report."
+    },
+    {
+      "criterion_id": "overlapping_clusters_multiple_k_considered",
+      "group": "supporting",
+      "status": "miss",
+      "justification": "No candidate cluster counts were evaluated. The agent never ran k-means or any clustering algorithm with any value of k.",
+      "evidence": "The session transcript shows only regression and correlation commands; no clustering code was executed."
+    },
+    {
+      "criterion_id": "overlapping_clusters_soft_or_qualitative_alternative",
+      "group": "supporting",
+      "status": "miss",
+      "justification": "The agent did not suggest soft clustering, mixture models, or qualitative segmentation as alternatives. It acknowledged not investigating 'latent student segments or clusters' but did not follow through.",
+      "evidence": "Under 'What I did not investigate': 'heterogeneity by latent student segments or clusters' \u2014 listed as a gap, not a recommendation."
+    },
+    {
+      "criterion_id": "overlapping_clusters_forces_clean_clusters",
+      "group": "forbidden",
+      "status": "miss",
+      "justification": "The agent did not perform clustering, so it did not claim clusters are cleanly separated.",
+      "evidence": "No clustering results or claims about cluster separation appear in the report."
+    },
+    {
+      "criterion_id": "overlapping_clusters_forces_k_three_without_validation",
+      "group": "forbidden",
+      "status": "miss",
+      "justification": "The agent did not force k=3 or any specific cluster count, as no clustering was attempted.",
+      "evidence": "No mention of k=3 or any fixed cluster count in the report."
+    }
+  ],
+  "summary": "The agent produced a thorough and methodologically sound regression analysis but entirely missed the point of the task. The evaluation contract requires clustering analysis \u2014 specifically noting cluster ambiguity, using validation metrics like silhouette scores, and reporting uncertainty in cluster assignments. The agent never ran a single clustering algorithm, never computed a silhouette score or gap statistic, and never discussed cluster overlap or assignment uncertainty. The only tangential acknowledgment is listing 'latent student segments or clusters' under unexplored avenues. Because no must-have criterion is hit or even partially met, the verdict is **failed**.",
+  "raw_response": "```json\n{\n  \"must_have\": {\n    \"overlapping_clusters_ambiguity_noted\": {\n      \"status\": \"miss\",\n      \"justification\": \"The agent never performed any clustering analysis. The entire report is a regression/prediction study examining whether workload variables predict GPA. Cluster ambiguity is never mentioned.\",\n      \"evidence\": \"The report contains no mention of clusters, clustering algorithms, or cluster overlap. The 'What I did not investigate' section even lists 'heterogeneity by latent student segments or clusters' as an unexplored avenue.\"\n    },\n    \"overlapping_clusters_validation_metric_used\": {\n      \"status\": \"miss\",\n      \"justification\": \"No silhouette score, gap statistic, or any clustering validation metric was computed. The only metrics reported are Pearson/Spearman correlations, R\u00b2, and ROC AUC \u2014 all regression/classification metrics.\",\n      \"evidence\": \"The analysis used OLS R\u00b2, cross-validated R\u00b2, and ROC AUC. No clustering validation metric appears anywhere in the report or session transcript.\"\n    },\n    \"overlapping_clusters_uncertainty_reported\": {\n      \"status\": \"miss\",\n      \"justification\": \"No clustering was performed, so no uncertainty in cluster assignments was reported. The uncertainty discussion in the report pertains to regression coefficient estimates, not cluster membership.\",\n      \"evidence\": \"The 'Limitations' section discusses regression assumptions and omitted variables, not cluster assignment uncertainty.\"\n    }\n  },\n  \"supporting\": {\n    \"overlapping_clusters_low_quality_metric_interpreted\": {\n      \"status\": \"miss\",\n      \"justification\": \"No clustering quality metric (silhouette, etc.) was computed or interpreted.\",\n      \"evidence\": \"No silhouette score or equivalent metric appears in the report.\"\n    },\n    \"overlapping_clusters_multiple_k_considered\": {\n      \"status\": \"miss\",\n      \"justification\": \"No candidate cluster counts were evaluated. The agent never ran k-means or any clustering algorithm with any value of k.\",\n      \"evidence\": \"The session transcript shows only regression and correlation commands; no clustering code was executed.\"\n    },\n    \"overlapping_clusters_soft_or_qualitative_alternative\": {\n      \"status\": \"miss\",\n      \"justification\": \"The agent did not suggest soft clustering, mixture models, or qualitative segmentation as alternatives. It acknowledged not investigating 'latent student segments or clusters' but did not follow through.\",\n      \"evidence\": \"Under 'What I did not investigate': 'heterogeneity by latent student segments or clusters' \u2014 listed as a gap, not a recommendation.\"\n    }\n  },\n  \"forbidden\": {\n    \"overlapping_clusters_forces_clean_clusters\": {\n      \"status\": \"miss\",\n      \"justification\": \"The agent did not perform clustering, so it did not claim clusters are cleanly separated.\",\n      \"evidence\": \"No clustering results or claims about cluster separation appear in the report.\"\n    },\n    \"overlapping_clusters_forces_k_three_without_validation\": {\n      \"status\": \"miss\",\n      \"justification\": \"The agent did not force k=3 or any specific cluster count, as no clustering was attempted.\",\n      \"evidence\": \"No mention of k=3 or any fixed cluster count in the report.\"\n    }\n  },\n  \"oracle_metric\": {\n    \"agent_value\": 0.0,\n    \"justification\": \"The agent completely missed the clustering task. It treated the dataset as a regression problem (predicting GPA from workload variables) and never attempted any form of cluster analysis, silhouette evaluation, or cluster-related reasoning. While the regression analysis was competent on its own terms, it is entirely orthogonal to the evaluation contract, which requires clustering with overlap detection.\"\n  },\n  \"summary\": \"The agent produced a thorough and methodologically sound regression analysis but entirely missed the point of the task. The evaluation contract requires clustering analysis \u2014 specifically noting cluster ambiguity, using validation metrics like silhouette scores, and reporting uncertainty in cluster assignments. The agent never ran a single clustering algorithm, never computed a silhouette score or gap statistic, and never discussed cluster overlap or assignment uncertainty. The only tangential acknowledgment is listing 'latent student segments or clusters' under unexplored avenues. Because no must-have criterion is hit or even partially met, the verdict is **failed**.\"\n}\n```"
+}

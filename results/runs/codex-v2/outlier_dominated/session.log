@@ -1,0 +1,9 @@
+dataset=outlier_dominated
+project_root=/Users/andreinemilentsau/Projects/ai-data-scientist
+work_dir=/var/folders/j_/dt6mk_nd7tbfpyx2v5z_lv6c0000gn/T/tmp.kDpQNzQa1w
+codex_home=/var/folders/j_/dt6mk_nd7tbfpyx2v5z_lv6c0000gn/T/tmp.kDpQNzQa1w/.codex-home
+max_turns=30
+tools=
+codex-cli 0.117.0
+
+2026-04-04T02:24:35.031332Z ERROR codex_core::tools::router: error=exec_command failed for `/bin/zsh -lc 'rm -f plots/order_gap_distribution.png && ls -1 plots'`: CreateProcess { message: "Rejected(\"`/bin/zsh -lc 'rm -f plots/order_gap_distribution.png && ls -1 plots'` rejected: blocked by policy\")" }

@@ -1,0 +1,84 @@
+{
+  "dataset": "interaction_effects",
+  "config": "codex-v2",
+  "agent": "codex",
+  "verdict": "wrong",
+  "run_status": "completed",
+  "rerun_recommended": false,
+  "run_error_reasons": [],
+  "core_insight_pass": false,
+  "required_coverage": 0.16666666666666666,
+  "supporting_coverage": 0.5,
+  "oracle_attainment": 0.3919999999999999,
+  "oracle_metric_name": "roc_auc",
+  "oracle_agent_value": 0.696,
+  "fatal_errors": [
+    "Conclude from a purely additive model without checking interactions.",
+    "Explain conversion entirely with separate main effects while missing the interaction."
+  ],
+  "efficiency": {
+    "transcript_chars": 50971.0,
+    "trace_events": 54.0,
+    "report_chars": 8215.0
+  },
+  "criterion_results": [
+    {
+      "criterion_id": "interaction_effects_interaction_tested",
+      "group": "must_have",
+      "status": "partial",
+      "justification": "The agent tested some interaction terms in the transcript (channel_score * page_load_time_sec, channel_score * ad_budget_usd, time_of_day_hour * page_load_time_sec, previous_visits * channel_score) but critically never tested the key channel_score * time_of_day_hour interaction, and never used tree-based models.",
+      "evidence": "Transcript shows formulas like 'converted ~ channel_score * page_load_time_sec + time_of_day_hour' but never 'converted ~ channel_score * time_of_day_hour'."
+    },
+    {
+      "criterion_id": "interaction_effects_main_effects_only_underperforms",
+      "group": "must_have",
+      "status": "miss",
+      "justification": "The agent never compared an additive model against an interaction-aware model for the key variables. The only model comparison was between the 2-variable additive model and the full additive model, both purely main-effects.",
+      "evidence": "Core model (time_of_day_hour + channel_score): mean 5-fold ROC AUC 0.696 vs Full model: mean 5-fold ROC AUC 0.692 \u2014 both additive."
+    },
+    {
+      "criterion_id": "interaction_effects_channel_time_interaction_identified",
+      "group": "must_have",
+      "status": "miss",
+      "justification": "The agent never identified an interaction between channel_score and time_of_day_hour. They explicitly treated the two as independent additive effects throughout the analysis.",
+      "evidence": "Report states: 'timing and traffic quality operate as two roughly comparable levers, and the best-case combination is far better than either lever alone' \u2014 additive combination, not interaction."
+    },
+    {
+      "criterion_id": "interaction_effects_interaction_visualized",
+      "group": "supporting",
+      "status": "partial",
+      "justification": "The agent created a predicted_probability_heatmap.png across channel_score and time_of_day_hour combinations, but it is generated from an additive model, so it shows combined additive effects rather than revealing the true interaction pattern.",
+      "evidence": "predicted_probability_heatmap.png with values: 2:00/0.1=7.4%, 2:00/0.9=26.8%, 23:00/0.1=29.4%, 23:00/0.9=65.6% \u2014 these are additive model predictions, not empirical interaction rates."
+    },
+    {
+      "criterion_id": "interaction_effects_secondary_features_not_overstated",
+      "group": "supporting",
+      "status": "hit",
+      "justification": "The agent correctly concluded that ad_budget_usd, page_load_time_sec, device, and previous_visits add negligible explanatory power beyond the two main signals.",
+      "evidence": "Finding #3: 'The five added variables do not significantly improve fit... likelihood-ratio statistic 2.59 on 5 degrees of freedom, p = 0.763.'"
+    },
+    {
+      "criterion_id": "interaction_effects_non_additive_language",
+      "group": "supporting",
+      "status": "miss",
+      "justification": "The agent never explains that the effect of one variable depends on the value of the other. The language throughout is purely additive \u2014 two separate levers, independent contributions.",
+      "evidence": "Report says 'two roughly comparable levers' and shows additive predicted probabilities without any mention of conditional or synergistic effects."
+    },
+    {
+      "criterion_id": "interaction_effects_main_effects_only_conclusion",
+      "group": "forbidden",
+      "status": "hit",
+      "justification": "The agent's final conclusions and practical recommendations are based entirely on a purely additive logistic regression. While some interactions were tested in the transcript with other variable pairs, the key channel_score * time_of_day_hour interaction was never tested, and the final model and narrative are additive-only.",
+      "evidence": "Final model: 'converted ~ time_of_day_hour + channel_score' (additive). Conclusion: 'Optimize for better channel quality and for late-day high-intent traffic windows' \u2014 framed as separate independent levers."
+    },
+    {
+      "criterion_id": "interaction_effects_misses_interaction_pattern",
+      "group": "forbidden",
+      "status": "hit",
+      "justification": "The agent explains conversion entirely through two separate main effects (channel_score and time_of_day_hour acting independently) and completely misses the A x B interaction that is the key pattern in the dataset.",
+      "evidence": "The entire analysis framework is additive: 'Moving from the 10th to the 90th percentile of channel_score... raises predicted conversion by 29.2 percentage points' and similarly for time_of_day_hour \u2014 both described as independent marginal effects."
+    }
+  ],
+  "summary": "The agent conducted a thorough exploratory analysis and correctly identified channel_score and time_of_day_hour as the two dominant predictors while appropriately dismissing secondary features. However, it fundamentally missed the key pattern in the dataset: the interaction between channel_score and time_of_day_hour. Despite testing four interaction terms with other variable pairs in the transcript, the agent never tested the critical channel_score * time_of_day_hour interaction. The final report and all conclusions are based on a purely additive model, treating the two variables as independent levers. Both forbidden criteria are triggered \u2014 the agent concluded from a main-effects-only model and explained conversion entirely through separate main effects while missing the interaction pattern. This results in a 'wrong' verdict.",
+  "raw_response": "Looking at the agent's analysis report and session transcript carefully to evaluate each criterion.\n\n```json\n{\n  \"must_have\": {\n    \"interaction_effects_interaction_tested\": {\n      \"status\": \"partial\",\n      \"justification\": \"The agent tested some interaction terms in the transcript (channel_score * page_load_time_sec, channel_score * ad_budget_usd, time_of_day_hour * page_load_time_sec, previous_visits * channel_score) but critically never tested the key channel_score * time_of_day_hour interaction, and never used tree-based models.\",\n      \"evidence\": \"Transcript shows formulas like 'converted ~ channel_score * page_load_time_sec + time_of_day_hour' but never 'converted ~ channel_score * time_of_day_hour'.\"\n    },\n    \"interaction_effects_main_effects_only_underperforms\": {\n      \"status\": \"miss\",\n      \"justification\": \"The agent never compared an additive model against an interaction-aware model for the key variables. The only model comparison was between the 2-variable additive model and the full additive model, both purely main-effects.\",\n      \"evidence\": \"Core model (time_of_day_hour + channel_score): mean 5-fold ROC AUC 0.696 vs Full model: mean 5-fold ROC AUC 0.692 \u2014 both additive.\"\n    },\n    \"interaction_effects_channel_time_interaction_identified\": {\n      \"status\": \"miss\",\n      \"justification\": \"The agent never identified an interaction between channel_score and time_of_day_hour. They explicitly treated the two as independent additive effects throughout the analysis.\",\n      \"evidence\": \"Report states: 'timing and traffic quality operate as two roughly comparable levers, and the best-case combination is far better than either lever alone' \u2014 additive combination, not interaction.\"\n    }\n  },\n  \"supporting\": {\n    \"interaction_effects_interaction_visualized\": {\n      \"status\": \"partial\",\n      \"justification\": \"The agent created a predicted_probability_heatmap.png across channel_score and time_of_day_hour combinations, but it is generated from an additive model, so it shows combined additive effects rather than revealing the true interaction pattern.\",\n      \"evidence\": \"predicted_probability_heatmap.png with values: 2:00/0.1=7.4%, 2:00/0.9=26.8%, 23:00/0.1=29.4%, 23:00/0.9=65.6% \u2014 these are additive model predictions, not empirical interaction rates.\"\n    },\n    \"interaction_effects_secondary_features_not_overstated\": {\n      \"status\": \"hit\",\n      \"justification\": \"The agent correctly concluded that ad_budget_usd, page_load_time_sec, device, and previous_visits add negligible explanatory power beyond the two main signals.\",\n      \"evidence\": \"Finding #3: 'The five added variables do not significantly improve fit... likelihood-ratio statistic 2.59 on 5 degrees of freedom, p = 0.763.'\"\n    },\n    \"interaction_effects_non_additive_language\": {\n      \"status\": \"miss\",\n      \"justification\": \"The agent never explains that the effect of one variable depends on the value of the other. The language throughout is purely additive \u2014 two separate levers, independent contributions.\",\n      \"evidence\": \"Report says 'two roughly comparable levers' and shows additive predicted probabilities without any mention of conditional or synergistic effects.\"\n    }\n  },\n  \"forbidden\": {\n    \"interaction_effects_main_effects_only_conclusion\": {\n      \"status\": \"hit\",\n      \"justification\": \"The agent's final conclusions and practical recommendations are based entirely on a purely additive logistic regression. While some interactions were tested in the transcript with other variable pairs, the key channel_score * time_of_day_hour interaction was never tested, and the final model and narrative are additive-only.\",\n      \"evidence\": \"Final model: 'converted ~ time_of_day_hour + channel_score' (additive). Conclusion: 'Optimize for better channel quality and for late-day high-intent traffic windows' \u2014 framed as separate independent levers.\"\n    },\n    \"interaction_effects_misses_interaction_pattern\": {\n      \"status\": \"hit\",\n      \"justification\": \"The agent explains conversion entirely through two separate main effects (channel_score and time_of_day_hour acting independently) and completely misses the A x B interaction that is the key pattern in the dataset.\",\n      \"evidence\": \"The entire analysis framework is additive: 'Moving from the 10th to the 90th percentile of channel_score... raises predicted conversion by 29.2 percentage points' and similarly for time_of_day_hour \u2014 both described as independent marginal effects.\"\n    }\n  },\n  \"oracle_metric\": {\n    \"agent_value\": 0.696,\n    \"justification\": \"Best reported ROC-AUC is 0.696 from the 5-fold cross-validated additive core model (time_of_day_hour + channel_score). No interaction-aware classifier was ever evaluated, so this is the additive-model AUC.\"\n  },\n  \"summary\": \"The agent conducted a thorough exploratory analysis and correctly identified channel_score and time_of_day_hour as the two dominant predictors while appropriately dismissing secondary features. However, it fundamentally missed the key pattern in the dataset: the interaction between channel_score and time_of_day_hour. Despite testing four interaction terms with other variable pairs in the transcript, the agent never tested the critical channel_score * time_of_day_hour interaction. The final report and all conclusions are based on a purely additive model, treating the two variables as independent levers. Both forbidden criteria are triggered \u2014 the agent concluded from a main-effects-only model and explained conversion entirely through separate main effects while missing the interaction pattern. This results in a 'wrong' verdict.\"\n}\n```"
+}

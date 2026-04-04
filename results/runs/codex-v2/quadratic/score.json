@@ -1,0 +1,88 @@
+{
+  "dataset": "quadratic",
+  "config": "codex-v2",
+  "agent": "codex",
+  "verdict": "solved",
+  "run_status": "completed",
+  "rerun_recommended": false,
+  "run_error_reasons": [],
+  "core_insight_pass": true,
+  "required_coverage": 1.0,
+  "supporting_coverage": 1.0,
+  "oracle_attainment": 0.9955,
+  "oracle_metric_name": "r2",
+  "oracle_agent_value": 0.9955,
+  "fatal_errors": [],
+  "efficiency": {
+    "transcript_chars": 55555.0,
+    "trace_events": 46.0,
+    "report_chars": 8519.0
+  },
+  "criterion_results": [
+    {
+      "criterion_id": "quadratic_nonlinearity_detected",
+      "group": "must_have",
+      "status": "hit",
+      "justification": "The agent explicitly detected nonlinearity by comparing linear vs quadratic models and showing the linear model misses curvature. The nested-model F-test (F=4882.5, p=7.7e-288) and large AIC gap (3497.7 vs 2164.2) confirm the detection.",
+      "evidence": "\"explicit model comparison showed that the missing curvature was real and large, not cosmetic\"; F=4882.5, p=7.7e-288"
+    },
+    {
+      "criterion_id": "quadratic_quadratic_relationship_identified",
+      "group": "must_have",
+      "status": "hit",
+      "justification": "The agent identifies the core relationship as quadratic, fitting engine_rpm^2 and interpreting the accelerating derivative across the RPM range.",
+      "evidence": "\"Fuel consumption is driven primarily by a nonlinear RPM curve\"; \"same model plus engine_rpm^2\"; derivative interpretation at 1k/3k/6k RPM"
+    },
+    {
+      "criterion_id": "quadratic_nonlinear_model_fit",
+      "group": "must_have",
+      "status": "hit",
+      "justification": "A quadratic OLS model with I(engine_rpm**2) was fit using statsmodels, achieving R\u00b2=0.9955.",
+      "evidence": "\"Quadratic model R^2 = 0.9955, adjusted R^2 = 0.9954\"; statsmodels formula: 'fuel_consumption_lph ~ engine_rpm + I(engine_rpm**2) + ...'"
+    },
+    {
+      "criterion_id": "quadratic_improvement_over_linear_shown",
+      "group": "must_have",
+      "status": "hit",
+      "justification": "Substantial improvement demonstrated via multiple metrics: CV R\u00b2 jumps from 0.9557 to 0.9952, CV MAE drops from 3.87 to 1.18, AIC drops by ~1333 points, and nested F-test is overwhelmingly significant.",
+      "evidence": "Linear CV R\u00b2=0.9557, MAE=3.87; Quadratic CV R\u00b2=0.9952, MAE=1.18; AIC 3497.7\u21922164.2; F=4882.5, p=7.7e-288"
+    },
+    {
+      "criterion_id": "quadratic_residuals_compared",
+      "group": "supporting",
+      "status": "hit",
+      "justification": "Extensive residual diagnostics performed: Breusch-Pagan test (p=0.612), Jarque-Bera test (p=0.534), residual RMSE reported (1.45 L/h), Q-Q plot and residual scatter plot generated, plus nested ANOVA for model comparison.",
+      "evidence": "\"Breusch-Pagan test for heteroskedasticity: p = 0.612\"; \"Jarque-Bera test for normality: p = 0.534\"; \"plots/quadratic_model_diagnostics.png shows residuals centered around zero\""
+    },
+    {
+      "criterion_id": "quadratic_equation_or_feature_transform",
+      "group": "supporting",
+      "status": "hit",
+      "justification": "The squared feature was created explicitly via I(engine_rpm**2) in the statsmodels formula, and the derivative of the quadratic was interpreted at multiple RPM values.",
+      "evidence": "\"same model plus engine_rpm^2\"; I(engine_rpm**2) in code; derivative at 1000 RPM: ~3.95, 3000 RPM: ~11.99, 6000 RPM: ~24.05 L/h per +1000 RPM"
+    },
+    {
+      "criterion_id": "quadratic_noise_columns_not_overinterpreted",
+      "group": "supporting",
+      "status": "hit",
+      "justification": "The agent systematically tested octane rating, vehicle age, ambient temperature, and humidity, correctly concluding none adds meaningful predictive power beyond RPM. Octane was tested with residualized ANOVA (p=0.656), age interaction was non-significant (p=0.678).",
+      "evidence": "\"octane rating is not an important predictor\"; \"vehicle age contributes little independent information\"; \"fuel octane, ambient temperature, humidity, and vehicle age add little once RPM is known\""
+    },
+    {
+      "criterion_id": "quadratic_linear_only_conclusion",
+      "group": "forbidden",
+      "status": "miss",
+      "justification": "The agent concludes with the quadratic model as the primary recommended specification, explicitly stating the linear model is materially worse.",
+      "evidence": "\"the relationship is nonlinear, so a straight-line approximation is materially worse than a quadratic specification\""
+    },
+    {
+      "criterion_id": "quadratic_no_residual_checks",
+      "group": "forbidden",
+      "status": "miss",
+      "justification": "The agent performed thorough residual diagnostics including Breusch-Pagan, Jarque-Bera, residual plots, and Q-Q plots.",
+      "evidence": "Full \"Model diagnostics and quality checks\" section with multiple statistical tests and diagnostic plots"
+    }
+  ],
+  "summary": "This is an excellent analysis that comprehensively addresses all evaluation criteria. The agent detected the quadratic nonlinearity early, fit an explicit quadratic model with engine_rpm\u00b2, demonstrated substantial improvement over the linear baseline using multiple comparison metrics (CV R\u00b2, MAE, AIC, nested F-test), performed thorough residual diagnostics, and correctly avoided overinterpreting the noise columns. The analysis goes beyond minimum requirements by providing derivative interpretations, testing octane and age effects with proper statistical controls, and including thoughtful limitations. Verdict: solved.",
+  "raw_response": "```json\n{\n  \"must_have\": {\n    \"quadratic_nonlinearity_detected\": {\n      \"status\": \"hit\",\n      \"justification\": \"The agent explicitly detected nonlinearity by comparing linear vs quadratic models and showing the linear model misses curvature. The nested-model F-test (F=4882.5, p=7.7e-288) and large AIC gap (3497.7 vs 2164.2) confirm the detection.\",\n      \"evidence\": \"\\\"explicit model comparison showed that the missing curvature was real and large, not cosmetic\\\"; F=4882.5, p=7.7e-288\"\n    },\n    \"quadratic_quadratic_relationship_identified\": {\n      \"status\": \"hit\",\n      \"justification\": \"The agent identifies the core relationship as quadratic, fitting engine_rpm^2 and interpreting the accelerating derivative across the RPM range.\",\n      \"evidence\": \"\\\"Fuel consumption is driven primarily by a nonlinear RPM curve\\\"; \\\"same model plus engine_rpm^2\\\"; derivative interpretation at 1k/3k/6k RPM\"\n    },\n    \"quadratic_nonlinear_model_fit\": {\n      \"status\": \"hit\",\n      \"justification\": \"A quadratic OLS model with I(engine_rpm**2) was fit using statsmodels, achieving R\u00b2=0.9955.\",\n      \"evidence\": \"\\\"Quadratic model R^2 = 0.9955, adjusted R^2 = 0.9954\\\"; statsmodels formula: 'fuel_consumption_lph ~ engine_rpm + I(engine_rpm**2) + ...'\"\n    },\n    \"quadratic_improvement_over_linear_shown\": {\n      \"status\": \"hit\",\n      \"justification\": \"Substantial improvement demonstrated via multiple metrics: CV R\u00b2 jumps from 0.9557 to 0.9952, CV MAE drops from 3.87 to 1.18, AIC drops by ~1333 points, and nested F-test is overwhelmingly significant.\",\n      \"evidence\": \"Linear CV R\u00b2=0.9557, MAE=3.87; Quadratic CV R\u00b2=0.9952, MAE=1.18; AIC 3497.7\u21922164.2; F=4882.5, p=7.7e-288\"\n    }\n  },\n  \"supporting\": {\n    \"quadratic_residuals_compared\": {\n      \"status\": \"hit\",\n      \"justification\": \"Extensive residual diagnostics performed: Breusch-Pagan test (p=0.612), Jarque-Bera test (p=0.534), residual RMSE reported (1.45 L/h), Q-Q plot and residual scatter plot generated, plus nested ANOVA for model comparison.\",\n      \"evidence\": \"\\\"Breusch-Pagan test for heteroskedasticity: p = 0.612\\\"; \\\"Jarque-Bera test for normality: p = 0.534\\\"; \\\"plots/quadratic_model_diagnostics.png shows residuals centered around zero\\\"\"\n    },\n    \"quadratic_equation_or_feature_transform\": {\n      \"status\": \"hit\",\n      \"justification\": \"The squared feature was created explicitly via I(engine_rpm**2) in the statsmodels formula, and the derivative of the quadratic was interpreted at multiple RPM values.\",\n      \"evidence\": \"\\\"same model plus engine_rpm^2\\\"; I(engine_rpm**2) in code; derivative at 1000 RPM: ~3.95, 3000 RPM: ~11.99, 6000 RPM: ~24.05 L/h per +1000 RPM\"\n    },\n    \"quadratic_noise_columns_not_overinterpreted\": {\n      \"status\": \"hit\",\n      \"justification\": \"The agent systematically tested octane rating, vehicle age, ambient temperature, and humidity, correctly concluding none adds meaningful predictive power beyond RPM. Octane was tested with residualized ANOVA (p=0.656), age interaction was non-significant (p=0.678).\",\n      \"evidence\": \"\\\"octane rating is not an important predictor\\\"; \\\"vehicle age contributes little independent information\\\"; \\\"fuel octane, ambient temperature, humidity, and vehicle age add little once RPM is known\\\"\"\n    }\n  },\n  \"forbidden\": {\n    \"quadratic_linear_only_conclusion\": {\n      \"status\": \"miss\",\n      \"justification\": \"The agent concludes with the quadratic model as the primary recommended specification, explicitly stating the linear model is materially worse.\",\n      \"evidence\": \"\\\"the relationship is nonlinear, so a straight-line approximation is materially worse than a quadratic specification\\\"\"\n    },\n    \"quadratic_no_residual_checks\": {\n      \"status\": \"miss\",\n      \"justification\": \"The agent performed thorough residual diagnostics including Breusch-Pagan, Jarque-Bera, residual plots, and Q-Q plots.\",\n      \"evidence\": \"Full \\\"Model diagnostics and quality checks\\\" section with multiple statistical tests and diagnostic plots\"\n    }\n  },\n  \"oracle_metric\": {\n    \"agent_value\": 0.9955,\n    \"justification\": \"The agent reports R\u00b2=0.9955 for the quadratic OLS model, which is the best nonlinear model R\u00b2 reported in the analysis.\"\n  },\n  \"summary\": \"This is an excellent analysis that comprehensively addresses all evaluation criteria. The agent detected the quadratic nonlinearity early, fit an explicit quadratic model with engine_rpm\u00b2, demonstrated substantial improvement over the linear baseline using multiple comparison metrics (CV R\u00b2, MAE, AIC, nested F-test), performed thorough residual diagnostics, and correctly avoided overinterpreting the noise columns. The analysis goes beyond minimum requirements by providing derivative interpretations, testing octane and age effects with proper statistical controls, and including thoughtful limitations. Verdict: solved.\"\n}\n```"
+}

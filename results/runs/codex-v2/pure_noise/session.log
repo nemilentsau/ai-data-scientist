@@ -1,0 +1,13 @@
+dataset=pure_noise
+project_root=/Users/andreinemilentsau/Projects/ai-data-scientist
+work_dir=/var/folders/j_/dt6mk_nd7tbfpyx2v5z_lv6c0000gn/T/tmp.8CjRh3Lue7
+codex_home=/var/folders/j_/dt6mk_nd7tbfpyx2v5z_lv6c0000gn/T/tmp.8CjRh3Lue7/.codex-home
+max_turns=30
+tools=
+codex-cli 0.117.0
+
+2026-04-03T18:31:33.511377Z ERROR codex_core::tools::router: error=apply_patch verification failed: Failed to find expected lines in /var/folders/j_/dt6mk_nd7tbfpyx2v5z_lv6c0000gn/T/tmp.8CjRh3Lue7/analyze.py:
+        {remote_md}
+        """
+    )
+    (ROOT / "analysis_report.md").write_text(report)

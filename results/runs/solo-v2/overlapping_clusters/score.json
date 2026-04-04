@@ -1,0 +1,81 @@
+{
+  "dataset": "overlapping_clusters",
+  "config": "solo-v2",
+  "agent": "claude",
+  "verdict": "partial",
+  "run_status": "completed",
+  "rerun_recommended": false,
+  "run_error_reasons": [],
+  "core_insight_pass": false,
+  "required_coverage": 0.16666666666666666,
+  "supporting_coverage": 0.0,
+  "oracle_attainment": null,
+  "oracle_metric_name": null,
+  "oracle_agent_value": 0.15,
+  "fatal_errors": [],
+  "efficiency": {
+    "transcript_chars": 97061.0,
+    "trace_events": 27.0,
+    "report_chars": 9688.0
+  },
+  "criterion_results": [
+    {
+      "criterion_id": "overlapping_clusters_ambiguity_noted",
+      "group": "must_have",
+      "status": "partial",
+      "justification": "The agent noted that K-means k=3 produced subgroups with identical GPA distributions (ANOVA F=0.06, p=0.94), which implicitly acknowledges that clusters lack meaningful separation. However, it was not framed as a key finding about cluster ambiguity or overlap \u2014 it was buried as supporting evidence for the null-result regression narrative.",
+      "evidence": "K-means clustering (k=3) finds subgroups with identical GPA distributions (ANOVA F = 0.06, p = 0.94)."
+    },
+    {
+      "criterion_id": "overlapping_clusters_validation_metric_used",
+      "group": "must_have",
+      "status": "miss",
+      "justification": "No silhouette score, gap statistic, or any standard cluster validation metric was computed. The ANOVA on GPA across k-means clusters tests one outcome variable, not cluster cohesion/separation in feature space. This does not qualify as equivalent evidence.",
+      "evidence": "Only metric used on clusters was ANOVA F-test on GPA means. No silhouette, gap statistic, Calinski-Harabasz, or Davies-Bouldin index anywhere in the analysis."
+    },
+    {
+      "criterion_id": "overlapping_clusters_uncertainty_reported",
+      "group": "must_have",
+      "status": "miss",
+      "justification": "The agent never discussed uncertainty in cluster assignments, never cautioned against overconfident hard clustering, and never mentioned that points could belong to multiple clusters. Clustering was treated as a one-off throwaway test rather than the central task.",
+      "evidence": "No discussion of cluster assignment uncertainty, membership probabilities, or hard-clustering limitations appears in the report."
+    },
+    {
+      "criterion_id": "overlapping_clusters_low_quality_metric_interpreted",
+      "group": "supporting",
+      "status": "miss",
+      "justification": "No silhouette-like cluster quality metric was computed, so there was nothing to interpret.",
+      "evidence": "No cluster quality metrics appear in the report or session transcript."
+    },
+    {
+      "criterion_id": "overlapping_clusters_multiple_k_considered",
+      "group": "supporting",
+      "status": "miss",
+      "justification": "Only k=3 was used for K-means. No elbow analysis, no gap statistic sweep, no comparison of k=2,3,4,5 or any other candidates.",
+      "evidence": "K-means clustering (k=3) \u2014 single value used with no justification or comparison."
+    },
+    {
+      "criterion_id": "overlapping_clusters_soft_or_qualitative_alternative",
+      "group": "supporting",
+      "status": "miss",
+      "justification": "No soft clustering method (GMM, fuzzy c-means) was suggested, nor was a qualitative alternative to hard clustering proposed. The agent pivoted entirely to regression analysis instead.",
+      "evidence": "No mention of Gaussian mixture models, probabilistic clustering, or soft segmentation anywhere in the report."
+    },
+    {
+      "criterion_id": "overlapping_clusters_forces_clean_clusters",
+      "group": "forbidden",
+      "status": "miss",
+      "justification": "The agent did not claim clean cluster separation. The k-means result was correctly described as producing subgroups with identical GPA distributions.",
+      "evidence": "K-means clustering (k=3) finds subgroups with identical GPA distributions (ANOVA F = 0.06, p = 0.94)."
+    },
+    {
+      "criterion_id": "overlapping_clusters_forces_k_three_without_validation",
+      "group": "forbidden",
+      "status": "miss",
+      "justification": "While k=3 was used without validation, it was not presented as a strong conclusion about the true number of clusters. It was a brief supporting analysis, not a definitive claim.",
+      "evidence": "The k=3 result was used only to show null results, not asserted as the correct cluster count."
+    }
+  ],
+  "summary": "The agent delivered a rigorous analysis of feature-GPA relationships but almost entirely ignored the clustering task that the evaluation contract centers on. K-means was run once with k=3 as a throwaway check, producing a brief note that clusters had identical GPA distributions \u2014 the closest the report comes to noting cluster ambiguity. No silhouette score, gap statistic, or any cluster validation metric was computed. No multiple k values were compared. No uncertainty in cluster assignments was reported. No soft clustering alternatives were suggested. The agent avoided both forbidden criteria (did not claim clean separation or force k=3 as a strong conclusion), but satisfied at most one must-have criterion partially, yielding a 'partial' verdict under the contract rules.",
+  "raw_response": "```json\n{\n  \"must_have\": {\n    \"overlapping_clusters_ambiguity_noted\": {\n      \"status\": \"partial\",\n      \"justification\": \"The agent noted that K-means k=3 produced subgroups with identical GPA distributions (ANOVA F=0.06, p=0.94), which implicitly acknowledges that clusters lack meaningful separation. However, it was not framed as a key finding about cluster ambiguity or overlap \u2014 it was buried as supporting evidence for the null-result regression narrative.\",\n      \"evidence\": \"K-means clustering (k=3) finds subgroups with identical GPA distributions (ANOVA F = 0.06, p = 0.94).\"\n    },\n    \"overlapping_clusters_validation_metric_used\": {\n      \"status\": \"miss\",\n      \"justification\": \"No silhouette score, gap statistic, or any standard cluster validation metric was computed. The ANOVA on GPA across k-means clusters tests one outcome variable, not cluster cohesion/separation in feature space. This does not qualify as equivalent evidence.\",\n      \"evidence\": \"Only metric used on clusters was ANOVA F-test on GPA means. No silhouette, gap statistic, Calinski-Harabasz, or Davies-Bouldin index anywhere in the analysis.\"\n    },\n    \"overlapping_clusters_uncertainty_reported\": {\n      \"status\": \"miss\",\n      \"justification\": \"The agent never discussed uncertainty in cluster assignments, never cautioned against overconfident hard clustering, and never mentioned that points could belong to multiple clusters. Clustering was treated as a one-off throwaway test rather than the central task.\",\n      \"evidence\": \"No discussion of cluster assignment uncertainty, membership probabilities, or hard-clustering limitations appears in the report.\"\n    }\n  },\n  \"supporting\": {\n    \"overlapping_clusters_low_quality_metric_interpreted\": {\n      \"status\": \"miss\",\n      \"justification\": \"No silhouette-like cluster quality metric was computed, so there was nothing to interpret.\",\n      \"evidence\": \"No cluster quality metrics appear in the report or session transcript.\"\n    },\n    \"overlapping_clusters_multiple_k_considered\": {\n      \"status\": \"miss\",\n      \"justification\": \"Only k=3 was used for K-means. No elbow analysis, no gap statistic sweep, no comparison of k=2,3,4,5 or any other candidates.\",\n      \"evidence\": \"K-means clustering (k=3) \u2014 single value used with no justification or comparison.\"\n    },\n    \"overlapping_clusters_soft_or_qualitative_alternative\": {\n      \"status\": \"miss\",\n      \"justification\": \"No soft clustering method (GMM, fuzzy c-means) was suggested, nor was a qualitative alternative to hard clustering proposed. The agent pivoted entirely to regression analysis instead.\",\n      \"evidence\": \"No mention of Gaussian mixture models, probabilistic clustering, or soft segmentation anywhere in the report.\"\n    }\n  },\n  \"forbidden\": {\n    \"overlapping_clusters_forces_clean_clusters\": {\n      \"status\": \"miss\",\n      \"justification\": \"The agent did not claim clean cluster separation. The k-means result was correctly described as producing subgroups with identical GPA distributions.\",\n      \"evidence\": \"K-means clustering (k=3) finds subgroups with identical GPA distributions (ANOVA F = 0.06, p = 0.94).\"\n    },\n    \"overlapping_clusters_forces_k_three_without_validation\": {\n      \"status\": \"miss\",\n      \"justification\": \"While k=3 was used without validation, it was not presented as a strong conclusion about the true number of clusters. It was a brief supporting analysis, not a definitive claim.\",\n      \"evidence\": \"The k=3 result was used only to show null results, not asserted as the correct cluster count.\"\n    }\n  },\n  \"oracle_metric\": {\n    \"agent_value\": 0.15,\n    \"justification\": \"The agent fundamentally missed the clustering focus of the task. Clustering was treated as a one-line supporting test rather than the central analysis. No cluster validation metrics (silhouette, gap statistic) were computed, no multiple k values were compared, no cluster uncertainty was discussed, and no soft clustering alternatives were considered. The agent produced a thorough regression/correlation analysis, but the evaluation contract is about clustering \u2014 and on that front, the analysis is nearly absent. One must-have criterion is partially met (ambiguity implicitly noted via ANOVA on k-means), but the other two are missed entirely. No forbidden criteria were violated.\"\n  },\n  \"summary\": \"The agent delivered a rigorous analysis of feature-GPA relationships but almost entirely ignored the clustering task that the evaluation contract centers on. K-means was run once with k=3 as a throwaway check, producing a brief note that clusters had identical GPA distributions \u2014 the closest the report comes to noting cluster ambiguity. No silhouette score, gap statistic, or any cluster validation metric was computed. No multiple k values were compared. No uncertainty in cluster assignments was reported. No soft clustering alternatives were suggested. The agent avoided both forbidden criteria (did not claim clean separation or force k=3 as a strong conclusion), but satisfied at most one must-have criterion partially, yielding a 'partial' verdict under the contract rules.\"\n}\n```"
+}
