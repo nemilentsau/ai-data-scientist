@@ -70,9 +70,11 @@ The v2 prompt's hypothesis-driven loop helps when the agent forms the right hypo
 
 **Claude: YES — mechanically and universally.** Every single dataset shows a consistent pattern: generate a plot in Bash, then immediately read the `.png` file back. Claude averaged 9 image reads per dataset (range: 5–14). This is genuine multimodal inspection — Claude sees the pixel content.
 
-**Codex: SYSTEMATICALLY VIOLATED.** Across all 20 datasets, Codex never read image pixel data. At best, 3 datasets had `Image.open` calls that only checked `img.size` and `img.mode` — metadata, not content. In the remaining datasets, zero image-reading commands were issued. Codex often claimed in its narrative to be "inspecting each PNG one by one" without executing any image-reading command. **Codex CLI has no multimodal input capability** — the prompt instruction is structurally impossible for it to follow.
+**Codex: SYSTEMATICALLY VIOLATED.** Across all 20 datasets, Codex never read image pixel data. At best, 3 datasets had `Image.open` calls that only checked `img.size` and `img.mode` — metadata, not content. In the remaining datasets, zero image-reading commands were issued. Codex often claimed in its narrative to be "inspecting each PNG one by one" without executing any image-reading command.
 
-**Impact:** This single difference likely explains much of the Claude-vs-Codex gap. For multimodal, viewing the histogram would reveal three peaks. For heteroscedasticity, the residual plot shows the fan shape. For interaction_effects, the heatmap reveals the non-additive surface. Claude solved all three; Codex missed all three.
+**Root cause: CLI tooling, not model capability.** GPT-5.4 is multimodal and can process images when they are passed as input. However, the Codex CLI does not have a built-in image-aware file read tool. Codex's trace format shows only `command_execution`, `file_change`, and `agent_message` event types — there is no dedicated file-read tool that feeds image pixel data into the model's context the way Claude Code's `Read` tool does. The agent's only file access is through shell commands (`cat`, `sed`, `Image.open` in Python), which return text output, not visual content. This means the visual self-review instruction is impossible to follow through the Codex CLI, even though the underlying model could process the images if they were provided via the API directly.
+
+**Impact:** This tooling gap likely explains much of the Claude-vs-Codex gap on this experiment. For multimodal, viewing the histogram would reveal three peaks. For heteroscedasticity, the residual plot shows the fan shape. For interaction_effects, the heatmap reveals the non-additive surface. Claude solved all three; Codex missed all three. If the benchmark harness were to use the GPT-5.4 API directly with image inputs (bypassing the CLI), Codex's visual review performance would likely improve significantly.
 
 ### Hypothesis-Driven Analysis
 
@@ -172,7 +174,7 @@ The v1 overview diagnosed the same core problems and recommended a multi-agent t
 | V1 Recommendation | V2 Prompt Approximation | Outcome |
 |-------------------|------------------------|---------|
 | Hypothesis Generator | "State a concrete hypothesis" instruction | Partially effective — helps when the right hypothesis is in the agent's prior |
-| Visual Reviewer | "Read the image back" instruction | Effective for Claude (solves 3+ extra datasets), impossible for Codex |
+| Visual Reviewer | "Read the image back" instruction | Effective for Claude (solves 3+ extra datasets), blocked by Codex CLI tooling (model is capable, CLI lacks image-aware read) |
 | Method Critic | "Self-critique before reporting" instruction | Structurally present but does not trigger revision |
 | Claim Verifier | Not addressed in v2 prompt | Still missing — partial runs still stop one step short |
 
@@ -190,13 +192,44 @@ The v2 prompt successfully implemented visual review for Claude but failed to re
 
 1. **Premature task framing.** Both agents still default to regression and do not consider clustering, mixture modeling, or temporal segmentation unless the signal is obvious.
 2. **Self-critique does not trigger revision.** Agents identify gaps in their limitations sections but treat them as acceptable caveats rather than action items.
-3. **Codex cannot do visual review.** The instruction is structurally impossible — Codex CLI has no multimodal input. This makes the v2 prompt effectively a v1 prompt for Codex.
+3. **Codex CLI blocks visual review.** GPT-5.4 is multimodal, but the Codex CLI has no image-aware file read tool — it only exposes shell commands that return text. The model never sees plot pixels. Using the GPT-5.4 API directly with image inputs would bypass this limitation.
 4. **Concept drift remains unsolved.** Neither agent checks relationship stability over time, only marginal stability.
 5. **The hardest datasets are immune to prompt-level fixes.** Multimodal, overlapping_clusters, and concept_drift require the agent to question its default analytical frame — something a prompt instruction alone cannot reliably induce.
 
 ### Recommended next steps
 
-1. **For Codex:** The visual self-review instruction should be replaced with an explicit "generate and interpret diagnostic statistics" checklist, since image reading is unavailable. Alternatively, a preprocessing step could extract numerical summaries from plots.
-2. **For both agents:** The prompt should include explicit "alternative framing" checkpoints — after initial EDA, the agent should be forced to enumerate at least three possible analytical frames (supervised, unsupervised, temporal, distributional) and justify which one it chose.
-3. **For the hardest datasets:** The v1 overview's multi-agent recommendation remains the strongest path. A separate hypothesis-generator agent with a different prior would catch the framing errors that self-critique does not.
-4. **For near-solved partials:** A claim-verification pass focused on proof completeness would convert several partial verdicts to solved (outlier_dominated, lognormal_skew, mnar for Codex).
+1. **For both agents:** Move to a multi-agent team architecture. The v1 overview's five-role team (hypothesis generator, analyst, visual reviewer, method critic, claim verifier) directly addresses every persistent failure mode. A single agent cannot reliably challenge its own framing — the self-critique evidence proves this.
+2. **For Codex visual review:** Either use the GPT-5.4 API directly with image inputs (bypassing the CLI tooling gap), or replace the visual self-review instruction with explicit diagnostic statistics extraction (histogram bin counts, residual variance by decile, silhouette scores).
+3. **For near-solved partials:** A claim-verification pass focused on proof completeness would convert several partial verdicts to solved (outlier_dominated, lognormal_skew, mnar for Codex).
+
+## Multi-Agent Platform Options
+
+The next experiment should test the five-role team architecture. Three platform options were evaluated:
+
+### Claude Code Agent Teams
+
+Claude Code v2.1.32+ supports experimental agent teams where one lead session spawns teammates that communicate via shared mailbox and task list.
+
+**Strengths:** Teammates are full Claude Code instances with image reading — visual reviewer works natively. Inter-agent messaging supports the revision loop (critic → analyst → verifier). Plan approval gates can require the hypothesis generator's framings be approved before the analyst proceeds. Quality gate hooks (`TeammateIdle`, `TaskCompleted`) can enforce proof-completion checks. Lowest amount of orchestration code to write.
+
+**Limitations:** Experimental with known issues (session resumption, task status lag). Designed for interactive use (tmux/split panes) — the benchmark harness runs headlessly across 20 datasets. One team per session, no nested teams.
+
+### Codex CLI Subagents
+
+Codex supports custom subagents defined as TOML files, spawned in parallel with fan-out orchestration.
+
+**Strengths:** Stable and enabled by default. Custom agents with per-role model and reasoning effort settings. `spawn_agents_on_csv` could batch all 20 datasets. Works in headless `codex exec` mode — fits the existing harness.
+
+**Limitations:** GPT-5.4 is multimodal, but the Codex CLI lacks an image-aware file read tool — subagents face the same visual review gap as the single-agent run. Fan-out only (subagents report to parent, no inter-agent messaging) — the sequential pipeline with revision loop does not map naturally. The critic → analyst → revision cycle would require the parent to manually route messages.
+
+### Custom Python Orchestrator (API-direct)
+
+A lightweight Python script that calls the Claude and/or OpenAI APIs directly, implementing the five-role pipeline with explicit handoffs.
+
+**Strengths:** Full control over pipeline topology — can implement the exact sequential flow with conditional revision loops. Can pass images directly to GPT-5.4 via the API, bypassing the Codex CLI tooling gap. Can mix models (Claude for visual review, GPT-5.4 for analysis, or use the same model for all roles). Deterministic and reproducible. Runs as a script — fits the benchmark harness.
+
+**Limitations:** Most code to write and maintain. Must handle API calls, tool execution, and file I/O that the CLI tools currently provide. Would require rethinking the harness architecture.
+
+### Recommendation
+
+Try Claude Code agent teams first on 2-3 hard datasets (`concept_drift`, `multimodal`, `overlapping_clusters`) interactively. This validates whether the team architecture solves the framing problem with zero orchestrator code. If agent teams work but cannot run headlessly, fall back to a lightweight Python orchestrator using API calls directly — not a full framework like LangGraph, just a simple pipeline script with explicit role handoffs. The API-direct approach also unlocks visual review for GPT-5.4 by passing images as multimodal inputs, removing the CLI tooling constraint.

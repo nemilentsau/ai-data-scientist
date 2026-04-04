@@ -3,8 +3,8 @@
     "experiment_id": "exp_20260403_173315_hypothesis-driven-v2-prompt",
     "title": "Hypothesis-driven v2 prompt",
     "source_kind": "legacy_import",
-    "created_at": "2026-04-04T12:05:19Z",
-    "updated_at": "2026-04-04T12:05:19Z",
+    "created_at": "2026-04-04T12:28:38Z",
+    "updated_at": "2026-04-04T12:28:38Z",
     "summary": {
       "num_agent_runs": 40,
       "num_artifacts": 472,

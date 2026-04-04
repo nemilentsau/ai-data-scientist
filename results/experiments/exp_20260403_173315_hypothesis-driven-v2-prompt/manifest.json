@@ -562,7 +562,7 @@
       "config_exp_20260403_173315_hypothesis-driven-v2-prompt_codex-v2",
       "config_exp_20260403_173315_hypothesis-driven-v2-prompt_solo-v2"
     ],
-    "created_at": "2026-04-04T12:05:19Z",
+    "created_at": "2026-04-04T12:28:38Z",
     "description": "Imported legacy benchmark experiment metadata.",
     "evaluation_ids": [
       "evaluation_workflow_case_exp_20260403_173315_hypothesis-driven-v2-prompt_codex-v2_anscombes_quartet_01",
@@ -623,7 +623,7 @@
       }
     },
     "title": "Hypothesis-driven v2 prompt",
-    "updated_at": "2026-04-04T12:05:19Z",
+    "updated_at": "2026-04-04T12:28:38Z",
     "workflow_run_ids": [
       "workflow_case_exp_20260403_173315_hypothesis-driven-v2-prompt_codex-v2_anscombes_quartet_01",
       "workflow_case_exp_20260403_173315_hypothesis-driven-v2-prompt_codex-v2_class_imbalance_01",
@@ -3231,7 +3231,7 @@
       "case_id": null,
       "config_names": [],
       "config_snapshot_id": "config_exp_20260403_173315_hypothesis-driven-v2-prompt_codex-v2",
-      "created_at": "2026-04-04T12:05:11Z",
+      "created_at": "2026-04-04T12:28:30Z",
       "datasets": [],
       "experiment_id": "exp_20260403_173315_hypothesis-driven-v2-prompt",
       "media_type": "text/markdown",
@@ -3239,7 +3239,7 @@
       "related_case_ids": [],
       "role": "synthesis_output",
       "scope": "experiment",
-      "size_bytes": 15632,
+      "size_bytes": 19595,
       "source_kind": "docs_import",
       "summary": "Cross-case synthesis comparing Claude and Codex under the hypothesis-driven v2 prompt, with trace-level analysis of whether prompt instructions changed agent behavior.",
       "title": "V2 Prompt Experiment: Synthesis Overview",
