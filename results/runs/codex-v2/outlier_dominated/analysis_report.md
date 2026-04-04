@@ -1,83 +1,113 @@
 # Analysis Report
 
-## What the dataset is about
+## What this dataset is about
 
-This is an order-level ecommerce-style dataset with 1,200 rows and 8 columns: an order identifier, customer segment, quantity, unit price, shipping charge, discount rate, recorded order total, and a binary return flag.
+This dataset contains 1,200 ecommerce orders and 8 original columns:
 
-The basic structure is clean: there are no nulls, `order_id` is unique for every row, `customer_segment` has three levels (`Returning`: 541, `New`: 480, `VIP`: 179), shipping is coded at four fixed price points (`0`, `4.99`, `9.99`, `14.99`), discounts are coded at five fixed percentages (`0`, `5`, `10`, `15`, `20`), and the overall return rate is 8.8% (105 of 1,200).
+- `order_id`: unique integer identifier.
+- `customer_segment`: `New`, `Returning`, or `VIP`.
+- `items_qty`, `unit_price_usd`, `shipping_usd`, `discount_pct`: transaction attributes.
+- `order_total_usd`: recorded order total.
+- `returned`: binary return flag.
 
-Two features require caution before interpretation:
+Initial orientation findings:
 
-1. `order_total_usd` contains 28 negative values (2.3% of rows), including extreme values down to -19,240.64. Most of those rows are **not** marked as returned (25 of 28), so they do not behave like standard refunds or cancellations.
-2. `order_total_usd` cannot be exactly reconstructed from `items_qty`, `unit_price_usd`, `discount_pct`, and `shipping_usd`. Even after restricting to non-negative totals, the residual spread is large enough to suggest either hidden charges/taxes or synthetic noise. That means spending analyses should be treated as directional rather than accounting-precise.
+- The schema is clean: no nulls in any column.
+- `order_id` is unique in all 1,200 rows.
+- `shipping_usd` is discretized to four values (`0`, `4.99`, `9.99`, `14.99`).
+- `discount_pct` is discretized to five values (`0`, `5`, `10`, `15`, `20`).
+- Returns are imbalanced but not rare: 105 of 1,200 orders were returned (8.75%).
+- The surprising feature is `order_total_usd`, whose range is implausible for the other fields: from `-19,240.64` to `21,438.55`.
 
-Raw rows otherwise look plausible for an order table: quantities range from 1 to 19, unit prices from 5.63 to 199.89, and return is encoded as `0` or `1`.
+The natural basket formula
+
+`items_qty * unit_price_usd * (1 - discount_pct / 100) + shipping_usd`
+
+does not reproduce `order_total_usd` except in 4 rows (within rounding tolerance). That observation drove the rest of the analysis.
 
 ## Key findings
 
-### 1. Negative order totals are a small but material anomaly, not a valid business pattern
+### 1. `order_total_usd` has a material data-integrity problem
 
-**Hypothesis:** The negative totals represent a meaningful business state such as returned orders or refunds.
+Hypothesis: if `order_total_usd` is a valid transaction total, it should track the computed basket total closely and should not be negative when all component fields are nonnegative.
 
-**Test:** Compare negative-total rows with the `returned` flag and visualize all order totals across the full dataset.
+Evidence:
 
-**Result:** The hypothesis is refuted. Only 3 of the 28 negative-total rows are marked as returned. The remaining 25 sit among otherwise ordinary orders and span all three segments. [order_total_anomalies.png](/private/var/folders/j_/dt6mk_nd7tbfpyx2v5z_lv6c0000gn/T/tmp.Z3Ma1YHn9a/plots/order_total_anomalies.png) shows these values as isolated points far below the rest of the data rather than a separate operational regime.
+- 28 of 1,200 orders (2.33%) have negative recorded totals even though `items_qty`, `unit_price_usd`, `shipping_usd`, and `discount_pct` are all nonnegative.
+- The correlation between computed basket total and recorded `order_total_usd` is only `r = 0.279`, far weaker than expected for a true total.
+- The average recorded order total is `$1,093.43`, but if the 28 negative rows are excluded it rises to `$1,370.23`.
+- Total recorded revenue is `$1,312,114.44`; excluding the negative rows raises it to `$1,605,911.70`.
+- The median is less sensitive but still moves from `$764.29` to `$790.98`.
 
-**Interpretation:** These rows are best treated as data anomalies or bookkeeping fields encoded inconsistently with the rest of the table. They are too few to dominate the dataset, but they are large enough to distort any average or model that uses `order_total_usd` naively. For that reason, all spending comparisons below use the 1,172 non-negative rows.
+Figure evidence:
 
-### 2. Customer segment does not explain spending once order composition is known
+- `plots/order_total_vs_computed.png` shows that many orders sit far from the 45-degree line expected under simple basket arithmetic, and the negative-total rows are obvious outliers.
+- `plots/order_gap_adjustments.png` shows the residual `order_total_usd - computed basket total`. While 79.2% of orders fall within `+/-$200`, 60 orders (5.0%) differ by more than `$5,000`, including 39 orders (3.25%) by more than `$10,000`.
 
-**Hypothesis:** VIP or returning customers place systematically larger orders than new customers.
+Interpretation:
 
-**Test:** Compare cleaned order totals across segments, then fit a regression for `log(1 + order_total_usd)` using segment plus quantity, unit price, shipping, and discount.
+`order_total_usd` should not be used as a revenue metric without auditing upstream logic first. The anomalies are large enough to materially bias revenue totals and averages, not just a cosmetic edge case.
 
-**Result:** The segment-only story is weak. On the cleaned subset, median order totals are 758.12 for `New`, 813.93 for `Returning`, and 868.62 for `VIP`, but the overall distributional difference is not statistically significant (Kruskal-Wallis p = 0.292). This overlap is visible in [segment_total_clean_boxplot.png](/private/var/folders/j_/dt6mk_nd7tbfpyx2v5z_lv6c0000gn/T/tmp.Z3Ma1YHn9a/plots/segment_total_clean_boxplot.png).
+### 2. The dataset suggests an unobserved adjustment process layered onto otherwise ordinary baskets
 
-In the regression, `items_qty` and `unit_price_usd` dominate:
+Hypothesis: the mismatch between computed basket totals and recorded totals is not pure random noise; most orders will have small adjustments, but a minority will have extreme extra adjustments.
 
-- `items_qty` coefficient: 0.129 on log-total, p < 0.001
-- `unit_price_usd` coefficient: 0.013 on log-total, p < 0.001
-- `customer_segment_Returning`: -0.044, p = 0.290
-- `customer_segment_VIP`: -0.006, p = 0.917
+Evidence:
 
-The model explains about 71.6% of the variance in log-order-total, and almost all of that explanatory power comes from quantity and unit price rather than segment.
+- The residual distribution is centered slightly above zero: median residual is `$46.83`.
+- 79.2% of orders are within `+/-$200` of the computed basket total.
+- There are no rows in the residual band `-$5,000` to `-$500`, but there are 28 rows below `-$5,000`, 21 rows between `$500` and `$5,000`, and 32 rows above `$5,000`.
+- Extreme residuals are not explained by returns: return rate is 8.77% in non-extreme rows and 8.33% in rows with `|residual| > $1,000`.
 
-**Interpretation:** Apparent segment differences are mostly compositional. VIP customers do not appear to spend more because they are VIP; they spend more only insofar as they buy slightly more items or higher-priced items on a given order.
+Interpretation:
 
-### 3. Returns are only weakly related to the observed order attributes
+The observed pattern is more consistent with a two-part process than with ordinary rounding or tax differences:
 
-**Hypothesis:** Returns can be meaningfully predicted from segment, price, quantity, discount, shipping, and total.
+- Most orders look like plausible basket totals plus a modest positive adjustment.
+- A small tail looks like a separate process entirely, such as a system join error, duplicated external adjustment, sign inversion, or imported non-order ledger entries.
 
-**Test:** Check segment-level differences, compare return rates across price bands, and fit a cross-validated logistic regression.
+I cannot identify the exact mechanism from the available columns, but the residual structure is too systematic to dismiss.
 
-**Result:** The evidence for strong return structure is weak.
+### 3. Return behavior is largely unexplained by the available order fields
 
-- Segment is not associated with return at conventional significance levels (chi-square = 1.037, p = 0.595).
-- The highest unit-price quintile has the highest return rate, but the effect is modest: 11.7% in the top quintile versus 8.0% in the other four combined, with chi-square p = 0.097. This pattern is shown in [return_rate_by_price_quintile.png](/private/var/folders/j_/dt6mk_nd7tbfpyx2v5z_lv6c0000gn/T/tmp.Z3Ma1YHn9a/plots/return_rate_by_price_quintile.png).
-- A logistic regression using all observed fields achieved mean 5-fold ROC AUC of 0.475 (std 0.047), which is effectively no predictive signal.
+Hypothesis: return rates differ meaningfully by customer segment or by the observed transaction variables.
 
-**Interpretation:** Returns in this dataset are close to irreducible given the available columns. There may be some weak tendency for high-priced items to be returned more often, but the dataset does not support operational targeting based on these variables alone.
+Evidence:
 
-### 4. Recorded order totals track discounted subtotal directionally, but not mechanically
+- Segment-level return rates are close: `VIP 10.6%` (19/179), `New 8.8%` (42/480), `Returning 8.1%` (44/541).
+- A chi-square test of `customer_segment` vs `returned` is not significant (`p = 0.595`).
+- Mann-Whitney tests found no significant return/non-return difference in `items_qty`, `unit_price_usd`, `shipping_usd`, `discount_pct`, `order_total_usd`, or computed basket total.
+- A 5-fold cross-validated logistic regression using segment plus all numeric fields achieved `AUC = 0.492`, which is effectively no better than chance.
 
-**Hypothesis:** `order_total_usd` is a near-deterministic function of quantity, unit price, discount, and shipping.
+Figure evidence:
 
-**Test:** Compare the recorded total against a discounted subtotal estimate and fit a simple regression of `order_total_usd` on discounted subtotal plus shipping.
+- `plots/return_rate_by_segment.png` shows overlapping 95% confidence intervals across all three segments.
 
-**Result:** The relationship is monotonic but not tightly accounting-based. The Spearman correlation between discounted subtotal and recorded total is 0.944, but the linear model explains only 13.6% of the variance, and the median markup over discounted subtotal plus shipping is 50.90 USD with a long right tail up to 19,867.89 USD. [total_vs_subtotal_clean.png](/private/var/folders/j_/dt6mk_nd7tbfpyx2v5z_lv6c0000gn/T/tmp.Z3Ma1YHn9a/plots/total_vs_subtotal_clean.png) shows that totals generally rise with subtotal, but many points sit far above the one-to-one line.
+Interpretation:
 
-**Interpretation:** The total field likely includes unobserved components or synthetic perturbation. It is still useful as a rough size metric after excluding negatives, but it should not be treated as a clean accounting target for reconciliation or margin analysis.
+The available transactional fields do not contain meaningful predictive signal for returns. If return prediction is a business goal, important drivers are probably missing, such as product category, fulfillment quality, delivery timing, channel, geography, or customer history beyond the coarse segment label.
 
-## Practical implications
+## What the findings mean
 
-- For spending analysis, exclude the 28 negative-total rows or handle them in a separate anomaly workflow.
-- For customer strategy, segment labels alone are not a strong lever in this data. Order composition matters more than whether a customer is `New`, `Returning`, or `VIP`.
-- For returns, the observed fields are inadequate for accurate prediction. Better signals would likely come from product category, fulfillment problems, customer history, or time-to-delivery, none of which are present here.
+- The main actionable conclusion is data quality, not customer behavior. Revenue reporting based on `order_total_usd` is currently less trustworthy than any segment comparison or return analysis.
+- The basket fields themselves look internally reasonable, so a pragmatic next step would be to rebuild a trustworthy revenue metric from `items_qty`, `unit_price_usd`, `discount_pct`, and `shipping_usd`, then reconcile it against the recorded total.
+- The return signal is weak enough that decision-making should not rely on these columns alone for return-risk scoring.
 
-## Limitations and self-critique
+## Limitations and self-assessment
 
-- The largest limitation is field semantics. I assumed negative totals are data quality issues because they do not align with the return flag, but without documentation they could reflect an undocumented accounting process.
-- I treated the non-negative subset as the best basis for monetary comparisons. If the negative rows are actually legitimate and systematically different, then the cleaned analyses understate that process.
-- The weak return findings may reflect missing predictors rather than true randomness. A low-AUC model here means “little signal in these columns,” not “returns are inherently unpredictable.”
-- I did not test causal claims, because the dataset is observational and lacks time, product, and customer-history fields. All findings are associative.
-- The irregular relationship between `order_total_usd` and the other monetary columns means effect sizes tied to totals should be interpreted cautiously. This is especially important for any downstream forecasting or unit-economics work.
+Alternative explanations I considered:
+
+- Negative totals might represent returns, refunds, or credits rather than bad data. The evidence does not support that strongly: only 3 of the 28 negative-total rows are marked as returned.
+- Segment differences might still exist but be hidden by sample size. That is possible, especially for `VIP` with only 179 orders, but the observed effect sizes are small and the predictive model still fails.
+- `order_total_usd` might include hidden taxes, fees, or bundle adjustments. That could explain the modest positive residuals, but not the extreme `+/-$10k` tail in otherwise ordinary orders.
+
+Assumptions and gaps:
+
+- I treated rows as independent orders because there is no customer identifier or time variable beyond sequential `order_id`.
+- I assumed `order_id` ordering is roughly chronological, but I did not rely on that assumption for the main conclusions.
+- I did not run causal analysis because the dataset is observational and lacks the variables needed to defend causal claims.
+- I did not try complex ML models after the logistic baseline because the statistical tests already indicated that the available features carry very little return signal.
+
+Bottom line:
+
+The strongest conclusion is that `order_total_usd` is not a reliable standalone measure of order value in this dataset. Any substantive business interpretation should start with fixing or replacing that field.

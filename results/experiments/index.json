@@ -3,18 +3,18 @@
     "experiment_id": "exp_20260403_173315_hypothesis-driven-v2-prompt",
     "title": "Hypothesis-driven v2 prompt",
     "source_kind": "legacy_import",
-    "created_at": "2026-04-03T19:14:40Z",
-    "updated_at": "2026-04-03T19:14:40Z",
+    "created_at": "2026-04-04T12:05:19Z",
+    "updated_at": "2026-04-04T12:05:19Z",
     "summary": {
       "num_agent_runs": 40,
-      "num_artifacts": 460,
+      "num_artifacts": 472,
       "num_cases": 40,
       "num_evaluations": 40,
       "num_workflow_runs": 40,
       "verdict_counts": {
         "failed": 1,
-        "partial": 5,
-        "run_error": 1,
+        "partial": 6,
+        "run_error": 0,
         "solved": 26,
         "wrong": 7
       }
