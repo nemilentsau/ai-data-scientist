@@ -20,7 +20,7 @@ workflow:
       role: visual_reviewer
       prompt: prompts/visual-review.md
       model: claude-opus-4-6
-      max_turns: 12
+      max_turns: 30
       tools:
         - Bash
         - Read

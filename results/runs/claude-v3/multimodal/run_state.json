@@ -1,0 +1,13 @@
+{
+  "backend": "claude_cli",
+  "dataset_name": "multimodal",
+  "work_dir": "/var/folders/j_/dt6mk_nd7tbfpyx2v5z_lv6c0000gn/T/tmpd4xo6aaj",
+  "results_dir": "/Users/andreinemilentsau/Projects/ai-data-scientist/results/runs/claude-v3/multimodal",
+  "status": "in_progress",
+  "error": null,
+  "cleaned_up": false,
+  "completed_steps": [],
+  "skipped_steps": [],
+  "matched_inputs": {},
+  "steps": {}
+}
