@@ -1,0 +1,5 @@
+Completed the analysis and wrote the report to [analysis_report.md](/var/folders/j_/dt6mk_nd7tbfpyx2v5z_lv6c0000gn/T/tmp.FUsE5h0B0w/analysis_report.md). The plots are in [plots/](/var/folders/j_/dt6mk_nd7tbfpyx2v5z_lv6c0000gn/T/tmp.FUsE5h0B0w/plots).
+
+Main result: conversion is driven mostly by `time_of_day_hour` and `channel_score`. Later sessions and higher-score sessions convert much more often, while `ad_budget_usd`, `device`, `page_load_time_sec`, and `previous_visits` add little once those two are known. I also validated that with a simpler 2-feature logistic model, which slightly outperformed the fuller model in 5-fold CV.
+
+I used [run_analysis.py](/var/folders/j_/dt6mk_nd7tbfpyx2v5z_lv6c0000gn/T/tmp.FUsE5h0B0w/run_analysis.py) to generate the deliverables, and the report includes a limitations/self-critique section plus references to each saved PNG.

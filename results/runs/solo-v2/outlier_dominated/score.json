@@ -1,0 +1,25 @@
+{
+  "dataset": "outlier_dominated",
+  "config": "solo-v2",
+  "agent": "claude",
+  "verdict": "run_error",
+  "run_status": "run_error",
+  "rerun_recommended": true,
+  "run_error_reasons": [
+    "missing analysis report (analysis_report.md)"
+  ],
+  "core_insight_pass": false,
+  "required_coverage": 0.0,
+  "supporting_coverage": 0.0,
+  "oracle_attainment": null,
+  "oracle_metric_name": null,
+  "oracle_agent_value": null,
+  "fatal_errors": [],
+  "efficiency": {
+    "transcript_chars": 107415.0,
+    "trace_events": 31.0
+  },
+  "criterion_results": [],
+  "summary": "Run did not complete successfully. Missing required output artifacts: missing analysis report (analysis_report.md). This result should be rerun and should not be interpreted as an analytical miss.",
+  "raw_response": ""
+}

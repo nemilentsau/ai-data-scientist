@@ -1,0 +1,95 @@
+{
+  "dataset": "simpsons_paradox",
+  "config": "codex-v2",
+  "agent": "codex",
+  "verdict": "solved",
+  "run_status": "completed",
+  "rerun_recommended": false,
+  "run_error_reasons": [],
+  "core_insight_pass": true,
+  "required_coverage": 1.0,
+  "supporting_coverage": 1.0,
+  "oracle_attainment": null,
+  "oracle_metric_name": null,
+  "oracle_agent_value": 1.0,
+  "fatal_errors": [],
+  "efficiency": {
+    "transcript_chars": 60348.0,
+    "trace_events": 38.0,
+    "report_chars": 7245.0
+  },
+  "criterion_results": [
+    {
+      "criterion_id": "simpsons_paradox_aggregate_effect",
+      "group": "must_have",
+      "status": "hit",
+      "justification": "The agent explicitly computes and reports the aggregate treatment comparison before any stratification.",
+      "evidence": "Mean recovery under A: 66.29 / Mean recovery under B: 68.53"
+    },
+    {
+      "criterion_id": "simpsons_paradox_within_group_effects",
+      "group": "must_have",
+      "status": "hit",
+      "justification": "The agent computes treatment effects within each of the three departments, with p-values.",
+      "evidence": "Cardiology: A - B = +5.10 (p = 2.1e-5); Neurology: A - B = +4.19 (p = 5.4e-12); Orthopedics: A - B = +3.76 (p = 3.7e-5)"
+    },
+    {
+      "criterion_id": "simpsons_paradox_reversal_identified",
+      "group": "must_have",
+      "status": "hit",
+      "justification": "The agent explicitly states that the aggregate trend reverses within every subgroup, noting B looks better overall but A is better in all three departments.",
+      "evidence": "\"the naive conclusion that treatment B is superior is wrong. The data show a Simpson's paradox pattern driven by non-random treatment allocation across departments and severity levels.\""
+    },
+    {
+      "criterion_id": "simpsons_paradox_confounder_identified",
+      "group": "must_have",
+      "status": "hit",
+      "justification": "The agent identifies department as the confounding grouping variable, shows the extreme treatment-department imbalance (chi^2 = 523.9, Cramer's V = 0.661), and explains how group composition drives the aggregate mismatch.",
+      "evidence": "\"treatment assignment is heavily confounded by department and severity levels\" / \"the raw treatment average mixes treatment effect with case mix\""
+    },
+    {
+      "criterion_id": "simpsons_paradox_correct_conclusion",
+      "group": "must_have",
+      "status": "hit",
+      "justification": "The final recommendation is based on the stratified/adjusted analysis, concluding treatment A is superior \u2014 the opposite of what the aggregate trend suggests.",
+      "evidence": "\"treatment A is associated with about 4 more recovery points than B\" / \"Recovery analysis should always adjust for severity, and probably department as well.\""
+    },
+    {
+      "criterion_id": "simpsons_paradox_named_simpsons_paradox",
+      "group": "supporting",
+      "status": "hit",
+      "justification": "The agent explicitly names the phenomenon as Simpson's paradox.",
+      "evidence": "\"The data show a Simpson's paradox pattern\""
+    },
+    {
+      "criterion_id": "simpsons_paradox_effect_sizes_quantified",
+      "group": "supporting",
+      "status": "hit",
+      "justification": "The agent quantifies both aggregate effect sizes (A: 66.29, B: 68.53) and all three within-department effect sizes (+5.10, +4.19, +3.76), plus the adjusted model coefficient (-4.00 with 95% CI).",
+      "evidence": "Aggregate: A=66.29 vs B=68.53; Per-department deltas: +5.10, +4.19, +3.76; Adjusted coefficient: -4.00 [-4.78, -3.23]"
+    },
+    {
+      "criterion_id": "simpsons_paradox_visualized_reversal",
+      "group": "supporting",
+      "status": "hit",
+      "justification": "The agent generated and references a dedicated visualization for the reversal pattern.",
+      "evidence": "References to plots/treatment_recovery_reversal.png and plots/department_treatment_imbalance.png"
+    },
+    {
+      "criterion_id": "simpsons_paradox_aggregate_only_conclusion",
+      "group": "forbidden",
+      "status": "miss",
+      "justification": "The agent explicitly rejects the aggregate-only conclusion, calling it 'misleading' and 'wrong', and bases its final recommendation on stratified results.",
+      "evidence": "\"the naive conclusion that treatment B is superior is wrong\""
+    },
+    {
+      "criterion_id": "simpsons_paradox_ignores_grouping_variable",
+      "group": "forbidden",
+      "status": "miss",
+      "justification": "The agent extensively analyzes the department grouping variable, including treatment imbalance, chi-squared test, and within-department comparisons.",
+      "evidence": "Full crosstab, chi^2 = 523.9, Cramer's V = 0.661, and per-department treatment effect analysis"
+    }
+  ],
+  "summary": "The agent's analysis is exemplary. It systematically computed the aggregate treatment comparison (B appears ~2.2 points better), then stratified by department to reveal that treatment A is actually ~4-5 points better in every subgroup. It correctly identified department as the confounding variable driving the reversal through extreme treatment-assignment imbalance, explicitly named Simpson's paradox, quantified all effect sizes with statistical tests, produced relevant visualizations, and drew the correct practical conclusion favoring treatment A. The report also demonstrates strong analytical judgment by discussing limitations around causal inference and confounding by indication. No forbidden criteria were triggered.",
+  "raw_response": "```json\n{\n  \"must_have\": {\n    \"simpsons_paradox_aggregate_effect\": {\n      \"status\": \"hit\",\n      \"justification\": \"The agent explicitly computes and reports the aggregate treatment comparison before any stratification.\",\n      \"evidence\": \"Mean recovery under A: 66.29 / Mean recovery under B: 68.53\"\n    },\n    \"simpsons_paradox_within_group_effects\": {\n      \"status\": \"hit\",\n      \"justification\": \"The agent computes treatment effects within each of the three departments, with p-values.\",\n      \"evidence\": \"Cardiology: A - B = +5.10 (p = 2.1e-5); Neurology: A - B = +4.19 (p = 5.4e-12); Orthopedics: A - B = +3.76 (p = 3.7e-5)\"\n    },\n    \"simpsons_paradox_reversal_identified\": {\n      \"status\": \"hit\",\n      \"justification\": \"The agent explicitly states that the aggregate trend reverses within every subgroup, noting B looks better overall but A is better in all three departments.\",\n      \"evidence\": \"\\\"the naive conclusion that treatment B is superior is wrong. The data show a Simpson's paradox pattern driven by non-random treatment allocation across departments and severity levels.\\\"\"\n    },\n    \"simpsons_paradox_confounder_identified\": {\n      \"status\": \"hit\",\n      \"justification\": \"The agent identifies department as the confounding grouping variable, shows the extreme treatment-department imbalance (chi^2 = 523.9, Cramer's V = 0.661), and explains how group composition drives the aggregate mismatch.\",\n      \"evidence\": \"\\\"treatment assignment is heavily confounded by department and severity levels\\\" / \\\"the raw treatment average mixes treatment effect with case mix\\\"\"\n    },\n    \"simpsons_paradox_correct_conclusion\": {\n      \"status\": \"hit\",\n      \"justification\": \"The final recommendation is based on the stratified/adjusted analysis, concluding treatment A is superior \u2014 the opposite of what the aggregate trend suggests.\",\n      \"evidence\": \"\\\"treatment A is associated with about 4 more recovery points than B\\\" / \\\"Recovery analysis should always adjust for severity, and probably department as well.\\\"\"\n    }\n  },\n  \"supporting\": {\n    \"simpsons_paradox_named_simpsons_paradox\": {\n      \"status\": \"hit\",\n      \"justification\": \"The agent explicitly names the phenomenon as Simpson's paradox.\",\n      \"evidence\": \"\\\"The data show a Simpson's paradox pattern\\\"\"\n    },\n    \"simpsons_paradox_effect_sizes_quantified\": {\n      \"status\": \"hit\",\n      \"justification\": \"The agent quantifies both aggregate effect sizes (A: 66.29, B: 68.53) and all three within-department effect sizes (+5.10, +4.19, +3.76), plus the adjusted model coefficient (-4.00 with 95% CI).\",\n      \"evidence\": \"Aggregate: A=66.29 vs B=68.53; Per-department deltas: +5.10, +4.19, +3.76; Adjusted coefficient: -4.00 [-4.78, -3.23]\"\n    },\n    \"simpsons_paradox_visualized_reversal\": {\n      \"status\": \"hit\",\n      \"justification\": \"The agent generated and references a dedicated visualization for the reversal pattern.\",\n      \"evidence\": \"References to plots/treatment_recovery_reversal.png and plots/department_treatment_imbalance.png\"\n    }\n  },\n  \"forbidden\": {\n    \"simpsons_paradox_aggregate_only_conclusion\": {\n      \"status\": \"miss\",\n      \"justification\": \"The agent explicitly rejects the aggregate-only conclusion, calling it 'misleading' and 'wrong', and bases its final recommendation on stratified results.\",\n      \"evidence\": \"\\\"the naive conclusion that treatment B is superior is wrong\\\"\"\n    },\n    \"simpsons_paradox_ignores_grouping_variable\": {\n      \"status\": \"miss\",\n      \"justification\": \"The agent extensively analyzes the department grouping variable, including treatment imbalance, chi-squared test, and within-department comparisons.\",\n      \"evidence\": \"Full crosstab, chi^2 = 523.9, Cramer's V = 0.661, and per-department treatment effect analysis\"\n    }\n  },\n  \"oracle_metric\": {\n    \"agent_value\": 1.0,\n    \"justification\": \"All five must-have criteria are hit, all three supporting criteria are hit, and neither forbidden criterion is triggered. The agent correctly identified Simpson's paradox, computed both aggregate and within-group effects, named the confounder, quantified effect sizes, visualized the reversal, and reached the correct practical conclusion. This is a comprehensive, textbook-quality discovery of the key pattern.\"\n  },\n  \"summary\": \"The agent's analysis is exemplary. It systematically computed the aggregate treatment comparison (B appears ~2.2 points better), then stratified by department to reveal that treatment A is actually ~4-5 points better in every subgroup. It correctly identified department as the confounding variable driving the reversal through extreme treatment-assignment imbalance, explicitly named Simpson's paradox, quantified all effect sizes with statistical tests, produced relevant visualizations, and drew the correct practical conclusion favoring treatment A. The report also demonstrates strong analytical judgment by discussing limitations around causal inference and confounding by indication. No forbidden criteria were triggered.\"\n}"
+}

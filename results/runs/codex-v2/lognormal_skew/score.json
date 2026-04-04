@@ -1,0 +1,88 @@
+{
+  "dataset": "lognormal_skew",
+  "config": "codex-v2",
+  "agent": "codex",
+  "verdict": "partial",
+  "run_status": "completed",
+  "rerun_recommended": false,
+  "run_error_reasons": [],
+  "core_insight_pass": true,
+  "required_coverage": 0.875,
+  "supporting_coverage": 1.0,
+  "oracle_attainment": 0.513,
+  "oracle_metric_name": "r2",
+  "oracle_agent_value": 0.513,
+  "fatal_errors": [],
+  "efficiency": {
+    "transcript_chars": 77471.0,
+    "trace_events": 33.0,
+    "report_chars": 7317.0
+  },
+  "criterion_results": [
+    {
+      "criterion_id": "lognormal_skew_right_skew_detected",
+      "group": "must_have",
+      "status": "hit",
+      "justification": "The agent explicitly computed skewness (3.22) and prominently noted the heavy right skew in the report overview.",
+      "evidence": "funding_amount_usd is highly right-skewed (median $118,934, mean $168,083, max $1,633,984; see plots/01_funding_distribution.png)"
+    },
+    {
+      "criterion_id": "lognormal_skew_lognormal_structure_identified",
+      "group": "must_have",
+      "status": "hit",
+      "justification": "The agent identified that the target is best modeled on the log scale, using log(funding_amount_usd) throughout all inferential work and noting patterns are 'approximately linear on the log scale.'",
+      "evidence": "Because of the skew, most inferential work below uses log(funding_amount_usd) rather than raw dollars."
+    },
+    {
+      "criterion_id": "lognormal_skew_target_transformed",
+      "group": "must_have",
+      "status": "hit",
+      "justification": "The agent applied np.log to the funding target and fit OLS on log_funding for all models.",
+      "evidence": "df['log_funding']=np.log(df['funding_amount_usd']); formula='log_funding ~ C(round_type) + C(sector) + employees + years_since_founding + revenue_growth_pct + num_investors'"
+    },
+    {
+      "criterion_id": "lognormal_skew_post_transform_improvement_shown",
+      "group": "must_have",
+      "status": "partial",
+      "justification": "The agent shows acceptable residual diagnostics after transformation (Q-Q plot, no residual structure) and reports R\u00b2=0.513, but never explicitly compares to an untransformed model to demonstrate improvement. The word 'improved' implies a before/after comparison that is absent.",
+      "evidence": "Diagnostics are acceptable for a simple linear model after log-transforming the target: residuals show no major structure and the Q-Q plot is reasonably straight (plots/05_model_diagnostics.png)."
+    },
+    {
+      "criterion_id": "lognormal_skew_distribution_plot_used",
+      "group": "supporting",
+      "status": "hit",
+      "justification": "The agent created and referenced both a target distribution plot and residual diagnostics plot to justify the transform.",
+      "evidence": "plots/01_funding_distribution.png for the skew; plots/05_model_diagnostics.png for residual diagnostics"
+    },
+    {
+      "criterion_id": "lognormal_skew_back_transform_interpreted",
+      "group": "supporting",
+      "status": "hit",
+      "justification": "The agent correctly interpreted log-scale coefficients back to percentage changes in dollar terms.",
+      "evidence": "each additional year since founding is associated with about 10.4% more funding; Every additional 100 employees is associated with about 32.0% more funding; Series_C coefficient 0.167 log points... about 18.2% higher funding"
+    },
+    {
+      "criterion_id": "lognormal_skew_normal_target_assumption_rejected",
+      "group": "supporting",
+      "status": "hit",
+      "justification": "The agent explicitly identified the skew (3.22) and used it as the reason to reject raw-scale modeling in favor of log transformation.",
+      "evidence": "Because of the skew, most inferential work below uses log(funding_amount_usd) rather than raw dollars."
+    },
+    {
+      "criterion_id": "lognormal_skew_assumes_raw_normality",
+      "group": "forbidden",
+      "status": "miss",
+      "justification": "The agent explicitly checked skew, found it to be 3.22, and switched to log-scale modeling. No assumption of raw normality was made.",
+      "evidence": "funding_amount_usd 3.2207578553915606 [skew computed]; Because of the skew, most inferential work below uses log(funding_amount_usd)"
+    },
+    {
+      "criterion_id": "lognormal_skew_skips_transform_despite_skew",
+      "group": "forbidden",
+      "status": "miss",
+      "justification": "The agent applied log transformation immediately upon detecting skew and used it consistently throughout all modeling.",
+      "evidence": "All OLS models use log_funding as the dependent variable."
+    }
+  ],
+  "summary": "The agent performed a strong analysis that correctly identified the heavy right skew in funding_amount_usd, applied a log transformation, and built well-interpreted regression models. The key gap is the lack of an explicit before/after comparison showing that the log transform improved model fit or residual behavior \u2014 the agent shows post-transform diagnostics are acceptable but never demonstrates how the untransformed model performed worse. All supporting criteria were met (distribution plots, back-transformation interpretation, explicit rejection of normality), and no forbidden criteria were triggered. The analysis is substantively sound but falls just short of fully demonstrating the improvement from transformation.",
+  "raw_response": "```json\n{\n  \"must_have\": {\n    \"lognormal_skew_right_skew_detected\": {\n      \"status\": \"hit\",\n      \"justification\": \"The agent explicitly computed skewness (3.22) and prominently noted the heavy right skew in the report overview.\",\n      \"evidence\": \"funding_amount_usd is highly right-skewed (median $118,934, mean $168,083, max $1,633,984; see plots/01_funding_distribution.png)\"\n    },\n    \"lognormal_skew_lognormal_structure_identified\": {\n      \"status\": \"hit\",\n      \"justification\": \"The agent identified that the target is best modeled on the log scale, using log(funding_amount_usd) throughout all inferential work and noting patterns are 'approximately linear on the log scale.'\",\n      \"evidence\": \"Because of the skew, most inferential work below uses log(funding_amount_usd) rather than raw dollars.\"\n    },\n    \"lognormal_skew_target_transformed\": {\n      \"status\": \"hit\",\n      \"justification\": \"The agent applied np.log to the funding target and fit OLS on log_funding for all models.\",\n      \"evidence\": \"df['log_funding']=np.log(df['funding_amount_usd']); formula='log_funding ~ C(round_type) + C(sector) + employees + years_since_founding + revenue_growth_pct + num_investors'\"\n    },\n    \"lognormal_skew_post_transform_improvement_shown\": {\n      \"status\": \"partial\",\n      \"justification\": \"The agent shows acceptable residual diagnostics after transformation (Q-Q plot, no residual structure) and reports R\u00b2=0.513, but never explicitly compares to an untransformed model to demonstrate improvement. The word 'improved' implies a before/after comparison that is absent.\",\n      \"evidence\": \"Diagnostics are acceptable for a simple linear model after log-transforming the target: residuals show no major structure and the Q-Q plot is reasonably straight (plots/05_model_diagnostics.png).\"\n    }\n  },\n  \"supporting\": {\n    \"lognormal_skew_distribution_plot_used\": {\n      \"status\": \"hit\",\n      \"justification\": \"The agent created and referenced both a target distribution plot and residual diagnostics plot to justify the transform.\",\n      \"evidence\": \"plots/01_funding_distribution.png for the skew; plots/05_model_diagnostics.png for residual diagnostics\"\n    },\n    \"lognormal_skew_back_transform_interpreted\": {\n      \"status\": \"hit\",\n      \"justification\": \"The agent correctly interpreted log-scale coefficients back to percentage changes in dollar terms.\",\n      \"evidence\": \"each additional year since founding is associated with about 10.4% more funding; Every additional 100 employees is associated with about 32.0% more funding; Series_C coefficient 0.167 log points... about 18.2% higher funding\"\n    },\n    \"lognormal_skew_normal_target_assumption_rejected\": {\n      \"status\": \"hit\",\n      \"justification\": \"The agent explicitly identified the skew (3.22) and used it as the reason to reject raw-scale modeling in favor of log transformation.\",\n      \"evidence\": \"Because of the skew, most inferential work below uses log(funding_amount_usd) rather than raw dollars.\"\n    }\n  },\n  \"forbidden\": {\n    \"lognormal_skew_assumes_raw_normality\": {\n      \"status\": \"miss\",\n      \"justification\": \"The agent explicitly checked skew, found it to be 3.22, and switched to log-scale modeling. No assumption of raw normality was made.\",\n      \"evidence\": \"funding_amount_usd 3.2207578553915606 [skew computed]; Because of the skew, most inferential work below uses log(funding_amount_usd)\"\n    },\n    \"lognormal_skew_skips_transform_despite_skew\": {\n      \"status\": \"miss\",\n      \"justification\": \"The agent applied log transformation immediately upon detecting skew and used it consistently throughout all modeling.\",\n      \"evidence\": \"All OLS models use log_funding as the dependent variable.\"\n    }\n  },\n  \"oracle_metric\": {\n    \"agent_value\": 0.513,\n    \"justification\": \"The agent reports R\u00b2=0.513 (adjusted 0.505) for the full OLS model on log(funding_amount_usd). The 5-fold CV R\u00b2 is 0.488. The best reported R\u00b2 after transformation is 0.513.\"\n  },\n  \"summary\": \"The agent performed a strong analysis that correctly identified the heavy right skew in funding_amount_usd, applied a log transformation, and built well-interpreted regression models. The key gap is the lack of an explicit before/after comparison showing that the log transform improved model fit or residual behavior \u2014 the agent shows post-transform diagnostics are acceptable but never demonstrates how the untransformed model performed worse. All supporting criteria were met (distribution plots, back-transformation interpretation, explicit rejection of normality), and no forbidden criteria were triggered. The analysis is substantively sound but falls just short of fully demonstrating the improvement from transformation.\"\n}\n```"
+}

@@ -1,0 +1,90 @@
+{
+  "dataset": "concept_drift",
+  "config": "codex-v2",
+  "agent": "codex",
+  "verdict": "wrong",
+  "run_status": "completed",
+  "rerun_recommended": false,
+  "run_error_reasons": [],
+  "core_insight_pass": false,
+  "required_coverage": 0.125,
+  "supporting_coverage": 0.0,
+  "oracle_attainment": null,
+  "oracle_metric_name": null,
+  "oracle_agent_value": 0.0,
+  "fatal_errors": [
+    "Fit a single pooled model without checking for drift."
+  ],
+  "efficiency": {
+    "transcript_chars": 46527.0,
+    "trace_events": 51.0,
+    "report_chars": 8314.0
+  },
+  "criterion_results": [
+    {
+      "criterion_id": "concept_drift_temporal_order_respected",
+      "group": "must_have",
+      "status": "partial",
+      "justification": "The agent parsed timestamps, computed daily means, tested a linear time trend, and plotted a 24-hour rolling mean \u2014 so temporal order was not destroyed. However, the cross-validation models (Ridge, RF, Logistic) almost certainly shuffled observations across time, pooling pre- and post-shift data in folds without temporal splits.",
+      "evidence": "\"Using 5-fold cross-validation with process variables, operator, hour-of-day, and day-of-week\" \u2014 standard k-fold shuffles across time."
+    },
+    {
+      "criterion_id": "concept_drift_drift_detected",
+      "group": "must_have",
+      "status": "miss",
+      "justification": "The agent explicitly concluded there is NO drift, directly contradicting the ground truth of an abrupt distribution shift at the midpoint. They only tested for a monotonic linear trend (slope \u2248 0, p = 0.847) and never tested for an abrupt shift or changepoint.",
+      "evidence": "\"There is no meaningful time drift and no credible operator effect\u2026 Trend p-value is 0.847, so there is no evidence of a monotonic trend.\""
+    },
+    {
+      "criterion_id": "concept_drift_pre_post_segments_compared",
+      "group": "must_have",
+      "status": "miss",
+      "justification": "The agent never split the data at the midpoint or any other point. No comparison of first-half vs. second-half distributions, correlations, or model performance was performed.",
+      "evidence": "No segment-based analysis appears anywhere in the report or transcript."
+    },
+    {
+      "criterion_id": "concept_drift_single_global_model_problem_noted",
+      "group": "must_have",
+      "status": "miss",
+      "justification": "The agent noted that global models perform terribly (R\u00b2 \u2248 0, AUC \u2248 0.5) but attributed this entirely to missing variables, not to concept drift making a pooled model fundamentally inappropriate.",
+      "evidence": "\"The missing drivers are likely unmeasured process conditions, material properties, maintenance states, measurement noise, or the dataset may be partially synthetic/noise-dominated.\""
+    },
+    {
+      "criterion_id": "concept_drift_relationship_flip_described",
+      "group": "supporting",
+      "status": "miss",
+      "justification": "The agent only computed global correlations and never examined whether the sign of the temperature\u2013defect relationship reverses across time segments.",
+      "evidence": "Global Spearman rho for temperature_c is 0.039 \u2014 reported as a single pooled number with no temporal decomposition."
+    },
+    {
+      "criterion_id": "concept_drift_changepoint_or_rolling_diagnostic",
+      "group": "supporting",
+      "status": "miss",
+      "justification": "The agent used a 24-hour rolling mean for visual smoothing but never applied a changepoint test (e.g., PELT, CUSUM, Chow test) or rolling-window correlation diagnostic. They explicitly acknowledged this gap in their limitations.",
+      "evidence": "\"What I did not investigate deeply: \u2026 Regime-switching or changepoint models.\""
+    },
+    {
+      "criterion_id": "concept_drift_adaptation_strategy_suggested",
+      "group": "supporting",
+      "status": "miss",
+      "justification": "Because drift was never detected, no drift-aware strategy (retraining, segmentation, monitoring) was suggested. Recommendations focused on collecting more variables.",
+      "evidence": "\"Useful next variables would include material lot, machine ID, maintenance events\u2026\""
+    },
+    {
+      "criterion_id": "concept_drift_single_model_without_drift_check",
+      "group": "forbidden",
+      "status": "hit",
+      "justification": "The agent fit OLS, Ridge, Random Forest, and Logistic models on the full pooled dataset. Their only temporal check was a linear trend test (which cannot detect an abrupt relationship shift) and a rolling mean plot. They explicitly acknowledged skipping changepoint/regime-switching analysis. This does not constitute a meaningful drift check for the type of shift present.",
+      "evidence": "\"Using 5-fold cross-validation\" on full data; OLS on all 1500 rows; \"Regime-switching or changepoint models\" listed under 'What I did not investigate deeply'."
+    },
+    {
+      "criterion_id": "concept_drift_ignores_time_order",
+      "group": "forbidden",
+      "status": "miss",
+      "justification": "The agent did incorporate temporal ordering in parts of the analysis \u2014 time trend regression, daily aggregates, rolling mean plot, lag correlation checks. Time order was not completely ignored or destroyed in the main analysis.",
+      "evidence": "\"Linear time trend slope is -0.00011 defect-rate units per day\"; daily means computed; 24-hour rolling mean plotted."
+    }
+  ],
+  "summary": "The agent performed a competent but fatally misdirected analysis. It thoroughly profiled distributions, tested operator effects, and built multiple models \u2014 all on the full pooled dataset. However, it never tested for an abrupt distributional shift, never split the data into pre/post segments, and explicitly concluded there was no drift when the dataset's defining feature is a concept drift at the midpoint. The linear trend test used is structurally unable to detect an abrupt relationship flip. The agent even acknowledged in its limitations that it skipped changepoint and regime-switching analysis \u2014 the exact techniques needed. Because a forbidden criterion is triggered (fitting pooled models without a real drift check) and no must-have criteria are met, the verdict is 'wrong'.",
+  "raw_response": "```json\n{\n  \"must_have\": {\n    \"concept_drift_temporal_order_respected\": {\n      \"status\": \"partial\",\n      \"justification\": \"The agent parsed timestamps, computed daily means, tested a linear time trend, and plotted a 24-hour rolling mean \u2014 so temporal order was not destroyed. However, the cross-validation models (Ridge, RF, Logistic) almost certainly shuffled observations across time, pooling pre- and post-shift data in folds without temporal splits.\",\n      \"evidence\": \"\\\"Using 5-fold cross-validation with process variables, operator, hour-of-day, and day-of-week\\\" \u2014 standard k-fold shuffles across time.\"\n    },\n    \"concept_drift_drift_detected\": {\n      \"status\": \"miss\",\n      \"justification\": \"The agent explicitly concluded there is NO drift, directly contradicting the ground truth of an abrupt distribution shift at the midpoint. They only tested for a monotonic linear trend (slope \u2248 0, p = 0.847) and never tested for an abrupt shift or changepoint.\",\n      \"evidence\": \"\\\"There is no meaningful time drift and no credible operator effect\u2026 Trend p-value is 0.847, so there is no evidence of a monotonic trend.\\\"\"\n    },\n    \"concept_drift_pre_post_segments_compared\": {\n      \"status\": \"miss\",\n      \"justification\": \"The agent never split the data at the midpoint or any other point. No comparison of first-half vs. second-half distributions, correlations, or model performance was performed.\",\n      \"evidence\": \"No segment-based analysis appears anywhere in the report or transcript.\"\n    },\n    \"concept_drift_single_global_model_problem_noted\": {\n      \"status\": \"miss\",\n      \"justification\": \"The agent noted that global models perform terribly (R\u00b2 \u2248 0, AUC \u2248 0.5) but attributed this entirely to missing variables, not to concept drift making a pooled model fundamentally inappropriate.\",\n      \"evidence\": \"\\\"The missing drivers are likely unmeasured process conditions, material properties, maintenance states, measurement noise, or the dataset may be partially synthetic/noise-dominated.\\\"\"\n    }\n  },\n  \"supporting\": {\n    \"concept_drift_relationship_flip_described\": {\n      \"status\": \"miss\",\n      \"justification\": \"The agent only computed global correlations and never examined whether the sign of the temperature\u2013defect relationship reverses across time segments.\",\n      \"evidence\": \"Global Spearman rho for temperature_c is 0.039 \u2014 reported as a single pooled number with no temporal decomposition.\"\n    },\n    \"concept_drift_changepoint_or_rolling_diagnostic\": {\n      \"status\": \"miss\",\n      \"justification\": \"The agent used a 24-hour rolling mean for visual smoothing but never applied a changepoint test (e.g., PELT, CUSUM, Chow test) or rolling-window correlation diagnostic. They explicitly acknowledged this gap in their limitations.\",\n      \"evidence\": \"\\\"What I did not investigate deeply: \u2026 Regime-switching or changepoint models.\\\"\"\n    },\n    \"concept_drift_adaptation_strategy_suggested\": {\n      \"status\": \"miss\",\n      \"justification\": \"Because drift was never detected, no drift-aware strategy (retraining, segmentation, monitoring) was suggested. Recommendations focused on collecting more variables.\",\n      \"evidence\": \"\\\"Useful next variables would include material lot, machine ID, maintenance events\u2026\\\"\"\n    }\n  },\n  \"forbidden\": {\n    \"concept_drift_single_model_without_drift_check\": {\n      \"status\": \"hit\",\n      \"justification\": \"The agent fit OLS, Ridge, Random Forest, and Logistic models on the full pooled dataset. Their only temporal check was a linear trend test (which cannot detect an abrupt relationship shift) and a rolling mean plot. They explicitly acknowledged skipping changepoint/regime-switching analysis. This does not constitute a meaningful drift check for the type of shift present.\",\n      \"evidence\": \"\\\"Using 5-fold cross-validation\\\" on full data; OLS on all 1500 rows; \\\"Regime-switching or changepoint models\\\" listed under 'What I did not investigate deeply'.\"\n    },\n    \"concept_drift_ignores_time_order\": {\n      \"status\": \"miss\",\n      \"justification\": \"The agent did incorporate temporal ordering in parts of the analysis \u2014 time trend regression, daily aggregates, rolling mean plot, lag correlation checks. Time order was not completely ignored or destroyed in the main analysis.\",\n      \"evidence\": \"\\\"Linear time trend slope is -0.00011 defect-rate units per day\\\"; daily means computed; 24-hour rolling mean plotted.\"\n    }\n  },\n  \"oracle_metric\": {\n    \"agent_value\": 0.0,\n    \"justification\": \"The agent completely missed the core pattern \u2014 an abrupt concept drift at the midpoint \u2014 and actively concluded the opposite ('no meaningful time drift'). A forbidden criterion is hit (single pooled model without proper drift check). Zero must-have criteria are fully met. The verdict is 'wrong'.\"\n  },\n  \"summary\": \"The agent performed a competent but fatally misdirected analysis. It thoroughly profiled distributions, tested operator effects, and built multiple models \u2014 all on the full pooled dataset. However, it never tested for an abrupt distributional shift, never split the data into pre/post segments, and explicitly concluded there was no drift when the dataset's defining feature is a concept drift at the midpoint. The linear trend test used is structurally unable to detect an abrupt relationship flip. The agent even acknowledged in its limitations that it skipped changepoint and regime-switching analysis \u2014 the exact techniques needed. Because a forbidden criterion is triggered (fitting pooled models without a real drift check) and no must-have criteria are met, the verdict is 'wrong'.\"\n}\n```"
+}

@@ -1,0 +1,88 @@
+{
+  "dataset": "high_dim_sparse",
+  "config": "codex-v2",
+  "agent": "codex",
+  "verdict": "solved",
+  "run_status": "completed",
+  "rerun_recommended": false,
+  "run_error_reasons": [],
+  "core_insight_pass": true,
+  "required_coverage": 1.0,
+  "supporting_coverage": 1.0,
+  "oracle_attainment": 0.8,
+  "oracle_metric_name": "roc_auc",
+  "oracle_agent_value": 0.9,
+  "fatal_errors": [],
+  "efficiency": {
+    "transcript_chars": 46908.0,
+    "trace_events": 41.0,
+    "report_chars": 7390.0
+  },
+  "criterion_results": [
+    {
+      "criterion_id": "high_dim_sparse_feature_selection_used",
+      "group": "must_have",
+      "status": "hit",
+      "justification": "The agent performed univariate feature selection via point-biserial correlations with Benjamini-Hochberg FDR correction, then compared a top-3-gene model against a full 100-gene model using cross-validated logistic regression.",
+      "evidence": "Only 3 of 100 genes survive Benjamini-Hochberg correction at 5%, and those are exactly the three genes above."
+    },
+    {
+      "criterion_id": "high_dim_sparse_small_signal_set_identified",
+      "group": "must_have",
+      "status": "hit",
+      "justification": "The agent explicitly identifies that only 3 out of 100 genes carry predictive signal and that the rest are noise.",
+      "evidence": "The outcome signal is concentrated in three genes, not spread across the whole feature set"
+    },
+    {
+      "criterion_id": "high_dim_sparse_true_genes_recovered",
+      "group": "must_have",
+      "status": "hit",
+      "justification": "The agent recovers exactly gene_000, gene_001, and gene_002 as the three informative features, matching the ground truth perfectly.",
+      "evidence": "gene_001: point-biserial correlation -0.452 ... gene_000: point-biserial correlation 0.407 ... gene_002: point-biserial correlation 0.244"
+    },
+    {
+      "criterion_id": "high_dim_sparse_reduced_model_benefit_shown",
+      "group": "must_have",
+      "status": "hit",
+      "justification": "The agent demonstrates that the 3-gene model (AUC 0.900) outperforms the full 100-gene model (AUC 0.853) by 0.048 AUC using 5-fold cross-validation.",
+      "evidence": "Top 3 genes + demographics: ROC AUC 0.900 ... All 100 genes + demographics: ROC AUC 0.853 ... the top-3-gene model outperforms the full 100-gene model by about 0.048 AUC"
+    },
+    {
+      "criterion_id": "high_dim_sparse_overfitting_risk_noted",
+      "group": "supporting",
+      "status": "hit",
+      "justification": "The agent explains that extra genes add variance faster than signal and that high-dimensional modeling does not help here.",
+      "evidence": "the extra genes add variance faster than they add signal ... this is not a case where high-dimensional modeling or broad feature inclusion helps"
+    },
+    {
+      "criterion_id": "high_dim_sparse_sparse_method_named",
+      "group": "supporting",
+      "status": "hit",
+      "justification": "The agent uses feature ranking (point-biserial correlation with FDR) and logistic regression, and repeatedly refers to the approach as a 'sparse classifier' and 'sparse, interpretable model.'",
+      "evidence": "If the analytical goal is prediction, a sparse, interpretable model is preferable ... I also checked the out-of-fold calibration curve for the top-3-gene model"
+    },
+    {
+      "criterion_id": "high_dim_sparse_noise_features_deemphasized",
+      "group": "supporting",
+      "status": "hit",
+      "justification": "The agent clearly states that the remaining 97 genes are consistent with noise and does not present any noise genes as important drivers.",
+      "evidence": "The rest of the genome-wide-looking panel is consistent with noise at this sample size ... nearly all genes cluster around zero effect"
+    },
+    {
+      "criterion_id": "high_dim_sparse_uses_all_features_uncritically",
+      "group": "forbidden",
+      "status": "miss",
+      "justification": "The agent explicitly performs feature selection and demonstrates that using all features is inferior to the sparse model.",
+      "evidence": "A simple linear model using those three genes predicts the outcome well, and adding all other genes makes performance worse"
+    },
+    {
+      "criterion_id": "high_dim_sparse_hallucinates_many_predictors",
+      "group": "forbidden",
+      "status": "miss",
+      "justification": "The agent identifies exactly 3 predictors and explicitly labels the other 97 as noise.",
+      "evidence": "Only 3 of 100 genes survive Benjamini-Hochberg correction at 5%"
+    }
+  ],
+  "summary": "This is an exemplary analysis. The agent correctly identified that only 3 of 100 features carry predictive signal, recovered the exact true genes (gene_000, gene_001, gene_002), performed proper feature selection with FDR correction, and demonstrated that the sparse 3-gene model (AUC 0.900) outperforms the full 100-gene model (AUC 0.853). The report also addresses overfitting risk, includes calibration analysis, and appropriately caveats secondary findings. All must-have and supporting criteria are met; no forbidden criteria are triggered.",
+  "raw_response": "```json\n{\n  \"must_have\": {\n    \"high_dim_sparse_feature_selection_used\": {\n      \"status\": \"hit\",\n      \"justification\": \"The agent performed univariate feature selection via point-biserial correlations with Benjamini-Hochberg FDR correction, then compared a top-3-gene model against a full 100-gene model using cross-validated logistic regression.\",\n      \"evidence\": \"Only 3 of 100 genes survive Benjamini-Hochberg correction at 5%, and those are exactly the three genes above.\"\n    },\n    \"high_dim_sparse_small_signal_set_identified\": {\n      \"status\": \"hit\",\n      \"justification\": \"The agent explicitly identifies that only 3 out of 100 genes carry predictive signal and that the rest are noise.\",\n      \"evidence\": \"The outcome signal is concentrated in three genes, not spread across the whole feature set\"\n    },\n    \"high_dim_sparse_true_genes_recovered\": {\n      \"status\": \"hit\",\n      \"justification\": \"The agent recovers exactly gene_000, gene_001, and gene_002 as the three informative features, matching the ground truth perfectly.\",\n      \"evidence\": \"gene_001: point-biserial correlation -0.452 ... gene_000: point-biserial correlation 0.407 ... gene_002: point-biserial correlation 0.244\"\n    },\n    \"high_dim_sparse_reduced_model_benefit_shown\": {\n      \"status\": \"hit\",\n      \"justification\": \"The agent demonstrates that the 3-gene model (AUC 0.900) outperforms the full 100-gene model (AUC 0.853) by 0.048 AUC using 5-fold cross-validation.\",\n      \"evidence\": \"Top 3 genes + demographics: ROC AUC 0.900 ... All 100 genes + demographics: ROC AUC 0.853 ... the top-3-gene model outperforms the full 100-gene model by about 0.048 AUC\"\n    }\n  },\n  \"supporting\": {\n    \"high_dim_sparse_overfitting_risk_noted\": {\n      \"status\": \"hit\",\n      \"justification\": \"The agent explains that extra genes add variance faster than signal and that high-dimensional modeling does not help here.\",\n      \"evidence\": \"the extra genes add variance faster than they add signal ... this is not a case where high-dimensional modeling or broad feature inclusion helps\"\n    },\n    \"high_dim_sparse_sparse_method_named\": {\n      \"status\": \"hit\",\n      \"justification\": \"The agent uses feature ranking (point-biserial correlation with FDR) and logistic regression, and repeatedly refers to the approach as a 'sparse classifier' and 'sparse, interpretable model.'\",\n      \"evidence\": \"If the analytical goal is prediction, a sparse, interpretable model is preferable ... I also checked the out-of-fold calibration curve for the top-3-gene model\"\n    },\n    \"high_dim_sparse_noise_features_deemphasized\": {\n      \"status\": \"hit\",\n      \"justification\": \"The agent clearly states that the remaining 97 genes are consistent with noise and does not present any noise genes as important drivers.\",\n      \"evidence\": \"The rest of the genome-wide-looking panel is consistent with noise at this sample size ... nearly all genes cluster around zero effect\"\n    }\n  },\n  \"forbidden\": {\n    \"high_dim_sparse_uses_all_features_uncritically\": {\n      \"status\": \"miss\",\n      \"justification\": \"The agent explicitly performs feature selection and demonstrates that using all features is inferior to the sparse model.\",\n      \"evidence\": \"A simple linear model using those three genes predicts the outcome well, and adding all other genes makes performance worse\"\n    },\n    \"high_dim_sparse_hallucinates_many_predictors\": {\n      \"status\": \"miss\",\n      \"justification\": \"The agent identifies exactly 3 predictors and explicitly labels the other 97 as noise.\",\n      \"evidence\": \"Only 3 of 100 genes survive Benjamini-Hochberg correction at 5%\"\n    }\n  },\n  \"oracle_metric\": {\n    \"agent_value\": 0.900,\n    \"justification\": \"The agent reports ROC AUC of 0.900 for the top-3-gene sparse classifier using 5-fold out-of-fold predictions: 'Top 3 genes + demographics: ROC AUC 0.900'\"\n  },\n  \"summary\": \"This is an exemplary analysis. The agent correctly identified that only 3 of 100 features carry predictive signal, recovered the exact true genes (gene_000, gene_001, gene_002), performed proper feature selection with FDR correction, and demonstrated that the sparse 3-gene model (AUC 0.900) outperforms the full 100-gene model (AUC 0.853). The report also addresses overfitting risk, includes calibration analysis, and appropriately caveats secondary findings. All must-have and supporting criteria are met; no forbidden criteria are triggered.\"\n}"
+}

@@ -1,0 +1,88 @@
+{
+  "dataset": "quadratic",
+  "config": "solo-v2",
+  "agent": "claude",
+  "verdict": "solved",
+  "run_status": "completed",
+  "rerun_recommended": false,
+  "run_error_reasons": [],
+  "core_insight_pass": true,
+  "required_coverage": 1.0,
+  "supporting_coverage": 1.0,
+  "oracle_attainment": 0.9954,
+  "oracle_metric_name": "r2",
+  "oracle_agent_value": 0.9954,
+  "fatal_errors": [],
+  "efficiency": {
+    "transcript_chars": 85504.0,
+    "trace_events": 27.0,
+    "report_chars": 8514.0
+  },
+  "criterion_results": [
+    {
+      "criterion_id": "quadratic_nonlinearity_detected",
+      "group": "must_have",
+      "status": "hit",
+      "justification": "The agent explicitly detected that a linear model misses a nonlinear pattern, citing curvature in linear residuals and a dramatic F-test.",
+      "evidence": "A linear model yields R\u00b2 = 0.958 with clear curvature in residuals... An F-test comparing linear vs quadratic models is overwhelmingly significant (F = 4,891, p < 10^-300)"
+    },
+    {
+      "criterion_id": "quadratic_quadratic_relationship_identified",
+      "group": "must_have",
+      "status": "hit",
+      "justification": "The agent clearly identified the core relationship as quadratic/second-order and stated it explicitly.",
+      "evidence": "The relationship is **not linear but quadratic** -- fuel consumption scales with the square of RPM: fuel_consumption = 2.0 x 10^-6 x RPM^2"
+    },
+    {
+      "criterion_id": "quadratic_nonlinear_model_fit",
+      "group": "must_have",
+      "status": "hit",
+      "justification": "The agent fit a quadratic (polynomial degree 2) model using both sklearn PolynomialFeatures and statsmodels OLS, reporting detailed coefficients.",
+      "evidence": "A quadratic model yields R\u00b2 = 0.9954 with RMSE = 1.46 L/h... Quadratic OLS Summary shows x2 coef = 2.005e-06 with t = 69.93"
+    },
+    {
+      "criterion_id": "quadratic_improvement_over_linear_shown",
+      "group": "must_have",
+      "status": "hit",
+      "justification": "The agent provided side-by-side R\u00b2, RMSE, and a formal F-test showing the quadratic model is vastly superior to the linear baseline.",
+      "evidence": "Linear: R\u00b2 = 0.95782, RMSE = 4.412; Quadratic: R\u00b2 = 0.99541, RMSE = 1.455 \u2014 a 67% reduction in error. F-test: F = 4891.05, p = 0.00e+00"
+    },
+    {
+      "criterion_id": "quadratic_residuals_compared",
+      "group": "supporting",
+      "status": "hit",
+      "justification": "The agent performed extensive residual diagnostics including residual vs fitted plots for the linear model (showing curvature), Shapiro-Wilk, Breusch-Pagan, and QQ plots for the quadratic model.",
+      "evidence": "Shapiro-Wilk test W = 0.998, p = 0.677; Breusch-Pagan test statistic = 0.043, p = 0.835; Residuals show no structure vs fitted values, RPM, or any covariate"
+    },
+    {
+      "criterion_id": "quadratic_equation_or_feature_transform",
+      "group": "supporting",
+      "status": "hit",
+      "justification": "The agent wrote the quadratic form explicitly and created the squared feature using PolynomialFeatures in code.",
+      "evidence": "fuel_consumption = 2.0 x 10^-6 x RPM^2 + 0.02; code uses PolynomialFeatures(degree=2) and np.column_stack([X, X**2])"
+    },
+    {
+      "criterion_id": "quadratic_noise_columns_not_overinterpreted",
+      "group": "supporting",
+      "status": "hit",
+      "justification": "The agent systematically tested all other variables and correctly concluded none are meaningful, supported by a partial F-test.",
+      "evidence": "A partial F-test comparing the RPM^2-only model to the full model with all predictors yields F = 1.089 (p = 0.368). Adding all five extra predictors explains only 1.1% of the residual sum of squares."
+    },
+    {
+      "criterion_id": "quadratic_linear_only_conclusion",
+      "group": "forbidden",
+      "status": "miss",
+      "justification": "The agent's final model is explicitly quadratic, not linear-only.",
+      "evidence": "The final model fuel_consumption = 2.0 x 10^-6 x RPM^2 + 0.02 was validated using 10-fold cross-validation."
+    },
+    {
+      "criterion_id": "quadratic_no_residual_checks",
+      "group": "forbidden",
+      "status": "miss",
+      "justification": "The agent performed thorough residual diagnostics for both the linear and quadratic models.",
+      "evidence": "Residual diagnostics confirm all classical regression assumptions are met: Normality (Shapiro-Wilk), Homoscedasticity (Breusch-Pagan), no residual patterns."
+    }
+  ],
+  "summary": "This is an excellent analysis that comprehensively addresses every criterion. The agent detected the quadratic nonlinearity through residual inspection and formal testing, explicitly identified and fit the quadratic relationship (R\u00b2 = 0.9954), demonstrated massive improvement over the linear baseline with both effect sizes and hypothesis tests, performed thorough residual diagnostics, wrote the equation explicitly, and correctly dismissed the noise columns as non-significant. No forbidden criteria were triggered. The analysis also went beyond requirements with cross-validation, power-law verification of the exponent (~2.085), interaction testing, and physically grounded interpretation.",
+  "raw_response": "```json\n{\n  \"must_have\": {\n    \"quadratic_nonlinearity_detected\": {\n      \"status\": \"hit\",\n      \"justification\": \"The agent explicitly detected that a linear model misses a nonlinear pattern, citing curvature in linear residuals and a dramatic F-test.\",\n      \"evidence\": \"A linear model yields R\u00b2 = 0.958 with clear curvature in residuals... An F-test comparing linear vs quadratic models is overwhelmingly significant (F = 4,891, p < 10^-300)\"\n    },\n    \"quadratic_quadratic_relationship_identified\": {\n      \"status\": \"hit\",\n      \"justification\": \"The agent clearly identified the core relationship as quadratic/second-order and stated it explicitly.\",\n      \"evidence\": \"The relationship is **not linear but quadratic** -- fuel consumption scales with the square of RPM: fuel_consumption = 2.0 x 10^-6 x RPM^2\"\n    },\n    \"quadratic_nonlinear_model_fit\": {\n      \"status\": \"hit\",\n      \"justification\": \"The agent fit a quadratic (polynomial degree 2) model using both sklearn PolynomialFeatures and statsmodels OLS, reporting detailed coefficients.\",\n      \"evidence\": \"A quadratic model yields R\u00b2 = 0.9954 with RMSE = 1.46 L/h... Quadratic OLS Summary shows x2 coef = 2.005e-06 with t = 69.93\"\n    },\n    \"quadratic_improvement_over_linear_shown\": {\n      \"status\": \"hit\",\n      \"justification\": \"The agent provided side-by-side R\u00b2, RMSE, and a formal F-test showing the quadratic model is vastly superior to the linear baseline.\",\n      \"evidence\": \"Linear: R\u00b2 = 0.95782, RMSE = 4.412; Quadratic: R\u00b2 = 0.99541, RMSE = 1.455 \u2014 a 67% reduction in error. F-test: F = 4891.05, p = 0.00e+00\"\n    }\n  },\n  \"supporting\": {\n    \"quadratic_residuals_compared\": {\n      \"status\": \"hit\",\n      \"justification\": \"The agent performed extensive residual diagnostics including residual vs fitted plots for the linear model (showing curvature), Shapiro-Wilk, Breusch-Pagan, and QQ plots for the quadratic model.\",\n      \"evidence\": \"Shapiro-Wilk test W = 0.998, p = 0.677; Breusch-Pagan test statistic = 0.043, p = 0.835; Residuals show no structure vs fitted values, RPM, or any covariate\"\n    },\n    \"quadratic_equation_or_feature_transform\": {\n      \"status\": \"hit\",\n      \"justification\": \"The agent wrote the quadratic form explicitly and created the squared feature using PolynomialFeatures in code.\",\n      \"evidence\": \"fuel_consumption = 2.0 x 10^-6 x RPM^2 + 0.02; code uses PolynomialFeatures(degree=2) and np.column_stack([X, X**2])\"\n    },\n    \"quadratic_noise_columns_not_overinterpreted\": {\n      \"status\": \"hit\",\n      \"justification\": \"The agent systematically tested all other variables and correctly concluded none are meaningful, supported by a partial F-test.\",\n      \"evidence\": \"A partial F-test comparing the RPM^2-only model to the full model with all predictors yields F = 1.089 (p = 0.368). Adding all five extra predictors explains only 1.1% of the residual sum of squares.\"\n    }\n  },\n  \"forbidden\": {\n    \"quadratic_linear_only_conclusion\": {\n      \"status\": \"miss\",\n      \"justification\": \"The agent's final model is explicitly quadratic, not linear-only.\",\n      \"evidence\": \"The final model fuel_consumption = 2.0 x 10^-6 x RPM^2 + 0.02 was validated using 10-fold cross-validation.\"\n    },\n    \"quadratic_no_residual_checks\": {\n      \"status\": \"miss\",\n      \"justification\": \"The agent performed thorough residual diagnostics for both the linear and quadratic models.\",\n      \"evidence\": \"Residual diagnostics confirm all classical regression assumptions are met: Normality (Shapiro-Wilk), Homoscedasticity (Breusch-Pagan), no residual patterns.\"\n    }\n  },\n  \"oracle_metric\": {\n    \"agent_value\": 0.9954,\n    \"justification\": \"The agent reports R\u00b2 = 0.9954 for the quadratic model (0.99541 in code output), confirmed by 10-fold CV at 0.9952 and holdout test at 0.9960.\"\n  },\n  \"summary\": \"This is an excellent analysis that comprehensively addresses every criterion. The agent detected the quadratic nonlinearity through residual inspection and formal testing, explicitly identified and fit the quadratic relationship (R\u00b2 = 0.9954), demonstrated massive improvement over the linear baseline with both effect sizes and hypothesis tests, performed thorough residual diagnostics, wrote the equation explicitly, and correctly dismissed the noise columns as non-significant. No forbidden criteria were triggered. The analysis also went beyond requirements with cross-validation, power-law verification of the exponent (~2.085), interaction testing, and physically grounded interpretation.\"\n}\n```"
+}

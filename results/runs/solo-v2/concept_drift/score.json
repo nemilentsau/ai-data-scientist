@@ -1,0 +1,90 @@
+{
+  "dataset": "concept_drift",
+  "config": "solo-v2",
+  "agent": "claude",
+  "verdict": "wrong",
+  "run_status": "completed",
+  "rerun_recommended": false,
+  "run_error_reasons": [],
+  "core_insight_pass": false,
+  "required_coverage": 0.125,
+  "supporting_coverage": 0.0,
+  "oracle_attainment": null,
+  "oracle_metric_name": null,
+  "oracle_agent_value": 0.0,
+  "fatal_errors": [
+    "Fit a single pooled model without checking for drift."
+  ],
+  "efficiency": {
+    "transcript_chars": 94254.0,
+    "trace_events": 25.0,
+    "report_chars": 9170.0
+  },
+  "criterion_results": [
+    {
+      "criterion_id": "concept_drift_temporal_order_respected",
+      "group": "must_have",
+      "status": "partial",
+      "justification": "The agent examined temporal patterns (autocorrelation, hourly/daily/weekly cycles, daily averages over time) and preserved timestamps in those analyses. However, the primary modeling (RF, GBM with 5-fold CV) pooled and shuffled all observations, destroying temporal order for the core predictive analysis.",
+      "evidence": "Finding 4: 'No temporal structure exists' \u2014 examined autocorrelation at lags 1-50, hourly/daily patterns. But modeling: 'Random Forest regression | 5-fold CV R\u00b2' on all 1500 rows."
+    },
+    {
+      "criterion_id": "concept_drift_drift_detected",
+      "group": "must_have",
+      "status": "miss",
+      "justification": "The agent explicitly concluded there is no temporal structure and no distribution shift. They actively dismissed the possibility of structural breaks in their limitations section without investigating.",
+      "evidence": "Finding 4: 'No temporal structure exists'; Limitations: 'Change-point detection: The data could in principle contain structural breaks, though the daily average plot shows no obvious regime changes.'"
+    },
+    {
+      "criterion_id": "concept_drift_pre_post_segments_compared",
+      "group": "must_have",
+      "status": "miss",
+      "justification": "The agent never split the data at or near the midpoint (or any point) to compare pre-drift and post-drift segments. All analysis was conducted on the full pooled dataset.",
+      "evidence": "No mention of any pre/post split, first-half vs second-half comparison, or segmented analysis anywhere in the report."
+    },
+    {
+      "criterion_id": "concept_drift_single_global_model_problem_noted",
+      "group": "must_have",
+      "status": "miss",
+      "justification": "Instead of recognizing that a global model is misleading due to concept drift, the agent concluded that process variables simply have zero predictive power. The agent never considered that the pooled model's failure could be caused by a relationship flip across regimes.",
+      "evidence": "Finding 2: 'Process variables have zero predictive power for defect rate \u2014 This is the central and most important finding.'"
+    },
+    {
+      "criterion_id": "concept_drift_relationship_flip_described",
+      "group": "supporting",
+      "status": "miss",
+      "justification": "The agent never identified that the temperature-defect relationship changes sign between the first and second halves of the dataset. They only computed global correlations.",
+      "evidence": "Only global correlations reported: 'temperature_c: 0.0247' \u2014 the near-zero value is actually the result of opposite-sign relationships canceling out, but the agent attributed it to true independence."
+    },
+    {
+      "criterion_id": "concept_drift_changepoint_or_rolling_diagnostic",
+      "group": "supporting",
+      "status": "miss",
+      "justification": "The agent explicitly declined to perform changepoint detection and did not use rolling metrics or any equivalent temporal diagnostic for detecting distribution shifts.",
+      "evidence": "Limitations: 'Change-point detection: The data could in principle contain structural breaks, though the daily average plot shows no obvious regime changes.' No rolling window statistics or CUSUM-type analysis was performed."
+    },
+    {
+      "criterion_id": "concept_drift_adaptation_strategy_suggested",
+      "group": "supporting",
+      "status": "miss",
+      "justification": "No drift-aware strategy (retraining, segmentation, monitoring) was suggested since drift was never detected. The recommendations focused on instrumenting additional variables or verifying data collection.",
+      "evidence": "Practical implications: 'No actionable levers exist... one should either (a) instrument additional variables... or (b) verify the data collection and measurement pipeline.'"
+    },
+    {
+      "criterion_id": "concept_drift_single_model_without_drift_check",
+      "group": "forbidden",
+      "status": "hit",
+      "justification": "The agent fit RF and GBM on the entire pooled 1500-observation dataset using shuffled 5-fold CV. While they examined temporal autocorrelation and cyclic patterns (hour/day), these are stationarity checks, not drift checks \u2014 they never performed changepoint detection, rolling window analysis, or any pre/post comparison that would constitute checking for concept drift.",
+      "evidence": "RF and GBM trained on all data with '5-fold CV R\u00b2'. Temporal analysis limited to autocorrelation and hourly/daily mean cycles. Changepoint detection explicitly skipped in limitations."
+    },
+    {
+      "criterion_id": "concept_drift_ignores_time_order",
+      "group": "forbidden",
+      "status": "miss",
+      "justification": "The agent did not fully ignore temporal ordering \u2014 Finding 4 is entirely devoted to temporal analysis (autocorrelation, hourly patterns, daily trends, time series plots). Time was examined but the temporal analysis failed to detect the drift.",
+      "evidence": "Finding 4: extensive temporal analysis including 'Autocorrelation: defect rate shows zero autocorrelation at all lags tested (1 through 50)', daily average plots, hourly/weekly patterns."
+    }
+  ],
+  "summary": "The agent's analysis is a textbook example of the 'single model without drift check' anti-pattern this evaluation contract targets. By pooling all 1500 observations and computing global statistics, the agent saw correlations near zero (opposite-sign relationships canceling) and concluded process variables have no predictive power \u2014 declaring the dataset likely synthetic noise. The agent examined temporal autocorrelation and cyclic patterns but never performed changepoint detection, rolling diagnostics, or any pre/post-midpoint comparison that would have revealed the abrupt distribution shift. All four must-have criteria are missed, the primary forbidden criterion is triggered, and no supporting criteria are met. Verdict: wrong.",
+  "raw_response": "```json\n{\n  \"must_have\": {\n    \"concept_drift_temporal_order_respected\": {\n      \"status\": \"partial\",\n      \"justification\": \"The agent examined temporal patterns (autocorrelation, hourly/daily/weekly cycles, daily averages over time) and preserved timestamps in those analyses. However, the primary modeling (RF, GBM with 5-fold CV) pooled and shuffled all observations, destroying temporal order for the core predictive analysis.\",\n      \"evidence\": \"Finding 4: 'No temporal structure exists' \u2014 examined autocorrelation at lags 1-50, hourly/daily patterns. But modeling: 'Random Forest regression | 5-fold CV R\u00b2' on all 1500 rows.\"\n    },\n    \"concept_drift_drift_detected\": {\n      \"status\": \"miss\",\n      \"justification\": \"The agent explicitly concluded there is no temporal structure and no distribution shift. They actively dismissed the possibility of structural breaks in their limitations section without investigating.\",\n      \"evidence\": \"Finding 4: 'No temporal structure exists'; Limitations: 'Change-point detection: The data could in principle contain structural breaks, though the daily average plot shows no obvious regime changes.'\"\n    },\n    \"concept_drift_pre_post_segments_compared\": {\n      \"status\": \"miss\",\n      \"justification\": \"The agent never split the data at or near the midpoint (or any point) to compare pre-drift and post-drift segments. All analysis was conducted on the full pooled dataset.\",\n      \"evidence\": \"No mention of any pre/post split, first-half vs second-half comparison, or segmented analysis anywhere in the report.\"\n    },\n    \"concept_drift_single_global_model_problem_noted\": {\n      \"status\": \"miss\",\n      \"justification\": \"Instead of recognizing that a global model is misleading due to concept drift, the agent concluded that process variables simply have zero predictive power. The agent never considered that the pooled model's failure could be caused by a relationship flip across regimes.\",\n      \"evidence\": \"Finding 2: 'Process variables have zero predictive power for defect rate \u2014 This is the central and most important finding.'\"\n    }\n  },\n  \"supporting\": {\n    \"concept_drift_relationship_flip_described\": {\n      \"status\": \"miss\",\n      \"justification\": \"The agent never identified that the temperature-defect relationship changes sign between the first and second halves of the dataset. They only computed global correlations.\",\n      \"evidence\": \"Only global correlations reported: 'temperature_c: 0.0247' \u2014 the near-zero value is actually the result of opposite-sign relationships canceling out, but the agent attributed it to true independence.\"\n    },\n    \"concept_drift_changepoint_or_rolling_diagnostic\": {\n      \"status\": \"miss\",\n      \"justification\": \"The agent explicitly declined to perform changepoint detection and did not use rolling metrics or any equivalent temporal diagnostic for detecting distribution shifts.\",\n      \"evidence\": \"Limitations: 'Change-point detection: The data could in principle contain structural breaks, though the daily average plot shows no obvious regime changes.' No rolling window statistics or CUSUM-type analysis was performed.\"\n    },\n    \"concept_drift_adaptation_strategy_suggested\": {\n      \"status\": \"miss\",\n      \"justification\": \"No drift-aware strategy (retraining, segmentation, monitoring) was suggested since drift was never detected. The recommendations focused on instrumenting additional variables or verifying data collection.\",\n      \"evidence\": \"Practical implications: 'No actionable levers exist... one should either (a) instrument additional variables... or (b) verify the data collection and measurement pipeline.'\"\n    }\n  },\n  \"forbidden\": {\n    \"concept_drift_single_model_without_drift_check\": {\n      \"status\": \"hit\",\n      \"justification\": \"The agent fit RF and GBM on the entire pooled 1500-observation dataset using shuffled 5-fold CV. While they examined temporal autocorrelation and cyclic patterns (hour/day), these are stationarity checks, not drift checks \u2014 they never performed changepoint detection, rolling window analysis, or any pre/post comparison that would constitute checking for concept drift.\",\n      \"evidence\": \"RF and GBM trained on all data with '5-fold CV R\u00b2'. Temporal analysis limited to autocorrelation and hourly/daily mean cycles. Changepoint detection explicitly skipped in limitations.\"\n    },\n    \"concept_drift_ignores_time_order\": {\n      \"status\": \"miss\",\n      \"justification\": \"The agent did not fully ignore temporal ordering \u2014 Finding 4 is entirely devoted to temporal analysis (autocorrelation, hourly patterns, daily trends, time series plots). Time was examined but the temporal analysis failed to detect the drift.\",\n      \"evidence\": \"Finding 4: extensive temporal analysis including 'Autocorrelation: defect rate shows zero autocorrelation at all lags tested (1 through 50)', daily average plots, hourly/weekly patterns.\"\n    }\n  },\n  \"oracle_metric\": {\n    \"agent_value\": 0.0,\n    \"justification\": \"The agent completely missed the central pattern of the dataset \u2014 an abrupt concept drift at the midpoint where the temperature-defect relationship flips sign. Instead, the agent concluded the data was synthetic random noise with no predictive signal, which is precisely the trap the evaluation contract warns about: fitting a single model to all data without checking for drift. The near-zero global correlations that the agent treated as evidence of independence are actually the result of opposite-sign relationships canceling across the two regimes.\"\n  },\n  \"summary\": \"The agent's analysis is a textbook example of the 'single model without drift check' anti-pattern this evaluation contract targets. By pooling all 1500 observations and computing global statistics, the agent saw correlations near zero (opposite-sign relationships canceling) and concluded process variables have no predictive power \u2014 declaring the dataset likely synthetic noise. The agent examined temporal autocorrelation and cyclic patterns but never performed changepoint detection, rolling diagnostics, or any pre/post-midpoint comparison that would have revealed the abrupt distribution shift. All four must-have criteria are missed, the primary forbidden criterion is triggered, and no supporting criteria are met. Verdict: wrong.\"\n}\n```"
+}

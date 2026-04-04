@@ -1,0 +1,84 @@
+{
+  "dataset": "heteroscedasticity",
+  "config": "codex-v2",
+  "agent": "codex",
+  "verdict": "wrong",
+  "run_status": "completed",
+  "rerun_recommended": false,
+  "run_error_reasons": [],
+  "core_insight_pass": false,
+  "required_coverage": 0.16666666666666666,
+  "supporting_coverage": 0.0,
+  "oracle_attainment": null,
+  "oracle_metric_name": null,
+  "oracle_agent_value": 0.0,
+  "fatal_errors": [
+    "Assume constant variance without checking residual behavior.",
+    "Report OLS significance or confidence as trustworthy without caveats."
+  ],
+  "efficiency": {
+    "transcript_chars": 58156.0,
+    "trace_events": 35.0,
+    "report_chars": 7753.0
+  },
+  "criterion_results": [
+    {
+      "criterion_id": "heteroscedasticity_residual_diagnostics_run",
+      "group": "must_have",
+      "status": "partial",
+      "justification": "The agent mentions producing a 'residual plot' (plots/revenue_vs_spend.png) and glancing at it, but the analysis focused on whether there was a channel- or spend-specific *mean* pattern rather than examining variance behavior. No formal residual diagnostic (e.g., Breusch-Pagan, White's test, or explicit residual-vs-fitted scatter) was reported.",
+      "evidence": "The residual plot in plots/revenue_vs_spend.png does not show a visible channel-specific or spend-specific pattern, which supports the conclusion that the dominant structure is linear scaling rather than nonlinear lift."
+    },
+    {
+      "criterion_id": "heteroscedasticity_non_constant_variance_identified",
+      "group": "must_have",
+      "status": "miss",
+      "justification": "The agent explicitly concluded the opposite \u2014 that residuals showed no pattern. The core finding that residual variance fans out with ad spend or fitted values was completely missed.",
+      "evidence": "The residual plot in plots/revenue_vs_spend.png does not show a visible channel-specific or spend-specific pattern."
+    },
+    {
+      "criterion_id": "heteroscedasticity_remedy_suggested",
+      "group": "must_have",
+      "status": "miss",
+      "justification": "No mention of weighted regression, robust/HC standard errors, or variance-stabilizing transforms anywhere in the report or transcript.",
+      "evidence": ""
+    },
+    {
+      "criterion_id": "heteroscedasticity_residual_plot_used",
+      "group": "supporting",
+      "status": "miss",
+      "justification": "Although a plot file was produced, it was not used to diagnose heteroscedasticity. The agent interpreted it as confirming linearity rather than revealing non-constant variance.",
+      "evidence": "The residual plot in plots/revenue_vs_spend.png does not show a visible channel-specific or spend-specific pattern."
+    },
+    {
+      "criterion_id": "heteroscedasticity_inference_risk_noted",
+      "group": "supporting",
+      "status": "miss",
+      "justification": "The report never mentions that OLS standard errors, confidence intervals, or p-values could be invalid under heteroscedasticity.",
+      "evidence": ""
+    },
+    {
+      "criterion_id": "heteroscedasticity_linear_mean_trend_preserved",
+      "group": "supporting",
+      "status": "miss",
+      "justification": "The agent did identify a strong linear mean trend (R\u00b2=0.945), but since heteroscedasticity was never identified, there was no distinction drawn between the mean trend and the variance problem. The criterion requires distinguishing the two, not just reporting one.",
+      "evidence": "Spend and revenue have a correlation of 0.972. The linear model explains 94.5% of revenue variance."
+    },
+    {
+      "criterion_id": "heteroscedasticity_assumes_constant_variance",
+      "group": "forbidden",
+      "status": "hit",
+      "justification": "The agent looked at a residual plot but explicitly concluded there was no spend-specific pattern, effectively assuming constant variance. The 'check' was superficial \u2014 focused on mean-shift patterns across channels rather than on variance behavior \u2014 and the conclusion directly assumes homoscedasticity despite clear heteroscedastic structure in the data.",
+      "evidence": "The residual plot in plots/revenue_vs_spend.png does not show a visible channel-specific or spend-specific pattern, which supports the conclusion that the dominant structure is linear scaling."
+    },
+    {
+      "criterion_id": "heteroscedasticity_uses_ols_uncritically",
+      "group": "forbidden",
+      "status": "hit",
+      "justification": "OLS confidence intervals and p-values are reported as trustworthy without any caveat about heteroscedasticity. The 95% CI on the slope is presented as a reliable finding.",
+      "evidence": "The fitted slope is 2.49 additional revenue dollars per additional dollar of spend, with 95% CI [2.46, 2.53]. ... Adding a quadratic term does not improve the relationship materially; the quadratic coefficient is not significant (p = 0.491)."
+    }
+  ],
+  "summary": "The agent conducted a thorough exploration of mean-level relationships (spend-revenue linearity, ROAS stability across channels/months, click funnel variability) but entirely missed the dataset's key pattern: heteroscedasticity. Despite mentioning a residual plot, the agent concluded residuals showed no pattern and reported OLS confidence intervals and p-values without caveat. No formal heteroscedasticity test was run, no non-constant variance was identified, and no remedy (robust SEs, WLS, variance-stabilizing transform) was suggested. Both forbidden criteria are hit \u2014 constant variance is assumed after a superficial check, and OLS inference is used uncritically \u2014 making the verdict 'wrong'.",
+  "raw_response": "```json\n{\n  \"must_have\": {\n    \"heteroscedasticity_residual_diagnostics_run\": {\n      \"status\": \"partial\",\n      \"justification\": \"The agent mentions producing a 'residual plot' (plots/revenue_vs_spend.png) and glancing at it, but the analysis focused on whether there was a channel- or spend-specific *mean* pattern rather than examining variance behavior. No formal residual diagnostic (e.g., Breusch-Pagan, White's test, or explicit residual-vs-fitted scatter) was reported.\",\n      \"evidence\": \"The residual plot in plots/revenue_vs_spend.png does not show a visible channel-specific or spend-specific pattern, which supports the conclusion that the dominant structure is linear scaling rather than nonlinear lift.\"\n    },\n    \"heteroscedasticity_non_constant_variance_identified\": {\n      \"status\": \"miss\",\n      \"justification\": \"The agent explicitly concluded the opposite \u2014 that residuals showed no pattern. The core finding that residual variance fans out with ad spend or fitted values was completely missed.\",\n      \"evidence\": \"The residual plot in plots/revenue_vs_spend.png does not show a visible channel-specific or spend-specific pattern.\"\n    },\n    \"heteroscedasticity_remedy_suggested\": {\n      \"status\": \"miss\",\n      \"justification\": \"No mention of weighted regression, robust/HC standard errors, or variance-stabilizing transforms anywhere in the report or transcript.\",\n      \"evidence\": \"\"\n    }\n  },\n  \"supporting\": {\n    \"heteroscedasticity_residual_plot_used\": {\n      \"status\": \"miss\",\n      \"justification\": \"Although a plot file was produced, it was not used to diagnose heteroscedasticity. The agent interpreted it as confirming linearity rather than revealing non-constant variance.\",\n      \"evidence\": \"The residual plot in plots/revenue_vs_spend.png does not show a visible channel-specific or spend-specific pattern.\"\n    },\n    \"heteroscedasticity_inference_risk_noted\": {\n      \"status\": \"miss\",\n      \"justification\": \"The report never mentions that OLS standard errors, confidence intervals, or p-values could be invalid under heteroscedasticity.\",\n      \"evidence\": \"\"\n    },\n    \"heteroscedasticity_linear_mean_trend_preserved\": {\n      \"status\": \"miss\",\n      \"justification\": \"The agent did identify a strong linear mean trend (R\u00b2=0.945), but since heteroscedasticity was never identified, there was no distinction drawn between the mean trend and the variance problem. The criterion requires distinguishing the two, not just reporting one.\",\n      \"evidence\": \"Spend and revenue have a correlation of 0.972. The linear model explains 94.5% of revenue variance.\"\n    }\n  },\n  \"forbidden\": {\n    \"heteroscedasticity_assumes_constant_variance\": {\n      \"status\": \"hit\",\n      \"justification\": \"The agent looked at a residual plot but explicitly concluded there was no spend-specific pattern, effectively assuming constant variance. The 'check' was superficial \u2014 focused on mean-shift patterns across channels rather than on variance behavior \u2014 and the conclusion directly assumes homoscedasticity despite clear heteroscedastic structure in the data.\",\n      \"evidence\": \"The residual plot in plots/revenue_vs_spend.png does not show a visible channel-specific or spend-specific pattern, which supports the conclusion that the dominant structure is linear scaling.\"\n    },\n    \"heteroscedasticity_uses_ols_uncritically\": {\n      \"status\": \"hit\",\n      \"justification\": \"OLS confidence intervals and p-values are reported as trustworthy without any caveat about heteroscedasticity. The 95% CI on the slope is presented as a reliable finding.\",\n      \"evidence\": \"The fitted slope is 2.49 additional revenue dollars per additional dollar of spend, with 95% CI [2.46, 2.53]. ... Adding a quadratic term does not improve the relationship materially; the quadratic coefficient is not significant (p = 0.491).\"\n    }\n  },\n  \"oracle_metric\": {\n    \"agent_value\": 0.0,\n    \"justification\": \"The agent missed the core dataset pattern entirely \u2014 heteroscedasticity (residual spread increasing with fitted values). Zero must-have criteria were fully hit, and both forbidden criteria were triggered. The analysis is technically competent in exploring mean trends and ROAS stability, but it completely overlooks the variance structure that is the dataset's defining feature. Verdict: wrong.\"\n  },\n  \"summary\": \"The agent conducted a thorough exploration of mean-level relationships (spend-revenue linearity, ROAS stability across channels/months, click funnel variability) but entirely missed the dataset's key pattern: heteroscedasticity. Despite mentioning a residual plot, the agent concluded residuals showed no pattern and reported OLS confidence intervals and p-values without caveat. No formal heteroscedasticity test was run, no non-constant variance was identified, and no remedy (robust SEs, WLS, variance-stabilizing transform) was suggested. Both forbidden criteria are hit \u2014 constant variance is assumed after a superficial check, and OLS inference is used uncritically \u2014 making the verdict 'wrong'.\"\n}\n```"
+}

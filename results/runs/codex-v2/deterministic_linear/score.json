@@ -1,0 +1,88 @@
+{
+  "dataset": "deterministic_linear",
+  "config": "codex-v2",
+  "agent": "codex",
+  "verdict": "solved",
+  "run_status": "completed",
+  "rerun_recommended": false,
+  "run_error_reasons": [],
+  "core_insight_pass": true,
+  "required_coverage": 1.0,
+  "supporting_coverage": 1.0,
+  "oracle_attainment": 1.0,
+  "oracle_metric_name": "r2",
+  "oracle_agent_value": 1.0,
+  "fatal_errors": [],
+  "efficiency": {
+    "transcript_chars": 55533.0,
+    "trace_events": 53.0,
+    "report_chars": 7739.0
+  },
+  "criterion_results": [
+    {
+      "criterion_id": "deterministic_linear_linear_relationship_identified",
+      "group": "must_have",
+      "status": "hit",
+      "justification": "The agent explicitly identifies the relationship as perfectly linear and exact, with zero residual noise.",
+      "evidence": "\"every point sits exactly on the same line, with no residual noise\"; \"Maximum absolute deviation from 2 * temperature_c + 3 = 1.78e-15\""
+    },
+    {
+      "criterion_id": "deterministic_linear_slope_recovered",
+      "group": "must_have",
+      "status": "hit",
+      "justification": "The agent recovers a slope of exactly 2.00.",
+      "evidence": "\"Fitted model: voltage_mv = 3.00 + 2.00 * temperature_c\""
+    },
+    {
+      "criterion_id": "deterministic_linear_intercept_recovered",
+      "group": "must_have",
+      "status": "hit",
+      "justification": "The agent recovers an intercept of exactly 3.00.",
+      "evidence": "\"Fitted model: voltage_mv = 3.00 + 2.00 * temperature_c\""
+    },
+    {
+      "criterion_id": "deterministic_linear_fit_near_perfect",
+      "group": "must_have",
+      "status": "hit",
+      "justification": "The agent explicitly reports R\u00b2 = 1.000000, indicating a perfect fit.",
+      "evidence": "\"R\u00b2 = 1.000000\""
+    },
+    {
+      "criterion_id": "deterministic_linear_equation_written",
+      "group": "supporting",
+      "status": "hit",
+      "justification": "The recovered equation is written out explicitly in the report.",
+      "evidence": "\"Fitted model: voltage_mv = 3.00 + 2.00 * temperature_c\""
+    },
+    {
+      "criterion_id": "deterministic_linear_ignores_noise_columns",
+      "group": "supporting",
+      "status": "hit",
+      "justification": "The agent identifies that humidity_pct and pressure_hpa have only weak, practically negligible cross-variable associations and correctly flags voltage_mv as a derived (non-independent) column that contributes no new information.",
+      "evidence": "\"voltage_mv should not be treated as a separate predictor, target, or corroborating measurement\"; \"The temperature-pressure link is real in the narrow statistical sense, but practically weak\" (R\u00b2=0.010)"
+    },
+    {
+      "criterion_id": "deterministic_linear_avoids_overcomplication",
+      "group": "supporting",
+      "status": "hit",
+      "justification": "The agent uses simple OLS linear regression for the core relationship and does not attempt any nonlinear or overly complex models for the voltage-temperature link.",
+      "evidence": "The analysis fits a single linear model and immediately confirms the exact linear structure without pursuing polynomial, tree-based, or other complex alternatives."
+    },
+    {
+      "criterion_id": "deterministic_linear_claims_nonlinear_structure",
+      "group": "forbidden",
+      "status": "miss",
+      "justification": "The agent never claims a nonlinear relationship or recommends a nonlinear model. The relationship is consistently described as perfectly linear.",
+      "evidence": "No nonlinear claims appear anywhere in the report."
+    },
+    {
+      "criterion_id": "deterministic_linear_unnecessary_model_complexity",
+      "group": "forbidden",
+      "status": "miss",
+      "justification": "The agent's main approach for the core relationship is a simple OLS linear regression. No unnecessary complexity is introduced.",
+      "evidence": "The fitted model is a single-predictor linear regression; no ensemble, polynomial, or regularized models are used for the voltage-temperature relationship."
+    }
+  ],
+  "summary": "The agent performs an excellent analysis of this dataset. It identifies the exact deterministic linear relationship voltage_mv = 2 * temperature_c + 3 with R\u00b2 = 1.0, correctly recovers slope (2) and intercept (3), writes the equation explicitly, identifies the noise columns as irrelevant, and avoids any overcomplication or nonlinear modeling. All four must-have criteria are hit, all three supporting criteria are hit, and neither forbidden criterion is triggered. The agent also goes beyond the core finding to provide useful context about the dataset's temporal structure, sensor effects, and weak cross-variable associations, though these are secondary to the primary linear relationship discovery.",
+  "raw_response": "```json\n{\n  \"must_have\": {\n    \"deterministic_linear_linear_relationship_identified\": {\n      \"status\": \"hit\",\n      \"justification\": \"The agent explicitly identifies the relationship as perfectly linear and exact, with zero residual noise.\",\n      \"evidence\": \"\\\"every point sits exactly on the same line, with no residual noise\\\"; \\\"Maximum absolute deviation from 2 * temperature_c + 3 = 1.78e-15\\\"\"\n    },\n    \"deterministic_linear_slope_recovered\": {\n      \"status\": \"hit\",\n      \"justification\": \"The agent recovers a slope of exactly 2.00.\",\n      \"evidence\": \"\\\"Fitted model: voltage_mv = 3.00 + 2.00 * temperature_c\\\"\"\n    },\n    \"deterministic_linear_intercept_recovered\": {\n      \"status\": \"hit\",\n      \"justification\": \"The agent recovers an intercept of exactly 3.00.\",\n      \"evidence\": \"\\\"Fitted model: voltage_mv = 3.00 + 2.00 * temperature_c\\\"\"\n    },\n    \"deterministic_linear_fit_near_perfect\": {\n      \"status\": \"hit\",\n      \"justification\": \"The agent explicitly reports R\u00b2 = 1.000000, indicating a perfect fit.\",\n      \"evidence\": \"\\\"R\u00b2 = 1.000000\\\"\"\n    }\n  },\n  \"supporting\": {\n    \"deterministic_linear_equation_written\": {\n      \"status\": \"hit\",\n      \"justification\": \"The recovered equation is written out explicitly in the report.\",\n      \"evidence\": \"\\\"Fitted model: voltage_mv = 3.00 + 2.00 * temperature_c\\\"\"\n    },\n    \"deterministic_linear_ignores_noise_columns\": {\n      \"status\": \"hit\",\n      \"justification\": \"The agent identifies that humidity_pct and pressure_hpa have only weak, practically negligible cross-variable associations and correctly flags voltage_mv as a derived (non-independent) column that contributes no new information.\",\n      \"evidence\": \"\\\"voltage_mv should not be treated as a separate predictor, target, or corroborating measurement\\\"; \\\"The temperature-pressure link is real in the narrow statistical sense, but practically weak\\\" (R\u00b2=0.010)\"\n    },\n    \"deterministic_linear_avoids_overcomplication\": {\n      \"status\": \"hit\",\n      \"justification\": \"The agent uses simple OLS linear regression for the core relationship and does not attempt any nonlinear or overly complex models for the voltage-temperature link.\",\n      \"evidence\": \"The analysis fits a single linear model and immediately confirms the exact linear structure without pursuing polynomial, tree-based, or other complex alternatives.\"\n    }\n  },\n  \"forbidden\": {\n    \"deterministic_linear_claims_nonlinear_structure\": {\n      \"status\": \"miss\",\n      \"justification\": \"The agent never claims a nonlinear relationship or recommends a nonlinear model. The relationship is consistently described as perfectly linear.\",\n      \"evidence\": \"No nonlinear claims appear anywhere in the report.\"\n    },\n    \"deterministic_linear_unnecessary_model_complexity\": {\n      \"status\": \"miss\",\n      \"justification\": \"The agent's main approach for the core relationship is a simple OLS linear regression. No unnecessary complexity is introduced.\",\n      \"evidence\": \"The fitted model is a single-predictor linear regression; no ensemble, polynomial, or regularized models are used for the voltage-temperature relationship.\"\n    }\n  },\n  \"oracle_metric\": {\n    \"agent_value\": 1.0,\n    \"justification\": \"The agent explicitly reports R\u00b2 = 1.000000 for the voltage_mv ~ temperature_c linear model, which is the best and final reported R\u00b2.\"\n  },\n  \"summary\": \"The agent performs an excellent analysis of this dataset. It identifies the exact deterministic linear relationship voltage_mv = 2 * temperature_c + 3 with R\u00b2 = 1.0, correctly recovers slope (2) and intercept (3), writes the equation explicitly, identifies the noise columns as irrelevant, and avoids any overcomplication or nonlinear modeling. All four must-have criteria are hit, all three supporting criteria are hit, and neither forbidden criterion is triggered. The agent also goes beyond the core finding to provide useful context about the dataset's temporal structure, sensor effects, and weak cross-variable associations, though these are secondary to the primary linear relationship discovery.\"\n}\n```"
+}

@@ -1,0 +1,76 @@
+{
+  "dataset": "pure_noise",
+  "config": "codex-v2",
+  "agent": "codex",
+  "verdict": "wrong",
+  "run_status": "completed",
+  "rerun_recommended": false,
+  "run_error_reasons": [],
+  "core_insight_pass": false,
+  "required_coverage": 0.8333333333333334,
+  "supporting_coverage": 1.0,
+  "oracle_attainment": null,
+  "oracle_metric_name": null,
+  "oracle_agent_value": -0.019,
+  "fatal_errors": [
+    "Claim a specific relationship as real despite the dataset being pure noise."
+  ],
+  "efficiency": {
+    "transcript_chars": 65944.0,
+    "trace_events": 59.0,
+    "report_chars": 6677.0
+  },
+  "criterion_results": [
+    {
+      "criterion_id": "pure_noise_no_signal_conclusion",
+      "group": "must_have",
+      "status": "partial",
+      "justification": "The overall conclusion strongly leans toward 'no signal' \u2014 the agent says features are 'largely disconnected' from the target and predictive modeling is 'not warranted.' However, the agent does not fully and explicitly reject all patterns. Finding #3 carves out team_size as 'a weak structural signal' and even offers a causal interpretation ('coordination drag'), which contradicts an unambiguous rejection of real patterns.",
+      "evidence": "\"whatever drives performance_rating is mostly absent from this table, or the target was generated largely independently of the listed features\" BUT ALSO \"This is a weak structural signal, not a dominant driver.\""
+    },
+    {
+      "criterion_id": "pure_noise_reports_weak_fit",
+      "group": "must_have",
+      "status": "hit",
+      "justification": "The agent clearly reports near-zero explained variance and non-significant overall model fit across multiple metrics.",
+      "evidence": "OLS R\u00b2=0.014, Adj R\u00b2=-0.000, F-stat p=0.456; Ridge CV R\u00b2=-0.019 (SD 0.019); CV RMSE=10.055 vs target SD=10.017."
+    },
+    {
+      "criterion_id": "pure_noise_supports_null_with_evidence",
+      "group": "must_have",
+      "status": "hit",
+      "justification": "The null conclusion is supported by a rich battery of formal tests: ANOVA, Kruskal-Wallis, Spearman correlations, OLS regression, Ridge cross-validation, and group-mean comparisons \u2014 not guesswork.",
+      "evidence": "ANOVA F=0.486 p=0.746 for salary_band~experience; Spearman rho=-0.049 p=0.166 for remote~commute; Ridge CV R\u00b2=-0.019; overall OLS F p=0.456."
+    },
+    {
+      "criterion_id": "pure_noise_tests_multiple_relationships",
+      "group": "supporting",
+      "status": "hit",
+      "justification": "The agent systematically tested many variable pairings: salary_band vs experience, remote_pct vs commute, remote_pct vs satisfaction, training vs performance, projects vs performance, team_size vs performance, and an all-features model.",
+      "evidence": "Eight separate Spearman tests, ANOVA for salary_band and remote_pct groups, full OLS with 11 predictors, and Ridge CV."
+    },
+    {
+      "criterion_id": "pure_noise_visualizes_lack_of_structure",
+      "group": "supporting",
+      "status": "hit",
+      "justification": "Multiple plots are referenced that visually demonstrate the absence of structure: overlapping salary bands, flat satisfaction lines, noisy scatter for team_size, and predictions compressed to the mean.",
+      "evidence": "plots/salary_band_vs_experience.png, plots/remote_work_outcomes.png, plots/team_size_vs_performance.png, plots/performance_cv_predictions.png."
+    },
+    {
+      "criterion_id": "pure_noise_claims_spurious_relationship",
+      "group": "forbidden",
+      "status": "hit",
+      "justification": "The agent explicitly labels the team_size\u2013performance association as 'a weak structural signal' (Finding #3) and provides a substantive causal interpretation ('coordination drag or dilute individual visibility'). With 11 predictors tested, a single p=0.020 result is well within the expected false-positive rate (~0.5 expected at \u03b1=0.05). The agent did not apply multiple-comparison correction and presented this noise artifact as a real, if modest, finding.",
+      "evidence": "\"The clearest relationship in the table is a weak negative association between team_size and performance_rating... This is a weak structural signal, not a dominant driver.\" Coefficient -0.129, p=0.020, 95% CI [-0.237, -0.020]."
+    },
+    {
+      "criterion_id": "pure_noise_overfit_as_signal",
+      "group": "forbidden",
+      "status": "miss",
+      "justification": "The agent correctly used 5-fold cross-validation, reported negative out-of-sample R\u00b2, and explicitly noted the model performs no better than predicting the mean. No overfit output was treated as evidence of signal.",
+      "evidence": "\"Ridge regression mean cross-validated R\u00b2 = -0.019... the model performs little better than predicting the overall mean every time.\""
+    }
+  ],
+  "summary": "The agent performed technically competent and thorough exploratory analysis \u2014 running many appropriate tests, reporting correct metrics, and largely concluding that the features do not predict performance. However, it fell into the classic pure-noise trap by singling out the team_size coefficient (p=0.020 among 11 predictors) as 'a weak structural signal' with a causal interpretation, without applying multiple-comparison correction. This triggers the forbidden criterion 'pure_noise_claims_spurious_relationship,' which under the verdict rules yields a 'wrong' outcome despite the otherwise strong analytical work.",
+  "raw_response": "```json\n{\n  \"must_have\": {\n    \"pure_noise_no_signal_conclusion\": {\n      \"status\": \"partial\",\n      \"justification\": \"The overall conclusion strongly leans toward 'no signal' \u2014 the agent says features are 'largely disconnected' from the target and predictive modeling is 'not warranted.' However, the agent does not fully and explicitly reject all patterns. Finding #3 carves out team_size as 'a weak structural signal' and even offers a causal interpretation ('coordination drag'), which contradicts an unambiguous rejection of real patterns.\",\n      \"evidence\": \"\\\"whatever drives performance_rating is mostly absent from this table, or the target was generated largely independently of the listed features\\\" BUT ALSO \\\"This is a weak structural signal, not a dominant driver.\\\"\"\n    },\n    \"pure_noise_reports_weak_fit\": {\n      \"status\": \"hit\",\n      \"justification\": \"The agent clearly reports near-zero explained variance and non-significant overall model fit across multiple metrics.\",\n      \"evidence\": \"OLS R\u00b2=0.014, Adj R\u00b2=-0.000, F-stat p=0.456; Ridge CV R\u00b2=-0.019 (SD 0.019); CV RMSE=10.055 vs target SD=10.017.\"\n    },\n    \"pure_noise_supports_null_with_evidence\": {\n      \"status\": \"hit\",\n      \"justification\": \"The null conclusion is supported by a rich battery of formal tests: ANOVA, Kruskal-Wallis, Spearman correlations, OLS regression, Ridge cross-validation, and group-mean comparisons \u2014 not guesswork.\",\n      \"evidence\": \"ANOVA F=0.486 p=0.746 for salary_band~experience; Spearman rho=-0.049 p=0.166 for remote~commute; Ridge CV R\u00b2=-0.019; overall OLS F p=0.456.\"\n    }\n  },\n  \"supporting\": {\n    \"pure_noise_tests_multiple_relationships\": {\n      \"status\": \"hit\",\n      \"justification\": \"The agent systematically tested many variable pairings: salary_band vs experience, remote_pct vs commute, remote_pct vs satisfaction, training vs performance, projects vs performance, team_size vs performance, and an all-features model.\",\n      \"evidence\": \"Eight separate Spearman tests, ANOVA for salary_band and remote_pct groups, full OLS with 11 predictors, and Ridge CV.\"\n    },\n    \"pure_noise_visualizes_lack_of_structure\": {\n      \"status\": \"hit\",\n      \"justification\": \"Multiple plots are referenced that visually demonstrate the absence of structure: overlapping salary bands, flat satisfaction lines, noisy scatter for team_size, and predictions compressed to the mean.\",\n      \"evidence\": \"plots/salary_band_vs_experience.png, plots/remote_work_outcomes.png, plots/team_size_vs_performance.png, plots/performance_cv_predictions.png.\"\n    }\n  },\n  \"forbidden\": {\n    \"pure_noise_claims_spurious_relationship\": {\n      \"status\": \"hit\",\n      \"justification\": \"The agent explicitly labels the team_size\u2013performance association as 'a weak structural signal' (Finding #3) and provides a substantive causal interpretation ('coordination drag or dilute individual visibility'). With 11 predictors tested, a single p=0.020 result is well within the expected false-positive rate (~0.5 expected at \u03b1=0.05). The agent did not apply multiple-comparison correction and presented this noise artifact as a real, if modest, finding.\",\n      \"evidence\": \"\\\"The clearest relationship in the table is a weak negative association between team_size and performance_rating... This is a weak structural signal, not a dominant driver.\\\" Coefficient -0.129, p=0.020, 95% CI [-0.237, -0.020].\"\n    },\n    \"pure_noise_overfit_as_signal\": {\n      \"status\": \"miss\",\n      \"justification\": \"The agent correctly used 5-fold cross-validation, reported negative out-of-sample R\u00b2, and explicitly noted the model performs no better than predicting the mean. No overfit output was treated as evidence of signal.\",\n      \"evidence\": \"\\\"Ridge regression mean cross-validated R\u00b2 = -0.019... the model performs little better than predicting the overall mean every time.\\\"\"\n    }\n  },\n  \"oracle_metric\": {\n    \"agent_value\": -0.019,\n    \"justification\": \"The agent's cross-validated Ridge R\u00b2 of -0.019 correctly reflects that the features have essentially zero predictive power for performance_rating, consistent with the ground truth of pure noise.\"\n  },\n  \"summary\": \"The agent performed technically competent and thorough exploratory analysis \u2014 running many appropriate tests, reporting correct metrics, and largely concluding that the features do not predict performance. However, it fell into the classic pure-noise trap by singling out the team_size coefficient (p=0.020 among 11 predictors) as 'a weak structural signal' with a causal interpretation, without applying multiple-comparison correction. This triggers the forbidden criterion 'pure_noise_claims_spurious_relationship,' which under the verdict rules yields a 'wrong' outcome despite the otherwise strong analytical work.\"\n}\n```"
+}

@@ -1,0 +1,95 @@
+{
+  "dataset": "simpsons_paradox",
+  "config": "solo-v2",
+  "agent": "claude",
+  "verdict": "solved",
+  "run_status": "completed",
+  "rerun_recommended": false,
+  "run_error_reasons": [],
+  "core_insight_pass": true,
+  "required_coverage": 1.0,
+  "supporting_coverage": 1.0,
+  "oracle_attainment": null,
+  "oracle_metric_name": null,
+  "oracle_agent_value": 1.0,
+  "fatal_errors": [],
+  "efficiency": {
+    "transcript_chars": 121226.0,
+    "trace_events": 31.0,
+    "report_chars": 11616.0
+  },
+  "criterion_results": [
+    {
+      "criterion_id": "simpsons_paradox_aggregate_effect",
+      "group": "must_have",
+      "status": "hit",
+      "justification": "The report explicitly computes and presents the naive (aggregate) treatment comparison in a table before any stratification.",
+      "evidence": "Recovery Score: A=66.3 vs B=68.5; LOS: A=15.3 vs B=12.5 days; Readmission: A=9.6% vs B=11.9%"
+    },
+    {
+      "criterion_id": "simpsons_paradox_within_group_effects",
+      "group": "must_have",
+      "status": "hit",
+      "justification": "The report computes within-department treatment effects for all three outcomes, with effect sizes, CIs, and p-values for each department.",
+      "evidence": "Recovery: A improves by +4.21 points (Cohen's d 0.69\u20130.88 within every department). LOS: A reduces by \u22121.48 days (Cohen's d \u22120.49 to \u22120.67 within every department). Readmission broken out by Cardiology (9.1% vs 11.2%), Neurology (8.8% vs 12.4%), Orthopedics (10.1% vs 15.9%)."
+    },
+    {
+      "criterion_id": "simpsons_paradox_reversal_identified",
+      "group": "must_have",
+      "status": "hit",
+      "justification": "The report explicitly states the direction reverses between aggregate and within-group analysis for every outcome.",
+      "evidence": "\"After adjusting for severity (the confounding variable), the direction reverses for every outcome\" and \"a trend that appears in aggregated data reverses when the data is stratified by a confounding variable.\""
+    },
+    {
+      "criterion_id": "simpsons_paradox_confounder_identified",
+      "group": "must_have",
+      "status": "hit",
+      "justification": "The report identifies department/severity as the confounder driving the reversal, explaining that Treatment A is systematically given to sicker patients in higher-severity departments.",
+      "evidence": "\"Treatment A is systematically given to sicker patients. Any naive comparison of treatments will be biased against A.\" Finding 1 details: Orthopedics (severity 7.0) = 89% Treatment A; Cardiology (severity 3.0) = 8% Treatment A. Chi-squared = 523.9, Cram\u00e9r's V = 0.661."
+    },
+    {
+      "criterion_id": "simpsons_paradox_correct_conclusion",
+      "group": "must_have",
+      "status": "hit",
+      "justification": "The practical conclusion is based on the stratified (adjusted) analysis, recommending Treatment A as superior.",
+      "evidence": "\"Treatment A is the better treatment for recovery and length of stay, with large, statistically significant effects.\" \"Consider expanding Treatment A to lower-severity patients.\""
+    },
+    {
+      "criterion_id": "simpsons_paradox_named_simpsons_paradox",
+      "group": "supporting",
+      "status": "hit",
+      "justification": "Simpson's Paradox is named explicitly in the title and explained in the interpretation section.",
+      "evidence": "\"This dataset is a textbook case of Simpson's Paradox \u2014 a statistical phenomenon where a trend that appears in aggregated data reverses when the data is stratified by a confounding variable.\""
+    },
+    {
+      "criterion_id": "simpsons_paradox_effect_sizes_quantified",
+      "group": "supporting",
+      "status": "hit",
+      "justification": "Both aggregate and subgroup effect sizes are quantified with point estimates, confidence intervals, and Cohen's d.",
+      "evidence": "Aggregate: Recovery 66.3 vs 68.5, LOS 15.3 vs 12.5. Adjusted: Recovery +4.21 (95% CI: 3.53\u20134.89), LOS \u22121.48 (95% CI: \u22121.75 to \u22121.21). Cohen's d = 0.69\u20130.88 for recovery, \u22120.49 to \u22120.67 for LOS. CMH OR = 1.48 for readmission."
+    },
+    {
+      "criterion_id": "simpsons_paradox_visualized_reversal",
+      "group": "supporting",
+      "status": "hit",
+      "justification": "Multiple visualizations and tables make the reversal visible, including dedicated Simpson's Paradox plots for recovery and LOS, plus a naive vs adjusted comparison table.",
+      "evidence": "plots/04_simpsons_paradox_recovery.png, plots/05_simpsons_paradox_los.png, plots/09_treatment_effect_summary.png, plus the inline table contrasting naive vs adjusted conclusions."
+    },
+    {
+      "criterion_id": "simpsons_paradox_aggregate_only_conclusion",
+      "group": "forbidden",
+      "status": "miss",
+      "justification": "The report explicitly rejects the aggregate conclusion and bases all recommendations on the stratified analysis.",
+      "evidence": "\"But these comparisons are wrong.\" Final conclusion: \"Treatment A is the better treatment.\""
+    },
+    {
+      "criterion_id": "simpsons_paradox_ignores_grouping_variable",
+      "group": "forbidden",
+      "status": "miss",
+      "justification": "The entire first finding is dedicated to analyzing the confounding structure of department and severity on treatment assignment.",
+      "evidence": "Finding 1: 'Treatment Assignment Is Confounded \u2014 Not Randomized' with detailed cross-tabulations and statistical tests."
+    }
+  ],
+  "summary": "This is an outstanding analysis that fully satisfies the evaluation contract. The agent systematically identified Simpson's Paradox by first computing aggregate treatment comparisons showing Treatment B appears superior, then stratifying by department/severity to reveal that Treatment A is consistently better within every subgroup. The confounder (department/severity driving non-random treatment assignment) is clearly identified with strong statistical evidence (Chi-squared = 523.9, Cram\u00e9r's V = 0.661). Effect sizes are thoroughly quantified at both aggregate and subgroup levels with confidence intervals and Cohen's d. The paradox is named explicitly and visualized in dedicated plots. The final recommendation correctly follows the within-group evidence, recommending Treatment A. No forbidden criteria are triggered.",
+  "raw_response": "```json\n{\n  \"must_have\": {\n    \"simpsons_paradox_aggregate_effect\": {\n      \"status\": \"hit\",\n      \"justification\": \"The report explicitly computes and presents the naive (aggregate) treatment comparison in a table before any stratification.\",\n      \"evidence\": \"Recovery Score: A=66.3 vs B=68.5; LOS: A=15.3 vs B=12.5 days; Readmission: A=9.6% vs B=11.9%\"\n    },\n    \"simpsons_paradox_within_group_effects\": {\n      \"status\": \"hit\",\n      \"justification\": \"The report computes within-department treatment effects for all three outcomes, with effect sizes, CIs, and p-values for each department.\",\n      \"evidence\": \"Recovery: A improves by +4.21 points (Cohen's d 0.69\u20130.88 within every department). LOS: A reduces by \u22121.48 days (Cohen's d \u22120.49 to \u22120.67 within every department). Readmission broken out by Cardiology (9.1% vs 11.2%), Neurology (8.8% vs 12.4%), Orthopedics (10.1% vs 15.9%).\"\n    },\n    \"simpsons_paradox_reversal_identified\": {\n      \"status\": \"hit\",\n      \"justification\": \"The report explicitly states the direction reverses between aggregate and within-group analysis for every outcome.\",\n      \"evidence\": \"\\\"After adjusting for severity (the confounding variable), the direction reverses for every outcome\\\" and \\\"a trend that appears in aggregated data reverses when the data is stratified by a confounding variable.\\\"\"\n    },\n    \"simpsons_paradox_confounder_identified\": {\n      \"status\": \"hit\",\n      \"justification\": \"The report identifies department/severity as the confounder driving the reversal, explaining that Treatment A is systematically given to sicker patients in higher-severity departments.\",\n      \"evidence\": \"\\\"Treatment A is systematically given to sicker patients. Any naive comparison of treatments will be biased against A.\\\" Finding 1 details: Orthopedics (severity 7.0) = 89% Treatment A; Cardiology (severity 3.0) = 8% Treatment A. Chi-squared = 523.9, Cram\u00e9r's V = 0.661.\"\n    },\n    \"simpsons_paradox_correct_conclusion\": {\n      \"status\": \"hit\",\n      \"justification\": \"The practical conclusion is based on the stratified (adjusted) analysis, recommending Treatment A as superior.\",\n      \"evidence\": \"\\\"Treatment A is the better treatment for recovery and length of stay, with large, statistically significant effects.\\\" \\\"Consider expanding Treatment A to lower-severity patients.\\\"\"\n    }\n  },\n  \"supporting\": {\n    \"simpsons_paradox_named_simpsons_paradox\": {\n      \"status\": \"hit\",\n      \"justification\": \"Simpson's Paradox is named explicitly in the title and explained in the interpretation section.\",\n      \"evidence\": \"\\\"This dataset is a textbook case of Simpson's Paradox \u2014 a statistical phenomenon where a trend that appears in aggregated data reverses when the data is stratified by a confounding variable.\\\"\"\n    },\n    \"simpsons_paradox_effect_sizes_quantified\": {\n      \"status\": \"hit\",\n      \"justification\": \"Both aggregate and subgroup effect sizes are quantified with point estimates, confidence intervals, and Cohen's d.\",\n      \"evidence\": \"Aggregate: Recovery 66.3 vs 68.5, LOS 15.3 vs 12.5. Adjusted: Recovery +4.21 (95% CI: 3.53\u20134.89), LOS \u22121.48 (95% CI: \u22121.75 to \u22121.21). Cohen's d = 0.69\u20130.88 for recovery, \u22120.49 to \u22120.67 for LOS. CMH OR = 1.48 for readmission.\"\n    },\n    \"simpsons_paradox_visualized_reversal\": {\n      \"status\": \"hit\",\n      \"justification\": \"Multiple visualizations and tables make the reversal visible, including dedicated Simpson's Paradox plots for recovery and LOS, plus a naive vs adjusted comparison table.\",\n      \"evidence\": \"plots/04_simpsons_paradox_recovery.png, plots/05_simpsons_paradox_los.png, plots/09_treatment_effect_summary.png, plus the inline table contrasting naive vs adjusted conclusions.\"\n    }\n  },\n  \"forbidden\": {\n    \"simpsons_paradox_aggregate_only_conclusion\": {\n      \"status\": \"miss\",\n      \"justification\": \"The report explicitly rejects the aggregate conclusion and bases all recommendations on the stratified analysis.\",\n      \"evidence\": \"\\\"But these comparisons are wrong.\\\" Final conclusion: \\\"Treatment A is the better treatment.\\\"\"\n    },\n    \"simpsons_paradox_ignores_grouping_variable\": {\n      \"status\": \"miss\",\n      \"justification\": \"The entire first finding is dedicated to analyzing the confounding structure of department and severity on treatment assignment.\",\n      \"evidence\": \"Finding 1: 'Treatment Assignment Is Confounded \u2014 Not Randomized' with detailed cross-tabulations and statistical tests.\"\n    }\n  },\n  \"oracle_metric\": {\n    \"agent_value\": 1.0,\n    \"justification\": \"All five must-have criteria are clearly hit with strong quantitative evidence. All three supporting criteria are also hit. No forbidden criteria are triggered. The analysis is exemplary: it computes both aggregate and stratified effects, explicitly identifies the reversal and names Simpson's Paradox, correctly identifies the confounder (department/severity driving treatment assignment), quantifies effect sizes with CIs, includes dedicated visualizations, and draws the correct practical conclusion from stratified evidence. The report also includes thoughtful limitations and a power analysis for the underpowered readmission finding.\"\n  },\n  \"summary\": \"This is an outstanding analysis that fully satisfies the evaluation contract. The agent systematically identified Simpson's Paradox by first computing aggregate treatment comparisons showing Treatment B appears superior, then stratifying by department/severity to reveal that Treatment A is consistently better within every subgroup. The confounder (department/severity driving non-random treatment assignment) is clearly identified with strong statistical evidence (Chi-squared = 523.9, Cram\u00e9r's V = 0.661). Effect sizes are thoroughly quantified at both aggregate and subgroup levels with confidence intervals and Cohen's d. The paradox is named explicitly and visualized in dedicated plots. The final recommendation correctly follows the within-group evidence, recommending Treatment A. No forbidden criteria are triggered.\"\n}\n```"
+}

@@ -1,0 +1,3 @@
+Completed the analysis and wrote the report to [analysis_report.md](/var/folders/j_/dt6mk_nd7tbfpyx2v5z_lv6c0000gn/T/tmp.4w03BMeTwt/analysis_report.md). All plots were saved under [plots](/var/folders/j_/dt6mk_nd7tbfpyx2v5z_lv6c0000gn/T/tmp.4w03BMeTwt/plots).
+
+Main conclusions: funding is explained much more by maturity and traction than by sector, only `Series_C` shows a clear adjusted premium over Seed after controlling for fundamentals, and sector contributes almost no incremental explanatory power. The report includes the hypothesis-test loop, effect sizes, model diagnostics, and a self-critique section with limitations.

@@ -1,0 +1,81 @@
+{
+  "dataset": "interaction_effects",
+  "config": "solo-v2",
+  "agent": "claude",
+  "verdict": "solved",
+  "run_status": "completed",
+  "rerun_recommended": false,
+  "run_error_reasons": [],
+  "core_insight_pass": true,
+  "required_coverage": 1.0,
+  "supporting_coverage": 1.0,
+  "oracle_attainment": 0.4099999999999999,
+  "oracle_metric_name": "roc_auc",
+  "oracle_agent_value": 0.705,
+  "fatal_errors": [],
+  "efficiency": {
+    "transcript_chars": 80231.0,
+    "trace_events": 23.0,
+    "report_chars": 10370.0
+  },
+  "criterion_results": [
+    {
+      "criterion_id": "interaction_effects_interaction_tested",
+      "group": "must_have",
+      "status": "hit",
+      "justification": "The agent explicitly fitted a logistic regression with the channel_score \u00d7 time_of_day_hour interaction term and performed a likelihood ratio test comparing interaction vs. main-effects-only models. Tree-based models (GBM, RF) were also used.",
+      "evidence": "when the interaction term channel_score \u00d7 time_of_day_hour is added, both main effects become non-significant... while the interaction is highly significant (z=4.31, p=1.6\u00d710^-5). A likelihood ratio test confirms the interaction term significantly improves the model (chi-squared=19.0, p=1.3\u00d710^-5)."
+    },
+    {
+      "criterion_id": "interaction_effects_main_effects_only_underperforms",
+      "group": "must_have",
+      "status": "hit",
+      "justification": "The agent directly compared main-effects-only vs. interaction model using AIC, LRT, and significance of coefficients, showing clear underperformance of the additive model.",
+      "evidence": "The interaction model (AIC=1645) fits substantially better than the main-effects-only model (AIC=1662). LRT chi-squared=19.0, p=1.3\u00d710^-5. Main effects become non-significant (p=0.90, p=0.87) when the interaction is included."
+    },
+    {
+      "criterion_id": "interaction_effects_channel_time_interaction_identified",
+      "group": "must_have",
+      "status": "hit",
+      "justification": "The agent unambiguously names channel_score \u00d7 time_of_day_hour as the key driver and builds the final model solely on this product term.",
+      "evidence": "The single most important discovery in this dataset is that conversion probability depends on the product of channel_score and time_of_day_hour, not on either variable independently. Final model: logit(P) = -1.88 + 0.142 \u00d7 (channel_score \u00d7 time_of_day_hour)."
+    },
+    {
+      "criterion_id": "interaction_effects_interaction_visualized",
+      "group": "supporting",
+      "status": "hit",
+      "justification": "The agent created a heatmap of conversion rates across channel_score quintiles \u00d7 time_of_day quintiles and printed the pivot table with actual values. Additional plots show the predicted probability surface.",
+      "evidence": "plots/02_interaction_heatmap.png shows conversion rates ranging from 0.09 (Very Low channel, Early hours) to 0.75 (Very High channel, Evening hours). Pivot table printed with all 25 cells."
+    },
+    {
+      "criterion_id": "interaction_effects_secondary_features_not_overstated",
+      "group": "supporting",
+      "status": "hit",
+      "justification": "The agent explicitly tested and dismissed all secondary features (ad_budget, page_load_time, device, previous_visits) with proper statistical evidence, stating they have no detectable effect.",
+      "evidence": "ad_budget Cohen's d=-0.03 p=0.64; page_load Cohen's d=-0.03 p=0.52; device chi-square p=0.49; previous_visits p=0.22. Adding these variables does not improve fit (LR test p=0.79)."
+    },
+    {
+      "criterion_id": "interaction_effects_non_additive_language",
+      "group": "supporting",
+      "status": "hit",
+      "justification": "The agent uses explicit non-additive/synergistic language throughout, explaining that the effect of one variable depends on the value of the other.",
+      "evidence": "This is a true synergistic interaction, not merely an additive effect. The effect is multiplicative: neither factor alone drives conversion. Channel quality matters, but only in the right context. A high channel score in the early morning does little; the same score in the evening is highly predictive."
+    },
+    {
+      "criterion_id": "interaction_effects_main_effects_only_conclusion",
+      "group": "forbidden",
+      "status": "miss",
+      "justification": "The agent explicitly tested interactions and concluded based on the interaction model. The main-effects-only model was shown to be inadequate, not used as the basis for conclusions.",
+      "evidence": "In a logistic regression with main effects only... However, when the interaction term is added, both main effects become non-significant."
+    },
+    {
+      "criterion_id": "interaction_effects_misses_interaction_pattern",
+      "group": "forbidden",
+      "status": "miss",
+      "justification": "The agent's entire analysis is centered on identifying and explaining the channel_score \u00d7 time_of_day_hour interaction pattern. The interaction is the primary finding, not missed.",
+      "evidence": "Finding 1: Conversion is driven by the interaction of channel score and time of day \u2014 not by either variable alone."
+    }
+  ],
+  "summary": "This is an exemplary analysis that fully satisfies all must-have criteria and all supporting criteria while avoiding both forbidden patterns. The agent correctly identified the channel_score \u00d7 time_of_day_hour interaction as the sole meaningful driver of conversion, rigorously demonstrated that a main-effects-only model underperforms (via AIC, LRT, and coefficient significance), visualized the interaction with a clear heatmap, properly dismissed noise variables with statistical evidence, and used precise non-additive language throughout. The reported AUC of 0.705 for the interaction-aware model is reasonable. The analysis also goes beyond the minimum requirements with practical targeting recommendations, calibration diagnostics, and a thoughtful limitations section.",
+  "raw_response": "```json\n{\n  \"must_have\": {\n    \"interaction_effects_interaction_tested\": {\n      \"status\": \"hit\",\n      \"justification\": \"The agent explicitly fitted a logistic regression with the channel_score \u00d7 time_of_day_hour interaction term and performed a likelihood ratio test comparing interaction vs. main-effects-only models. Tree-based models (GBM, RF) were also used.\",\n      \"evidence\": \"when the interaction term channel_score \u00d7 time_of_day_hour is added, both main effects become non-significant... while the interaction is highly significant (z=4.31, p=1.6\u00d710^-5). A likelihood ratio test confirms the interaction term significantly improves the model (chi-squared=19.0, p=1.3\u00d710^-5).\"\n    },\n    \"interaction_effects_main_effects_only_underperforms\": {\n      \"status\": \"hit\",\n      \"justification\": \"The agent directly compared main-effects-only vs. interaction model using AIC, LRT, and significance of coefficients, showing clear underperformance of the additive model.\",\n      \"evidence\": \"The interaction model (AIC=1645) fits substantially better than the main-effects-only model (AIC=1662). LRT chi-squared=19.0, p=1.3\u00d710^-5. Main effects become non-significant (p=0.90, p=0.87) when the interaction is included.\"\n    },\n    \"interaction_effects_channel_time_interaction_identified\": {\n      \"status\": \"hit\",\n      \"justification\": \"The agent unambiguously names channel_score \u00d7 time_of_day_hour as the key driver and builds the final model solely on this product term.\",\n      \"evidence\": \"The single most important discovery in this dataset is that conversion probability depends on the product of channel_score and time_of_day_hour, not on either variable independently. Final model: logit(P) = -1.88 + 0.142 \u00d7 (channel_score \u00d7 time_of_day_hour).\"\n    }\n  },\n  \"supporting\": {\n    \"interaction_effects_interaction_visualized\": {\n      \"status\": \"hit\",\n      \"justification\": \"The agent created a heatmap of conversion rates across channel_score quintiles \u00d7 time_of_day quintiles and printed the pivot table with actual values. Additional plots show the predicted probability surface.\",\n      \"evidence\": \"plots/02_interaction_heatmap.png shows conversion rates ranging from 0.09 (Very Low channel, Early hours) to 0.75 (Very High channel, Evening hours). Pivot table printed with all 25 cells.\"\n    },\n    \"interaction_effects_secondary_features_not_overstated\": {\n      \"status\": \"hit\",\n      \"justification\": \"The agent explicitly tested and dismissed all secondary features (ad_budget, page_load_time, device, previous_visits) with proper statistical evidence, stating they have no detectable effect.\",\n      \"evidence\": \"ad_budget Cohen's d=-0.03 p=0.64; page_load Cohen's d=-0.03 p=0.52; device chi-square p=0.49; previous_visits p=0.22. Adding these variables does not improve fit (LR test p=0.79).\"\n    },\n    \"interaction_effects_non_additive_language\": {\n      \"status\": \"hit\",\n      \"justification\": \"The agent uses explicit non-additive/synergistic language throughout, explaining that the effect of one variable depends on the value of the other.\",\n      \"evidence\": \"This is a true synergistic interaction, not merely an additive effect. The effect is multiplicative: neither factor alone drives conversion. Channel quality matters, but only in the right context. A high channel score in the early morning does little; the same score in the evening is highly predictive.\"\n    }\n  },\n  \"forbidden\": {\n    \"interaction_effects_main_effects_only_conclusion\": {\n      \"status\": \"miss\",\n      \"justification\": \"The agent explicitly tested interactions and concluded based on the interaction model. The main-effects-only model was shown to be inadequate, not used as the basis for conclusions.\",\n      \"evidence\": \"In a logistic regression with main effects only... However, when the interaction term is added, both main effects become non-significant.\"\n    },\n    \"interaction_effects_misses_interaction_pattern\": {\n      \"status\": \"miss\",\n      \"justification\": \"The agent's entire analysis is centered on identifying and explaining the channel_score \u00d7 time_of_day_hour interaction pattern. The interaction is the primary finding, not missed.\",\n      \"evidence\": \"Finding 1: Conversion is driven by the interaction of channel score and time of day \u2014 not by either variable alone.\"\n    }\n  },\n  \"oracle_metric\": {\n    \"agent_value\": 0.705,\n    \"justification\": \"The agent reports 10-fold cross-validated AUC of 0.705 \u00b1 0.035 for the interaction-aware logistic regression model using the channel_score \u00d7 time_of_day_hour product term.\"\n  },\n  \"summary\": \"This is an exemplary analysis that fully satisfies all must-have criteria and all supporting criteria while avoiding both forbidden patterns. The agent correctly identified the channel_score \u00d7 time_of_day_hour interaction as the sole meaningful driver of conversion, rigorously demonstrated that a main-effects-only model underperforms (via AIC, LRT, and coefficient significance), visualized the interaction with a clear heatmap, properly dismissed noise variables with statistical evidence, and used precise non-additive language throughout. The reported AUC of 0.705 for the interaction-aware model is reasonable. The analysis also goes beyond the minimum requirements with practical targeting recommendations, calibration diagnostics, and a thoughtful limitations section.\"\n}"
+}

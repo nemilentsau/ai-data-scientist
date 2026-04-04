@@ -1,0 +1,88 @@
+{
+  "dataset": "time_series_seasonality",
+  "config": "solo-v2",
+  "agent": "claude",
+  "verdict": "solved",
+  "run_status": "completed",
+  "rerun_recommended": false,
+  "run_error_reasons": [],
+  "core_insight_pass": true,
+  "required_coverage": 1.0,
+  "supporting_coverage": 1.0,
+  "oracle_attainment": null,
+  "oracle_metric_name": null,
+  "oracle_agent_value": 0.95,
+  "fatal_errors": [],
+  "efficiency": {
+    "transcript_chars": 119839.0,
+    "trace_events": 35.0,
+    "report_chars": 11362.0
+  },
+  "criterion_results": [
+    {
+      "criterion_id": "time_series_seasonality_temporal_order_respected",
+      "group": "must_have",
+      "status": "hit",
+      "justification": "The agent parses dates, orders data chronologically, computes rolling averages, performs STL decomposition, builds time-indexed models, and analyzes autocorrelation \u2014 treating the dataset as a time series throughout.",
+      "evidence": "STL decomposition of pageviews with period=7, 30-day moving averages plotted, trend analysis showing 'Avg daily growth: 0.73 pageviews/day', ACF plots for temporal structure."
+    },
+    {
+      "criterion_id": "time_series_seasonality_weekly_seasonality_identified",
+      "group": "must_have",
+      "status": "hit",
+      "justification": "The agent explicitly identifies and quantifies a weekly periodic component using STL decomposition (period=7), day-of-week analysis with Kruskal-Wallis tests, and includes a table of day-of-week effects.",
+      "evidence": "\"Traffic peaks on Mondays (1,124 avg pageviews) and troughs on Thursdays (748), a swing of ~376 pageviews (Kruskal-Wallis H = 147, p < 0.001).\" Day-of-week effect table provided."
+    },
+    {
+      "criterion_id": "time_series_seasonality_yearly_seasonality_identified",
+      "group": "must_have",
+      "status": "hit",
+      "justification": "The agent identifies yearly seasonality, quantifies its amplitude, and confirms it repeats across all three years using monthly averages and Fourier terms in the model.",
+      "evidence": "\"Annual seasonality: Traffic follows a sinusoidal pattern with amplitude ~399 pageviews, peaking in spring (March-April) and troughing in late summer (August-September). This pattern repeats consistently across all three years.\" Monthly averages pivot table confirms the pattern."
+    },
+    {
+      "criterion_id": "time_series_seasonality_trend_and_seasonality_accounted_for",
+      "group": "must_have",
+      "status": "hit",
+      "justification": "The agent builds an explicit model decomposing the series into trend + weekly seasonality + annual seasonality, achieving R\u00b2 = 0.955. STL decomposition also separates trend, seasonal, and residual components.",
+      "evidence": "\"A linear regression with trend (day number), weekly (day-of-week dummies), and annual (Fourier terms) components achieves R\u00b2 = 0.955 with MAE = 61 pageviews (~6.5% of the mean).\" STL decomposition plot produced."
+    },
+    {
+      "criterion_id": "time_series_seasonality_decomposition_or_autocorrelation",
+      "group": "supporting",
+      "status": "hit",
+      "justification": "The agent performs STL decomposition with period=7, generates autocorrelation function (ACF) plots, and uses these diagnostics to characterize temporal structure in all metrics.",
+      "evidence": "STL decomposition in plots/03_stl_decomposition.png, ACF plots in plots/09_autocorrelation.png showing 'only traffic has temporal structure.'"
+    },
+    {
+      "criterion_id": "time_series_seasonality_time_axis_visualized",
+      "group": "supporting",
+      "status": "hit",
+      "justification": "Multiple time-axis visualizations are produced including a full time series overview, STL decomposition, rates over time, and monthly trend plots.",
+      "evidence": "plots/01_time_series_overview.png (all six metrics over time with 30-day MAs), plots/03_stl_decomposition.png, plots/05_rates_over_time.png, plots/07_monthly_trends.png."
+    },
+    {
+      "criterion_id": "time_series_seasonality_multiple_metrics_considered",
+      "group": "supporting",
+      "status": "hit",
+      "justification": "The agent analyzes all six non-date columns (pageviews, unique_visitors, bounce_rate, avg_session_duration_sec, new_signups, support_tickets), examines their correlations, tests for seasonality in each, and investigates relationships between traffic and outcome metrics.",
+      "evidence": "Correlation matrix of all metrics, Kruskal-Wallis tests for day-of-week effects on every metric, engagement vs. outcomes analysis, Poisson analysis of signups and tickets."
+    },
+    {
+      "criterion_id": "time_series_seasonality_ignores_temporal_structure",
+      "group": "forbidden",
+      "status": "miss",
+      "justification": "The agent fully respects temporal structure: dates are parsed, data is indexed by time, STL decomposition and autocorrelation are used, and the analysis is framed around temporal patterns throughout.",
+      "evidence": "The entire analysis is built on time series methodology \u2014 STL decomposition, rolling averages, trend estimation, ACF, time-indexed visualizations."
+    },
+    {
+      "criterion_id": "time_series_seasonality_no_seasonality_modeling",
+      "group": "forbidden",
+      "status": "miss",
+      "justification": "Seasonality is explicitly modeled via STL decomposition and a regression model with weekly dummies and annual Fourier terms. Conclusions are drawn with full awareness of seasonal structure.",
+      "evidence": "\"STL decomposition reveals two layers of predictable variation\"; regression model includes \"weekly (day-of-week dummies), and annual (Fourier terms) components.\""
+    }
+  ],
+  "summary": "The agent delivers an exemplary time series analysis that satisfies every evaluation criterion. It treats the data as temporally ordered throughout, identifies both weekly seasonality (Monday peak, Thursday trough, Kruskal-Wallis H=147) and yearly seasonality (spring peak, late-summer trough, ~399 pageview amplitude), and decomposes the series using STL and a trend+seasonality regression model (R\u00b2=0.955). Supporting criteria are all met via ACF plots, multiple time-axis visualizations, and analysis of all available metrics. No forbidden criteria are triggered \u2014 the agent never treats rows as i.i.d. and never ignores seasonality. The analysis goes substantially beyond the minimum, including Poisson process characterization of signups, CUSUM changepoint analysis, and a thoughtful limitations section.",
+  "raw_response": "```json\n{\n  \"must_have\": {\n    \"time_series_seasonality_temporal_order_respected\": {\n      \"status\": \"hit\",\n      \"justification\": \"The agent parses dates, orders data chronologically, computes rolling averages, performs STL decomposition, builds time-indexed models, and analyzes autocorrelation \u2014 treating the dataset as a time series throughout.\",\n      \"evidence\": \"STL decomposition of pageviews with period=7, 30-day moving averages plotted, trend analysis showing 'Avg daily growth: 0.73 pageviews/day', ACF plots for temporal structure.\"\n    },\n    \"time_series_seasonality_weekly_seasonality_identified\": {\n      \"status\": \"hit\",\n      \"justification\": \"The agent explicitly identifies and quantifies a weekly periodic component using STL decomposition (period=7), day-of-week analysis with Kruskal-Wallis tests, and includes a table of day-of-week effects.\",\n      \"evidence\": \"\\\"Traffic peaks on Mondays (1,124 avg pageviews) and troughs on Thursdays (748), a swing of ~376 pageviews (Kruskal-Wallis H = 147, p < 0.001).\\\" Day-of-week effect table provided.\"\n    },\n    \"time_series_seasonality_yearly_seasonality_identified\": {\n      \"status\": \"hit\",\n      \"justification\": \"The agent identifies yearly seasonality, quantifies its amplitude, and confirms it repeats across all three years using monthly averages and Fourier terms in the model.\",\n      \"evidence\": \"\\\"Annual seasonality: Traffic follows a sinusoidal pattern with amplitude ~399 pageviews, peaking in spring (March-April) and troughing in late summer (August-September). This pattern repeats consistently across all three years.\\\" Monthly averages pivot table confirms the pattern.\"\n    },\n    \"time_series_seasonality_trend_and_seasonality_accounted_for\": {\n      \"status\": \"hit\",\n      \"justification\": \"The agent builds an explicit model decomposing the series into trend + weekly seasonality + annual seasonality, achieving R\u00b2 = 0.955. STL decomposition also separates trend, seasonal, and residual components.\",\n      \"evidence\": \"\\\"A linear regression with trend (day number), weekly (day-of-week dummies), and annual (Fourier terms) components achieves R\u00b2 = 0.955 with MAE = 61 pageviews (~6.5% of the mean).\\\" STL decomposition plot produced.\"\n    }\n  },\n  \"supporting\": {\n    \"time_series_seasonality_decomposition_or_autocorrelation\": {\n      \"status\": \"hit\",\n      \"justification\": \"The agent performs STL decomposition with period=7, generates autocorrelation function (ACF) plots, and uses these diagnostics to characterize temporal structure in all metrics.\",\n      \"evidence\": \"STL decomposition in plots/03_stl_decomposition.png, ACF plots in plots/09_autocorrelation.png showing 'only traffic has temporal structure.'\"\n    },\n    \"time_series_seasonality_time_axis_visualized\": {\n      \"status\": \"hit\",\n      \"justification\": \"Multiple time-axis visualizations are produced including a full time series overview, STL decomposition, rates over time, and monthly trend plots.\",\n      \"evidence\": \"plots/01_time_series_overview.png (all six metrics over time with 30-day MAs), plots/03_stl_decomposition.png, plots/05_rates_over_time.png, plots/07_monthly_trends.png.\"\n    },\n    \"time_series_seasonality_multiple_metrics_considered\": {\n      \"status\": \"hit\",\n      \"justification\": \"The agent analyzes all six non-date columns (pageviews, unique_visitors, bounce_rate, avg_session_duration_sec, new_signups, support_tickets), examines their correlations, tests for seasonality in each, and investigates relationships between traffic and outcome metrics.\",\n      \"evidence\": \"Correlation matrix of all metrics, Kruskal-Wallis tests for day-of-week effects on every metric, engagement vs. outcomes analysis, Poisson analysis of signups and tickets.\"\n    }\n  },\n  \"forbidden\": {\n    \"time_series_seasonality_ignores_temporal_structure\": {\n      \"status\": \"miss\",\n      \"justification\": \"The agent fully respects temporal structure: dates are parsed, data is indexed by time, STL decomposition and autocorrelation are used, and the analysis is framed around temporal patterns throughout.\",\n      \"evidence\": \"The entire analysis is built on time series methodology \u2014 STL decomposition, rolling averages, trend estimation, ACF, time-indexed visualizations.\"\n    },\n    \"time_series_seasonality_no_seasonality_modeling\": {\n      \"status\": \"miss\",\n      \"justification\": \"Seasonality is explicitly modeled via STL decomposition and a regression model with weekly dummies and annual Fourier terms. Conclusions are drawn with full awareness of seasonal structure.\",\n      \"evidence\": \"\\\"STL decomposition reveals two layers of predictable variation\\\"; regression model includes \\\"weekly (day-of-week dummies), and annual (Fourier terms) components.\\\"\"\n    }\n  },\n  \"oracle_metric\": {\n    \"agent_value\": 0.95,\n    \"justification\": \"All four must-have criteria are fully met and all three supporting criteria are hit. The agent correctly identifies both weekly and yearly seasonality, performs proper STL decomposition, builds a trend+seasonality model with R\u00b2=0.955, uses autocorrelation diagnostics, visualizes the series over time, and considers multiple metrics. The analysis is thorough, well-structured, and goes beyond the minimum requirements with Poisson analysis, CUSUM, and predictive modeling. Minor deduction for the analysis leaning heavily into the traffic-conversion narrative (which is valid but secondary to the seasonality task).\"\n  },\n  \"summary\": \"The agent delivers an exemplary time series analysis that satisfies every evaluation criterion. It treats the data as temporally ordered throughout, identifies both weekly seasonality (Monday peak, Thursday trough, Kruskal-Wallis H=147) and yearly seasonality (spring peak, late-summer trough, ~399 pageview amplitude), and decomposes the series using STL and a trend+seasonality regression model (R\u00b2=0.955). Supporting criteria are all met via ACF plots, multiple time-axis visualizations, and analysis of all available metrics. No forbidden criteria are triggered \u2014 the agent never treats rows as i.i.d. and never ignores seasonality. The analysis goes substantially beyond the minimum, including Poisson process characterization of signups, CUSUM changepoint analysis, and a thoughtful limitations section.\"\n}\n```"
+}
