@@ -1,0 +1,16 @@
+name: codex-v3
+description: Codex CLI workflow with analyst and visual review steps
+created: "2026-04-04"
+backend: codex_cli
+workflow:
+  steps:
+    - id: analyst
+      role: analyst
+      prompt: prompts/analyst-v2.md
+      max_turns: 30
+    - id: visual_review
+      role: visual_reviewer
+      prompt: prompts/visual-review.md
+      image_inputs:
+        - plots/*.png
+      required: true

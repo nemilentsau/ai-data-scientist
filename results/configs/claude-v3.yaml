@@ -1,0 +1,33 @@
+name: claude-v3
+description: Claude CLI workflow with analyst and visual review steps
+created: "2026-04-04"
+backend: claude_cli
+workflow:
+  steps:
+    - id: analyst
+      role: analyst
+      prompt: prompts/analyst-v2.md
+      model: claude-opus-4-6
+      max_turns: 30
+      tools:
+        - Bash
+        - Read
+        - Write
+        - Edit
+        - Glob
+        - Grep
+    - id: visual_review
+      role: visual_reviewer
+      prompt: prompts/visual-review.md
+      model: claude-opus-4-6
+      max_turns: 12
+      tools:
+        - Bash
+        - Read
+        - Write
+        - Edit
+        - Glob
+        - Grep
+      image_inputs:
+        - plots/*.png
+      required: true

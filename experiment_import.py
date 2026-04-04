@@ -12,6 +12,7 @@ from typing import Any
 
 import yaml
 
+from benchmark_orchestrator import primary_agent_metadata
 from experiment_catalog import (
     catalog_db_path,
     load_experiment_manifest,
@@ -207,8 +208,7 @@ def import_legacy_experiment(
             }
             workflow_records.append(workflow_record)
 
-            team = config_record.get("config", {}).get("team", [])
-            primary_agent = team[0] if team else {}
+            primary_agent = primary_agent_metadata(config_record.get("config", {}))
             agent_records.append(
                 {
                     "agent_run_id": agent_run_id,

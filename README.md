@@ -43,6 +43,7 @@ Produces 20 CSVs in `datasets/generated/` with opaque filenames.
 ```bash
 uv run python run_benchmark.py --config solo-baseline
 uv run python run_benchmark.py --config solo-codex
+uv run python run_benchmark.py --config codex-v3
 ```
 
 This will:
@@ -59,6 +60,45 @@ By default it creates a new experiment per invocation. To compare multiple confi
 uv run python run_benchmark.py --config solo-baseline --experiment-id exp_solo_compare --experiment-title "Solo compare"
 uv run python run_benchmark.py --config solo-codex --experiment-id exp_solo_compare
 ```
+
+### Workflow configs
+
+The runner now supports both legacy single-agent configs and ordered multi-step workflows.
+
+Legacy configs still work unchanged:
+
+```yaml
+name: solo-codex
+team:
+  - role: codex
+    prompt: prompts/analyst-generic.md
+    max_turns: 30
+harness: harness/run_codex.sh
+```
+
+New workflow configs use a backend plus ordered steps:
+
+```yaml
+name: codex-v3
+backend: codex_cli
+workflow:
+  steps:
+    - id: analyst
+      role: analyst
+      prompt: prompts/analyst-v2.md
+      max_turns: 30
+    - id: visual_review
+      role: visual_reviewer
+      prompt: prompts/visual-review.md
+      image_inputs:
+        - plots/*.png
+      required: true
+```
+
+The current built-in backends are:
+
+- `codex_cli`
+- `claude_cli`
 
 ### Import legacy runs into the experiment catalog
 
@@ -108,15 +148,15 @@ uv run python run_benchmark.py --config solo-codex --skip-generate --skip-run
 
 ## Tracing
 
-Every agent run produces a detailed `trace.jsonl` in its results directory, logging each tool call with timestamps, inputs, and outputs.
+Every agent run produces a top-level `trace.jsonl` in its results directory. For multi-step workflows, it is an append-only concatenation of the per-step traces in execution order.
 
-**Claude Code** — Uses [hooks](https://docs.anthropic.com/en/docs/claude-code/hooks) (`.claude/hooks/trace.sh`) registered in `.claude/settings.json`. The `PostToolUse` and `PostToolUseFailure` hooks fire after every tool call and append a JSON line to `results/<agent>/<dataset>/trace.jsonl`. Each line contains:
+**Claude Code** — Uses [hooks](https://docs.anthropic.com/en/docs/claude-code/hooks) (`.claude/hooks/trace.sh`) registered in `.claude/settings.json`. The `PostToolUse` and `PostToolUseFailure` hooks fire after every tool call and append JSON lines to a per-step trace, which the orchestrator then appends into the top-level `trace.jsonl`. Each line contains:
 
 ```json
 {"timestamp":"2026-03-15T12:00:00Z","event":"PostToolUse","tool":"Bash","tool_input":{"command":"python analysis.py"},"tool_response":"...","cwd":"/tmp/work"}
 ```
 
-**Codex CLI** — Uses `codex -a never exec -s workspace-write --json --skip-git-repo-check`, which natively streams JSONL events (thread starts, tool executions, completions) to `trace.jsonl`. The harness also saves Codex stderr to `session.log` and the final agent message to `final_message.md`.
+**Codex CLI** — Uses `codex exec` and `codex exec resume` in a shared workspace. Each step streams JSONL events to a step trace, and the orchestrator appends those events into the top-level `trace.jsonl`. Codex stderr is saved per step and aggregated into the top-level `session.log`.
 
 The reviewer reads `trace.jsonl` (when available) instead of the raw session log, giving it full visibility into the agent's step-by-step reasoning.
 
@@ -136,9 +176,14 @@ ai-data-scientist/
 │   ├── registry.py           # Ground-truth metadata per dataset
 │   └── generated/            # Output CSVs (git-ignored)
 ├── harness/
-│   ├── prompt_template.txt   # Analysis prompt sent to both agents
-│   ├── run_claude.sh         # Headless Claude Code runner (sets TRACE_FILE)
-│   └── run_codex.sh          # Headless Codex CLI runner (uses --json)
+│   ├── prompt_template.txt   # Legacy fallback prompt
+│   ├── run_claude.sh         # Legacy shim / reference runner
+│   └── run_codex.sh          # Legacy shim / reference runner
+├── prompts/
+│   ├── analyst-generic.md
+│   ├── analyst-v2.md
+│   └── visual-review.md
+├── benchmark_orchestrator.py # Shared workflow runner + backend adapters
 ├── reviewer/
 │   ├── rubric.py             # 7-dimension scoring rubric (0-5 each)
 │   ├── scorer.py             # LLM-based reviewer (reads trace.jsonl)
@@ -158,7 +203,7 @@ ai-data-scientist/
 ├── results/
 │   ├── runs/                 # Raw harness outputs
 │   └── experiments/          # SQLite catalog + JSON exports for the frontend
-└── run_benchmark.py          # Orchestrator + fresh-run experiment refresh
+└── run_benchmark.py          # Benchmark entrypoint + experiment refresh
 ```
 
 ## Scoring

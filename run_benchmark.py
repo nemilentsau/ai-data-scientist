@@ -10,6 +10,7 @@ from pathlib import Path
 
 import yaml
 
+from benchmark_orchestrator import primary_agent_metadata, run_workflow
 from experiment_catalog import catalog_db_path, load_experiment_manifest
 from experiment_import import build_experiment_id, import_legacy_experiment
 
@@ -42,43 +43,33 @@ def generate_datasets():
     print(f"Datasets generated in {DATASETS_DIR}\n")
 
 
-def run_agent(config: dict, config_name: str, dataset_name: str, dataset_csv: Path):
-    """Run an agent config on a single dataset."""
-    harness_script = ROOT / config["harness"]
-    if not harness_script.exists():
-        print(f"  WARNING: {harness_script} not found, skipping")
-        return False
-
+def run_workflow_for_dataset(
+    config: dict,
+    config_name: str,
+    dataset_name: str,
+    dataset_csv: Path,
+):
+    """Run a workflow config on a single dataset."""
     run_results = RUNS_DIR / config_name / dataset_name
     run_results.mkdir(parents=True, exist_ok=True)
 
-    # Resolve prompt file(s) from team config
-    team = config.get("team", [])
-    prompt_file = ROOT / team[0]["prompt"] if team else HARNESS_DIR / "prompt_template.txt"
-    max_turns = str(team[0].get("max_turns", 30)) if team else "30"
-    model = team[0].get("model", "") if team else ""
-    tools = ",".join(team[0].get("tools", [])) if team else "Bash,Read,Write,Edit,Glob,Grep"
-
     print(f"  Running {config_name} on {dataset_name}...")
     try:
-        subprocess.run(
-            [
-                "bash",
-                str(harness_script),
-                dataset_name,
-                str(dataset_csv),
-                str(run_results),
-                str(prompt_file),
-                max_turns,
-                model,
-                tools,
-            ],
-            check=False,
+        return run_workflow(
+            config=config,
+            dataset_name=dataset_name,
+            dataset_csv=dataset_csv,
+            results_dir=run_results,
+            root=ROOT,
         )
-        return True
     except Exception as e:
         print(f"  ERROR: {config_name} on {dataset_name}: {e}")
         return False
+
+
+def run_agent(config: dict, config_name: str, dataset_name: str, dataset_csv: Path):
+    """Backward-compatible alias for workflow execution."""
+    return run_workflow_for_dataset(config, config_name, dataset_name, dataset_csv)
 
 
 def score_results(dataset_names: list[str], config_name: str, config: dict):
@@ -87,7 +78,7 @@ def score_results(dataset_names: list[str], config_name: str, config: dict):
     from datasets.registry import get_dataset
     from reviewer.scorer import score_analysis
 
-    agent_name = config.get("team", [{}])[0].get("role", config_name)
+    agent_name = str(primary_agent_metadata(config).get("role") or config_name)
     all_scores = []
 
     for ds_name in dataset_names:
@@ -284,7 +275,7 @@ def main(argv: list[str] | None = None):
             if not csv_path.exists():
                 print(f"  WARNING: {csv_path} not found, skipping")
                 continue
-            run_agent(config, args.config, ds_name, csv_path)
+            run_workflow_for_dataset(config, args.config, ds_name, csv_path)
 
     # Step 3: Score
     if not args.skip_score:
