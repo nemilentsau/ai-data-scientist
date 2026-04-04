@@ -1,7 +1,7 @@
 ---
 title: Experiment 3 Visual Pilot Synthesis
 artifact_type: synthesis_note
-summary: Visual review materially helped Claude on two datasets but mostly failed as a reframing mechanism; Codex also suffered from a resume-step writeback bug.
+summary: After rerunning codex-v3, Codex now solves heteroscedasticity and interaction_effects, but multimodal still fails; the visual-review step still cannot write back, so the remaining gap is primarily about reframing rather than raw analysis quality.
 experiment_ids:
   - exp_20260404_experiment-3-visual-pilot
 ---
@@ -10,7 +10,7 @@ experiment_ids:
 
 ## Scope
 
-This note synthesizes the `claude-v3` and `codex-v3` results for:
+This note synthesizes the current `claude-v3` and rerun `codex-v3` results for:
 
 - `multimodal`
 - `heteroscedasticity`
@@ -24,209 +24,152 @@ Sources reviewed:
 - `results/runs/codex-v3/*/analysis_report.md`
 - `results/runs/claude-v3/*/steps/visual_review/final_message.md`
 - `results/runs/codex-v3/*/steps/visual_review/final_message.md`
-- `results/runs/claude-v3/multimodal/steps/visual_review/trace.jsonl`
-- `results/runs/codex-v3/multimodal/steps/visual_review/trace.jsonl`
+- `results/runs/codex-v3/*/run_state.json`
 
 ## Outcome Summary
 
-The visual-review workflow helped Claude substantially on two of the three datasets:
+The refreshed experiment picture is now:
 
-- `heteroscedasticity`: Claude `solved`, Codex `partial`
-- `interaction_effects`: Claude `solved`, Codex `partial`
+- `heteroscedasticity`: Claude `solved`, Codex `solved`
+- `interaction_effects`: Claude `solved`, Codex `solved`
 - `multimodal`: Claude `partial`, Codex `wrong`
 
-This means the visual pass was not a no-op. But it also was not enough to reliably correct a bad initial framing.
+This is materially different from the earlier Codex readout. After the rerun, Codex is no longer weak across the board. It is competitive on the two datasets whose core signal can be recovered through strong first-pass diagnostics and standard modeling.
 
-## Executive Diagnosis
+## What Changed In The Codex Rerun
 
-The pilot surfaced two different bottlenecks:
+The rerun replaced the earlier Codex outcomes of `partial / partial / wrong` with `solved / solved / wrong`.
 
-1. **Reframing bottleneck**
-   Visual review is good at tightening an existing analysis, but weak at overturning the analyst's initial problem framing.
+That means the earlier takeaway, "Codex did not improve much," is no longer accurate. The updated conclusion is narrower:
 
-2. **Integration bottleneck**
-   Codex's reviewer often found real corrections, but could not write them back into `analysis_report.md`, so the scored artifact stayed stale.
+- Codex can solve `heteroscedasticity` and `interaction_effects` at benchmark quality.
+- Codex still fails `multimodal`.
+- The current Codex visual-review step still does not integrate its corrections into the scored report.
 
-Claude mostly hit the first bottleneck.
-Codex hit both.
+So the remaining problem is not general analytical competence. It is the combination of:
 
-## Why Claude Improved On Two Datasets
+- no true critique/reframing loop
+- a reviewer that still cannot write back to `analysis_report.md`
+- and, on `multimodal`, the wrong plot set being handed to the reviewer
 
-Claude's visual-review step was genuinely corrective, not merely cosmetic.
+## Why Codex Now Solves `heteroscedasticity` And `interaction_effects`
+
+The important point is that the new Codex wins do **not** show a functioning visual-correction loop. They show a much stronger analyst pass.
 
 ### `heteroscedasticity`
 
-The reviewer rebuilt the diagnostics rather than just commenting on them:
+The new Codex analyst report squarely hits the benchmark contract:
 
-- it replaced a misleading QQ construction in `regression_diagnostics.png`
-- added a scale-location plot
-- added `funnel_noise_analysis.png`
-- strengthened the report from "strong linear trend with caveats" to "linear mean trend plus serious heteroscedasticity / funnel-noise interpretation"
+- identifies the spend-revenue mean trend
+- runs explicit residual diagnostics
+- names heteroscedasticity as the variance problem
+- cites the Breusch-Pagan test
+- uses HC3 robust standard errors as the remedy
 
-The final reviewer message explicitly documents those changes, including new plots and revised interpretation.
+The visual reviewer only adds tightening:
 
-This matters because the benchmark rewards:
+- sharper wording on funnel shape and heavy tails
+- confirmation that quadratic spend and channel-specific slopes do not matter much
+- more specific comments on outliers
 
-- explicit residual diagnostics
-- explicit identification of non-constant variance
-- concrete remedy suggestions
-
-Claude's visual pass moved the report into that space.
+Those are useful edits, but they are not what moved the verdict to `solved`. The analyst report already did that.
 
 ### `interaction_effects`
 
-Claude's reviewer also did real analytical escalation:
+The same pattern holds here. The new Codex analyst report:
 
-- upgraded the finding from generic "synergy" to a **crossing interaction**
-- added a direct main-effects-vs-interaction model comparison
-- added `plots/10_corrective_diagnostics.png`
-- documented that the main-effects-only view underperforms
-- explained the ad-budget feature-importance artifact instead of leaving it as a misleading model output
+- explicitly tests `channel_score × time_of_day_hour`
+- compares main-effects and interaction models
+- identifies the interaction as the headline finding
+- downweights `ad_budget_usd`, device, and page load time
 
-Again, this is exactly the kind of shift the rubric rewards: not just seeing the heatmap, but formally establishing that the interaction is the dominant mechanism.
+The visual reviewer again adds nuance rather than rescue:
 
-## Why Claude Still Failed `multimodal`
+- warns that the hour-by-hour pattern is noisy at fine granularity
+- notes mild calibration underprediction at the tails
+- confirms the interaction is not being driven by a few influential points
 
-Claude's `multimodal` review improved the report, but only locally.
+So the rerun demonstrates that Codex can produce a benchmark-passing report on these datasets before the visual reviewer needs to intervene.
 
-The reviewer:
+## Why `multimodal` Still Fails
 
-- strengthened the heteroscedasticity diagnosis
-- corrected elasticity interpretation
-- documented the LOWESS boundary artifact
-- found a `1,500–2,000 sqft` rent-per-sqft bump
-- fixed Q-Q interpretation
+`multimodal` remains the clearest example of why visual review is not enough.
 
-Those are real improvements. But they all stay inside the original framing: "this is a size-driven rent regression problem with some diagnostics and local nonlinearities."
+The new Codex analyst again framed the task as a rent-regression problem:
 
-The benchmark's core requirement was different:
+- `sq_ft` as the dominant driver
+- parking as a confounded effect
+- location and age as weak after adjustment
+
+This analysis is coherent, but it still misses the defining benchmark requirement:
 
 - inspect the target distribution directly
 - recognize that `monthly_rent_usd` is multi-peaked
-- reject the single-population / single-Gaussian framing
+- reject the single-population framing
 - suggest segmentation or mixture analysis
 
-Claude did not do that.
+The failure is visible in both the report and the attached plot set.
 
-The evidence is straightforward:
+The `multimodal` visual-review inputs were:
 
-- the final report still describes rent as **right-skewed**, not multimodal
-- the only target-distribution view is a small panel inside the summary dashboard
-- the visual review trace focuses on bathroom anomalies, elasticity reconciliation, heteroscedasticity, and local rent-per-sqft structure
-- there is no dedicated histogram / KDE investigation of the target's modal structure
+- `plot_01_rent_vs_sqft.png`
+- `plot_02_parking_by_size_quartile.png`
+- `plot_03_rent_per_sqft_vs_distance.png`
+- `plot_04_standardized_coefficients.png`
 
-So the failure on `multimodal` was not "Claude cannot inspect plots." It did inspect them. The failure was that the reviewer inherited the analyst's framing and used its effort budget to refine that framing instead of challenging it.
+There is still no histogram, KDE, or dedicated target-distribution plot of `monthly_rent_usd`.
 
-This is the strongest evidence that **visual review is not the same thing as critique**.
+So even though the reviewer did run and inspect images, it inherited the analyst's framing and was asked to review the wrong evidence. Its output tightens the regression story by adding:
 
-## Why Codex Did Not Improve Much
+- heteroscedasticity language
+- a small `sq_ft × bedrooms` interaction
+- stronger residual caveats
 
-Codex's visual-review step did real work:
+But those edits all stay inside the same wrong worldview.
 
-- for `heteroscedasticity`, it quantified the residual fan-out and proposed stronger caveats
-- for `interaction_effects`, it formally tested `time_of_day_hour × channel_score` and found the missing positive interaction
-- for `multimodal`, it diagnosed misspecification and weakened the bathroom claim using HC3 and RESET-style checks
+## The Codex Visual Reviewer Is Still Not Functioning As A Corrective Loop
 
-So the weak benchmark movement was not because Codex ignored the plots.
+The rerun also confirms that the Codex resume-step integration bug is still real.
 
-### Reason 1: Writeback bug
+Across the refreshed Codex visual-review outputs, the reviewer again says it could not edit `analysis_report.md` because the workspace was read-only.
 
-The most immediate issue is operational.
+That matters for interpretation:
 
-Across all three Codex visual-review runs, the reviewer says it could not update `analysis_report.md` because the workspace was read-only. That means:
+- the visual reviewer is active
+- the visual reviewer does inspect the generated PNGs
+- but its corrections still remain in `steps/visual_review/final_message.md`
+- while the scorer still grades the top-level `analysis_report.md`
 
-- the reviewer found better conclusions
-- but those corrections often remained in `steps/visual_review/final_message.md`
-- while the scorer still graded the top-level `analysis_report.md`
+This means the current Codex benchmark is still not measuring "analyst plus functioning visual reviewer." It is mostly measuring the analyst, with reviewer comments stranded beside the scored artifact.
 
-This is a harness bug, not just a model limitation.
+## What This Means For The Claude vs Codex Comparison
 
-### Reason 2: The corrections were mostly local, not reframing-level
+The updated comparison is more balanced than before.
 
-Even where Codex found new evidence, the reviewer usually concluded that the existing report was "directionally correct" and should only be tightened.
+Claude still has the better overall Experiment 3 result because:
 
-That is enough to improve nuance, but not enough to move a rubric that expects:
+- it solves `heteroscedasticity`
+- it solves `interaction_effects`
+- it reaches `partial` on `multimodal` rather than `wrong`
 
-- heteroscedasticity to become the main story
-- the interaction to be formally modeled and centered
-- the rent target to be treated as a mixture signal
+But the cross-agent gap is now much smaller than the earlier writeup implied.
 
-### Reason 3: Codex inherited the wrong plot set on `multimodal`
+The real remaining difference is:
 
-Codex's `multimodal` visual-review inputs were:
+- both agents can solve the datasets where the right signal is already accessible through conventional analysis
+- neither agent truly solves the reframing problem on `multimodal`
+- Claude's workflow is operationally better because its reviewer can actually edit the report
+- Codex's reviewer is still non-integrating, so its value is mostly diagnostic rather than corrective
 
-- `adjusted_effects.png`
-- `price_per_sqft_vs_sqft.png`
-- `rent_vs_sqft.png`
-- `residuals_vs_fitted.png`
+## Updated Bottom Line
 
-There was no target-distribution plot attached.
+Experiment 3 now supports a sharper conclusion:
 
-So even before the critique/writeback bug, the reviewer was being asked to visually inspect the wrong evidence for the benchmark's core discovery.
+1. Visual review is not a substitute for critique. The `multimodal` failure still comes from missing the need to question the original framing and inspect the target distribution directly.
+2. Codex is stronger than the earlier run suggested. After rerun, it fully solves `heteroscedasticity` and `interaction_effects`.
+3. The Codex visual-review step is still operationally broken for benchmark purposes. It can see plots, but it still cannot write its corrections back into the scored report.
 
-### Reason 4: The review step behaved more like a validator than an adversarial critic
+So the next workflow priority remains the same:
 
-The Codex reviewer repeatedly took the stance:
-
-- the report is mostly correct
-- here are the smallest corrections I would make
-
-That is the right behavior for polishing a report.
-It is the wrong behavior for discovering that the report is answering the wrong question.
-
-## Comparison: What Visual Review Can And Cannot Do
-
-This experiment suggests a sharper conclusion than "visual review helps" or "visual review does not help."
-
-Visual review is good at:
-
-- catching plot-conclusion mismatches
-- strengthening diagnostics
-- adding missing caveats
-- formalizing patterns already hinted at visually
-- improving communication of a basically correct analysis
-
-Visual review is weak at:
-
-- noticing that the analyst generated the wrong plots
-- discarding the original task framing
-- switching from pooled modeling to segmentation / mixture logic
-- forcing a new first-principles EDA pass on the target distribution
-
-That is why it helped on `heteroscedasticity` and `interaction_effects`, but not on `multimodal`.
-
-Those first two datasets can still be solved by strengthening or formalizing what the existing plots already imply.
-`multimodal` requires a different first question.
-
-## Implications For Workflow Design
-
-The next harness iteration should separate three functions that are currently conflated:
-
-1. **Analyst**
-   Builds the first-pass report and plot set.
-
-2. **Critic**
-   Challenges framing, missing plots, and untested assumptions.
-   This step should be adversarial and willing to say:
-   "You are answering the wrong question."
-
-3. **Visual reviewer**
-   Checks whether the existing plots and revised report actually align.
-
-That sequence matters.
-
-If visual review is used before critique, it mostly becomes a sophisticated editor for the analyst's worldview.
-
-## Bottom Line
-
-The experiment shows that visual review is useful, but not sufficient.
-
-- Claude proves that a visual follow-up pass can materially improve reports when the core structure is already on the page.
-- Codex shows that the current harness can also lose those gains entirely if reviewer corrections do not persist back into the scored artifact.
-- `multimodal` shows the deeper limitation: **without an explicit critique step, the system refines the analyst's framing instead of challenging it**.
-
-So the next improvement priority should be:
-
-1. fix Codex writeback on resume
-2. add a true critic / analyst-revision loop
-3. only then treat visual review as the final alignment pass
+- add a true critique / revision loop for reframing
+- separately fix the Codex resume/writeback path so visual review becomes part of the scored artifact rather than a side note

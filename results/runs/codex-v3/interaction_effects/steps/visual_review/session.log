@@ -1,0 +1,51 @@
+2026-04-04T20:20:58.699276Z ERROR codex_core::tools::router: error=exec_command failed for `/bin/zsh -lc "python - <<'PY'
+import pandas as pd
+import statsmodels.api as sm
+import statsmodels.formula.api as smf
+
+df = pd.read_csv('dataset.csv')
+df['device'] = df['device'].astype('category')
+model = smf.glm('converted ~ ad_budget_usd + time_of_day_hour + channel_score + page_load_time_sec + previous_visits + channel_score:time_of_day_hour + C(device)', data=df, family=sm.families.Binomial()).fit()
+inf = model.get_influence(observed=True)
+frame = inf.summary_frame()
+print(frame[['hat_diag','cooks_d','standard_resid']].describe().to_string())
+print('\\nTop Cook\\'s D')
+print(frame[['hat_diag','cooks_d','standard_resid']].sort_values('cooks_d', ascending=False).head(10).to_string())
+PY"`: CreateProcess { message: "Codex(Sandbox(Denied { output: ExecToolCallOutput { exit_code: 1, stdout: StreamOutput { text: \"\", truncated_after_lines: None }, stderr: StreamOutput { text: \"zsh:1: can't create temp file for here document: operation not permitted\\n\", truncated_after_lines: None }, aggregated_output: StreamOutput { text: \"zsh:1: can't create temp file for here document: operation not permitted\\n\", truncated_after_lines: None }, duration: 0ns, timed_out: false }, network_policy_decision: None }))" }
+2026-04-04T20:20:58.699384Z ERROR codex_core::tools::router: error=exec_command failed for `/bin/zsh -lc "python - <<'PY'
+import pandas as pd
+
+df = pd.read_csv('dataset.csv')
+df['score_bin'] = pd.qcut(df['channel_score'], q=[0,0.33,0.67,1], labels=['low','mid','high'])
+df['hour_bin'] = pd.cut(df['time_of_day_hour'], bins=range(0,25), include_lowest=True, right=False)
+summary = df.groupby(['score_bin','hour_bin'], observed=False)['converted'].agg(['mean','size','sum']).reset_index()
+for score in ['low','mid','high']:
+    s = summary[summary['score_bin']==score]
+    print('\\n', score)
+    print(s.to_string(index=False))
+PY"`: CreateProcess { message: "Codex(Sandbox(Denied { output: ExecToolCallOutput { exit_code: 1, stdout: StreamOutput { text: \"\", truncated_after_lines: None }, stderr: StreamOutput { text: \"zsh:1: can't create temp file for here document: operation not permitted\\n\", truncated_after_lines: None }, aggregated_output: StreamOutput { text: \"zsh:1: can't create temp file for here document: operation not permitted\\n\", truncated_after_lines: None }, duration: 0ns, timed_out: false }, network_policy_decision: None }))" }
+2026-04-04T20:20:58.736623Z ERROR codex_core::tools::router: error=exec_command failed for `/bin/zsh -lc "python - <<'PY'
+import pandas as pd
+from sklearn.calibration import calibration_curve
+from sklearn.compose import ColumnTransformer
+from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import StratifiedKFold, cross_val_predict
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import OneHotEncoder, StandardScaler
+
+df = pd.read_csv('dataset.csv')
+X = df.drop(columns=['converted','session_id'])
+y = df['converted']
+pipe = Pipeline([
+    ('prep', ColumnTransformer([
+        ('num', StandardScaler(), ['ad_budget_usd','time_of_day_hour','channel_score','page_load_time_sec','previous_visits']),
+        ('cat', OneHotEncoder(drop='first'), ['device'])
+    ])),
+    ('model', LogisticRegression(max_iter=1000))
+])
+cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
+p = cross_val_predict(pipe, X, y, cv=cv, method='predict_proba')[:,1]
+qt = pd.qcut(p, 8, duplicates='drop')
+summary = pd.DataFrame({'pred':p,'y':y}).groupby(qt, observed=False).agg(pred_mean=('pred','mean'), obs_rate=('y','mean'), n=('y','size'))
+print(summary.to_string())
+PY"`: CreateProcess { message: "Codex(Sandbox(Denied { output: ExecToolCallOutput { exit_code: 1, stdout: StreamOutput { text: \"\", truncated_after_lines: None }, stderr: StreamOutput { text: \"zsh:1: can't create temp file for here document: operation not permitted\\n\", truncated_after_lines: None }, aggregated_output: StreamOutput { text: \"zsh:1: can't create temp file for here document: operation not permitted\\n\", truncated_after_lines: None }, duration: 0ns, timed_out: false }, network_policy_decision: None }))" }

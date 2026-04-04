@@ -1,0 +1,9 @@
+The visual review does not overturn the report’s main conclusions, but it does surface two nuances the current wording should state more explicitly.
+
+First, the time effect is real at the coarse-bin level, but the hour-by-hour pattern is noisy rather than smoothly monotonic. Within each score tercile, the hourly cells are small, roughly 14 to 32 sessions per hour, so local spikes like `high score` at `22:00-23:00` (`16/17` conversions) should be treated as noisy bin-level evidence, not a precise changepoint. The current report is directionally right, but the phrasing “conversion rises later in the day” would be safer as “late-day conversion is materially higher for high-score traffic when time is aggregated into broad bins.”
+
+Second, the calibration plot is slightly more structured than “reasonably close to the diagonal” suggests. The model underpredicts at both extremes: the lowest calibration bin had mean predicted probability `0.094` versus observed `0.149`, and the highest bin had `0.564` predicted versus `0.617` observed. That is still acceptable for a moderate-signal model, but the report should mention mild underprediction at the tails.
+
+I also checked whether the interaction result is being driven by a few influential points. It does not appear to be: the maximum Cook’s distance is only `0.0098`, and maximum leverage is `0.0498`, so there is no obvious single-row leverage problem behind the main finding.
+
+I could not revise [analysis_report.md](/private/var/folders/j_/dt6mk_nd7tbfpyx2v5z_lv6c0000gn/T/tmpht3jtrd0/analysis_report.md) directly because the workspace is now read-only. If you want, switch the workspace back to writable and I’ll make the minimal wording edits in place.

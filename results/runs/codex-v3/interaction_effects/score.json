@@ -1,0 +1,81 @@
+{
+  "dataset": "interaction_effects",
+  "config": "codex-v3",
+  "agent": "codex",
+  "verdict": "solved",
+  "run_status": "completed",
+  "rerun_recommended": false,
+  "run_error_reasons": [],
+  "core_insight_pass": true,
+  "required_coverage": 1.0,
+  "supporting_coverage": 1.0,
+  "oracle_attainment": 0.3839999999999999,
+  "oracle_metric_name": "roc_auc",
+  "oracle_agent_value": 0.692,
+  "fatal_errors": [],
+  "efficiency": {
+    "transcript_chars": 66392.0,
+    "trace_events": 56.0,
+    "report_chars": 6680.0
+  },
+  "criterion_results": [
+    {
+      "criterion_id": "interaction_effects_interaction_tested",
+      "group": "must_have",
+      "status": "hit",
+      "justification": "Agent explicitly fitted a logistic model with the channel_score:time_of_day_hour interaction term and performed a likelihood-ratio test against the main-effects-only base model.",
+      "evidence": "Adding the interaction channel_score:time_of_day_hour improved logistic model fit with a likelihood-ratio statistic of 18.81 on 1 degree of freedom (p = 1.44e-05)."
+    },
+    {
+      "criterion_id": "interaction_effects_main_effects_only_underperforms",
+      "group": "must_have",
+      "status": "hit",
+      "justification": "The agent compared the base (additive) model to the interaction model using a likelihood-ratio test, demonstrating a statistically significant improvement (p = 1.44e-05). AIC also improved from 1669.49 for the base model.",
+      "evidence": "LR tests vs base ... with_interaction lr 18.81 df 1 p 1.44e-05; base AIC 1669.49"
+    },
+    {
+      "criterion_id": "interaction_effects_channel_time_interaction_identified",
+      "group": "must_have",
+      "status": "hit",
+      "justification": "The report's primary finding is explicitly titled 'Conversion is driven mainly by a time-by-channel-quality interaction' and names channel_score and time_of_day_hour as the interacting variables.",
+      "evidence": "The strongest pattern is not a simple main effect. Conversion rises later in the day, but the increase is much steeper for high-channel_score traffic than for low-score traffic."
+    },
+    {
+      "criterion_id": "interaction_effects_interaction_visualized",
+      "group": "supporting",
+      "status": "hit",
+      "justification": "Agent produced a heatmap and fitted probability curves plot (conversion_by_time_and_score.png) and tabulated conversion rates across channel_score terciles and time-of-day bins.",
+      "evidence": "In the lowest channel_score tercile during 00-06, the conversion rate is 10.9%. In the highest channel_score tercile during 18-24, it reaches 75.0%. The plot shows both the observed heatmap and the fitted probability curves."
+    },
+    {
+      "criterion_id": "interaction_effects_secondary_features_not_overstated",
+      "group": "supporting",
+      "status": "hit",
+      "justification": "The report explicitly downweights device (p=0.929), page load time (p=0.784), and ad budget (p=0.629 and flat quintile rates), clearly positioning the interaction as the dominant pattern.",
+      "evidence": "Device type is also uninformative after adjustment (p = 0.929), and page load time is not distinguishable from noise here (p = 0.784)... ad_budget_usd looks important by name, but not by evidence."
+    },
+    {
+      "criterion_id": "interaction_effects_non_additive_language",
+      "group": "supporting",
+      "status": "hit",
+      "justification": "The report explicitly describes how the effect of one variable depends on the value of the other, using clear non-additive framing throughout.",
+      "evidence": "The same hour of day is not equally valuable for all traffic sources. High-quality channels become much more productive late in the day, while low-quality channels stay relatively weak throughout."
+    },
+    {
+      "criterion_id": "interaction_effects_main_effects_only_conclusion",
+      "group": "forbidden",
+      "status": "miss",
+      "justification": "The agent did not conclude from a purely additive model. The interaction was tested, found significant, and made the central finding.",
+      "evidence": "The strongest pattern is not a simple main effect."
+    },
+    {
+      "criterion_id": "interaction_effects_misses_interaction_pattern",
+      "group": "forbidden",
+      "status": "miss",
+      "justification": "The interaction between channel_score and time_of_day_hour is the headline finding; conversion is not explained via separate main effects.",
+      "evidence": "Conversion is driven mainly by a time-by-channel-quality interaction (Finding #1)."
+    }
+  ],
+  "summary": "The agent delivered an excellent analysis that squarely hits every must-have criterion. It tested the channel_score \u00d7 time_of_day_hour interaction explicitly via likelihood-ratio test, demonstrated the main-effects model underperforms, and identified the interaction as the key driver. All supporting criteria are also met: the interaction is visualized with a heatmap and tabulated rates, secondary features are appropriately downweighted, and the language clearly conveys non-additive effects. No forbidden criteria are triggered. The only minor gap is that the reported ROC-AUC (0.692) comes from the main-effects logistic regression rather than from a cross-validated interaction-aware model, so the oracle metric may understate the interaction model's true predictive performance.",
+  "raw_response": "```json\n{\n  \"must_have\": {\n    \"interaction_effects_interaction_tested\": {\n      \"status\": \"hit\",\n      \"justification\": \"Agent explicitly fitted a logistic model with the channel_score:time_of_day_hour interaction term and performed a likelihood-ratio test against the main-effects-only base model.\",\n      \"evidence\": \"Adding the interaction channel_score:time_of_day_hour improved logistic model fit with a likelihood-ratio statistic of 18.81 on 1 degree of freedom (p = 1.44e-05).\"\n    },\n    \"interaction_effects_main_effects_only_underperforms\": {\n      \"status\": \"hit\",\n      \"justification\": \"The agent compared the base (additive) model to the interaction model using a likelihood-ratio test, demonstrating a statistically significant improvement (p = 1.44e-05). AIC also improved from 1669.49 for the base model.\",\n      \"evidence\": \"LR tests vs base ... with_interaction lr 18.81 df 1 p 1.44e-05; base AIC 1669.49\"\n    },\n    \"interaction_effects_channel_time_interaction_identified\": {\n      \"status\": \"hit\",\n      \"justification\": \"The report's primary finding is explicitly titled 'Conversion is driven mainly by a time-by-channel-quality interaction' and names channel_score and time_of_day_hour as the interacting variables.\",\n      \"evidence\": \"The strongest pattern is not a simple main effect. Conversion rises later in the day, but the increase is much steeper for high-channel_score traffic than for low-score traffic.\"\n    }\n  },\n  \"supporting\": {\n    \"interaction_effects_interaction_visualized\": {\n      \"status\": \"hit\",\n      \"justification\": \"Agent produced a heatmap and fitted probability curves plot (conversion_by_time_and_score.png) and tabulated conversion rates across channel_score terciles and time-of-day bins.\",\n      \"evidence\": \"In the lowest channel_score tercile during 00-06, the conversion rate is 10.9%. In the highest channel_score tercile during 18-24, it reaches 75.0%. The plot shows both the observed heatmap and the fitted probability curves.\"\n    },\n    \"interaction_effects_secondary_features_not_overstated\": {\n      \"status\": \"hit\",\n      \"justification\": \"The report explicitly downweights device (p=0.929), page load time (p=0.784), and ad budget (p=0.629 and flat quintile rates), clearly positioning the interaction as the dominant pattern.\",\n      \"evidence\": \"Device type is also uninformative after adjustment (p = 0.929), and page load time is not distinguishable from noise here (p = 0.784)... ad_budget_usd looks important by name, but not by evidence.\"\n    },\n    \"interaction_effects_non_additive_language\": {\n      \"status\": \"hit\",\n      \"justification\": \"The report explicitly describes how the effect of one variable depends on the value of the other, using clear non-additive framing throughout.\",\n      \"evidence\": \"The same hour of day is not equally valuable for all traffic sources. High-quality channels become much more productive late in the day, while low-quality channels stay relatively weak throughout.\"\n    }\n  },\n  \"forbidden\": {\n    \"interaction_effects_main_effects_only_conclusion\": {\n      \"status\": \"miss\",\n      \"justification\": \"The agent did not conclude from a purely additive model. The interaction was tested, found significant, and made the central finding.\",\n      \"evidence\": \"The strongest pattern is not a simple main effect.\"\n    },\n    \"interaction_effects_misses_interaction_pattern\": {\n      \"status\": \"miss\",\n      \"justification\": \"The interaction between channel_score and time_of_day_hour is the headline finding; conversion is not explained via separate main effects.\",\n      \"evidence\": \"Conversion is driven mainly by a time-by-channel-quality interaction (Finding #1).\"\n    }\n  },\n  \"oracle_metric\": {\n    \"agent_value\": 0.692,\n    \"justification\": \"The agent reported a cross-validated ROC AUC of 0.692 for a regularized logistic regression. However, this was computed for the main-effects-only sklearn pipeline (no explicit interaction term). The interaction-aware statsmodels GLM was evaluated via LR test and AIC but no separate cross-validated AUC was reported for it. 0.692 is the best (and only) ROC-AUC reported.\"\n  },\n  \"summary\": \"The agent delivered an excellent analysis that squarely hits every must-have criterion. It tested the channel_score \u00d7 time_of_day_hour interaction explicitly via likelihood-ratio test, demonstrated the main-effects model underperforms, and identified the interaction as the key driver. All supporting criteria are also met: the interaction is visualized with a heatmap and tabulated rates, secondary features are appropriately downweighted, and the language clearly conveys non-additive effects. No forbidden criteria are triggered. The only minor gap is that the reported ROC-AUC (0.692) comes from the main-effects logistic regression rather than from a cross-validated interaction-aware model, so the oracle metric may understate the interaction model's true predictive performance.\"\n}"
+}

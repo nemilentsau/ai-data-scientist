@@ -1,0 +1,35 @@
+2026-04-04T20:09:53.844178Z ERROR codex_core::tools::router: error=exec_command failed for `/bin/zsh -lc "python - <<'PY'
+import pandas as pd
+import numpy as np
+import statsmodels.formula.api as smf
+
+df = pd.read_csv('dataset.csv')
+# compare linear vs interaction/nonlinear variants
+m1 = smf.ols('monthly_rent_usd ~ sq_ft + bedrooms + bathrooms + distance_to_center_km + year_built + has_parking + pet_friendly', data=df).fit()
+m2 = smf.ols('monthly_rent_usd ~ sq_ft * bedrooms + bathrooms + distance_to_center_km + year_built + has_parking + pet_friendly', data=df).fit()
+m3 = smf.ols('monthly_rent_usd ~ sq_ft + bedrooms + bathrooms + bs(distance_to_center_km, df=4) + year_built + has_parking + pet_friendly', data=df).fit()
+print('AIC linear', m1.aic)
+print('AIC sqft*bedrooms', m2.aic)
+print('AIC spline distance', m3.aic)
+print('\\nInteraction term:')
+print(m2.params.filter(like='sq_ft:bedrooms').to_string())
+print(m2.pvalues.filter(like='sq_ft:bedrooms').to_string())
+PY"`: CreateProcess { message: "Codex(Sandbox(Denied { output: ExecToolCallOutput { exit_code: 1, stdout: StreamOutput { text: \"\", truncated_after_lines: None }, stderr: StreamOutput { text: \"zsh:1: can't create temp file for here document: operation not permitted\\n\", truncated_after_lines: None }, aggregated_output: StreamOutput { text: \"zsh:1: can't create temp file for here document: operation not permitted\\n\", truncated_after_lines: None }, duration: 0ns, timed_out: false }, network_policy_decision: None }))" }
+2026-04-04T20:09:53.844178Z ERROR codex_core::tools::router: error=exec_command failed for `/bin/zsh -lc "python - <<'PY'
+import pandas as pd
+import statsmodels.formula.api as smf
+import statsmodels.api as sm
+import numpy as np
+
+df = pd.read_csv('dataset.csv')
+model = smf.ols('monthly_rent_usd ~ sq_ft + bedrooms + bathrooms + distance_to_center_km + year_built + has_parking + pet_friendly', data=df).fit()
+infl = model.get_influence()
+summary = infl.summary_frame()
+print('Top leverage:')
+print(summary[['hat_diag','cooks_d','student_resid']].sort_values('hat_diag', ascending=False).head(10).to_string())
+print('\\nTop Cooks D:')
+print(summary[['hat_diag','cooks_d','student_resid']].sort_values('cooks_d', ascending=False).head(10).to_string())
+print('\\nResidual-fitted corr', np.corrcoef(model.fittedvalues, abs(model.resid))[0,1])
+print('Breusch-Pagan', sm.stats.diagnostic.het_breuschpagan(model.resid, model.model.exog))
+print('Jarque-Bera', sm.stats.stattools.jarque_bera(model.resid))
+PY"`: CreateProcess { message: "Codex(Sandbox(Denied { output: ExecToolCallOutput { exit_code: 1, stdout: StreamOutput { text: \"\", truncated_after_lines: None }, stderr: StreamOutput { text: \"zsh:1: can't create temp file for here document: operation not permitted\\n\", truncated_after_lines: None }, aggregated_output: StreamOutput { text: \"zsh:1: can't create temp file for here document: operation not permitted\\n\", truncated_after_lines: None }, duration: 0ns, timed_out: false }, network_policy_decision: None }))" }

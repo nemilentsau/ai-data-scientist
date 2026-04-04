@@ -1,0 +1,47 @@
+2026-04-04T20:15:11.392116Z ERROR codex_core::tools::router: error=exec_command failed for `/bin/zsh -lc "python - <<'PY'
+import pandas as pd
+import statsmodels.formula.api as smf
+import statsmodels.api as sm
+from statsmodels.stats.outliers_influence import OLSInfluence
+from scipy import stats
+
+df = pd.read_csv('dataset.csv')
+df = df.assign(
+    ctr=df['clicks']/df['impressions'],
+    cpc=df['ad_spend_usd']/df['clicks'],
+    roas=df['revenue_usd']/df['ad_spend_usd'],
+)
+
+m1 = smf.ols('revenue_usd ~ ad_spend_usd', data=df).fit()
+infl = OLSInfluence(m1)
+cd = infl.cooks_distance[0]
+lev = infl.hat_matrix_diag
+stud = infl.resid_studentized_external
+idx = pd.Series(cd).sort_values(ascending=False).head(10).index
+print('Top Cook distance rows:')
+print(df.loc[idx, ['campaign_id','ad_spend_usd','revenue_usd','channel','month','region']].assign(cooks=cd[idx], leverage=lev[idx], studentized=stud[idx]).round(4).to_string(index=False))
+print('\\nCook threshold', 4/len(df))
+print('Leverage summary', pd.Series(lev).describe().to_string())
+print('Studentized residual summary', pd.Series(stud).describe().to_string())
+
+# Nonlinearity checks
+m_quad = smf.ols('revenue_usd ~ ad_spend_usd + I(ad_spend_usd**2)', data=df).fit()
+print('\\nLinear R2', m1.rsquared, 'Quad R2', m_quad.rsquared)
+print('Quad term p', m_quad.pvalues['I(ad_spend_usd ** 2)'])
+
+# Segment-specific slopes
+m_inter = smf.ols('revenue_usd ~ ad_spend_usd * C(channel)', data=df).fit()
+print('\\nInteraction ANOVA')
+print(sm.stats.anova_lm(m_inter, typ=2).round(6).to_string())
+
+# Residual spread by spend decile
+q = pd.qcut(df['ad_spend_usd'], 10, duplicates='drop')
+spread = df.assign(abs_resid=m1.resid.abs(), decile=q).groupby('decile', observed=False)['abs_resid'].agg(['mean','median','max'])
+print('\\nAbsolute residual by spend decile')
+print(spread.round(2).to_string())
+
+# Month step/change style check
+month = df.groupby('month')[['ad_spend_usd','revenue_usd','roas']].mean()
+print('\\nMonth-to-month diffs')
+print(month.diff().round(2).to_string())
+PY"`: CreateProcess { message: "Codex(Sandbox(Denied { output: ExecToolCallOutput { exit_code: 1, stdout: StreamOutput { text: \"\", truncated_after_lines: None }, stderr: StreamOutput { text: \"zsh:1: can't create temp file for here document: operation not permitted\\n\", truncated_after_lines: None }, aggregated_output: StreamOutput { text: \"zsh:1: can't create temp file for here document: operation not permitted\\n\", truncated_after_lines: None }, duration: 0ns, timed_out: false }, network_policy_decision: None }))" }

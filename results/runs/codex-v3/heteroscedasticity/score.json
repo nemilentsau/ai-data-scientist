@@ -1,0 +1,81 @@
+{
+  "dataset": "heteroscedasticity",
+  "config": "codex-v3",
+  "agent": "codex",
+  "verdict": "solved",
+  "run_status": "completed",
+  "rerun_recommended": false,
+  "run_error_reasons": [],
+  "core_insight_pass": true,
+  "required_coverage": 1.0,
+  "supporting_coverage": 1.0,
+  "oracle_attainment": null,
+  "oracle_metric_name": null,
+  "oracle_agent_value": 0.9,
+  "fatal_errors": [],
+  "efficiency": {
+    "transcript_chars": 83489.0,
+    "trace_events": 50.0,
+    "report_chars": 8947.0
+  },
+  "criterion_results": [
+    {
+      "criterion_id": "heteroscedasticity_residual_diagnostics_run",
+      "group": "must_have",
+      "status": "hit",
+      "justification": "The agent fit an OLS model (revenue ~ ad_spend), produced residual diagnostic plots, and ran a formal Breusch-Pagan test on the residuals.",
+      "evidence": "\"The residual plot in plots/revenue_model_diagnostics.png shows clear heteroskedasticity, confirmed by the Breusch-Pagan test (p < 1e-36).\""
+    },
+    {
+      "criterion_id": "heteroscedasticity_non_constant_variance_identified",
+      "group": "must_have",
+      "status": "hit",
+      "justification": "The agent explicitly identifies that residual spread increases with spend/fitted values \u2014 the core pattern in the dataset.",
+      "evidence": "\"the residual spread widens at higher spend levels\" and \"Higher-spend campaigns have wider residual spread, so prediction intervals for large campaigns should be wider.\""
+    },
+    {
+      "criterion_id": "heteroscedasticity_remedy_suggested",
+      "group": "must_have",
+      "status": "hit",
+      "justification": "The agent applied HC3 robust standard errors as a direct remedy for heteroscedasticity, which is one of the accepted remedies (robust standard errors).",
+      "evidence": "\"I therefore relied on HC3 robust confidence intervals for the slope. This affects uncertainty estimates, not the basic conclusion that spend is the dominant driver.\""
+    },
+    {
+      "criterion_id": "heteroscedasticity_residual_plot_used",
+      "group": "supporting",
+      "status": "hit",
+      "justification": "Both a residual plot and a formal heteroscedasticity test were produced and referenced to support the diagnosis.",
+      "evidence": "\"The residual plot in plots/revenue_model_diagnostics.png shows clear heteroskedasticity, confirmed by the Breusch-Pagan test (p < 1e-36).\""
+    },
+    {
+      "criterion_id": "heteroscedasticity_inference_risk_noted",
+      "group": "supporting",
+      "status": "hit",
+      "justification": "The agent explains that heteroscedasticity affects uncertainty estimates and switches to robust SEs, implicitly but clearly communicating that standard OLS inference would be unreliable.",
+      "evidence": "\"This affects uncertainty estimates\" and the deliberate switch to HC3 robust CIs rather than standard OLS intervals."
+    },
+    {
+      "criterion_id": "heteroscedasticity_linear_mean_trend_preserved",
+      "group": "supporting",
+      "status": "hit",
+      "justification": "The agent clearly distinguishes the mean relationship (strong, R\u00b2=0.945) from the variance problem, explicitly stating the heteroscedasticity does not invalidate the mean trend.",
+      "evidence": "\"This affects uncertainty estimates, not the basic conclusion that spend is the dominant driver\" and \"the average linear relationship is strong.\""
+    },
+    {
+      "criterion_id": "heteroscedasticity_assumes_constant_variance",
+      "group": "forbidden",
+      "status": "miss",
+      "justification": "The agent explicitly tests for and identifies non-constant variance using residual plots and the Breusch-Pagan test. No assumption of constant variance is made.",
+      "evidence": "Breusch-Pagan test (p < 1e-36) and residual diagnostics were run proactively."
+    },
+    {
+      "criterion_id": "heteroscedasticity_uses_ols_uncritically",
+      "group": "forbidden",
+      "status": "miss",
+      "justification": "The agent explicitly caveat OLS results and switches to HC3 robust standard errors. OLS significance is never reported as trustworthy without qualification.",
+      "evidence": "\"95% CI for slope with HC3 robust standard errors: [2.454, 2.535]\" \u2014 robust inference was used instead of naive OLS CIs."
+    }
+  ],
+  "summary": "The agent delivered a thorough and methodologically sound analysis. It correctly identified heteroscedasticity as the key dataset pattern \u2014 residual spread increasing with fitted values \u2014 supported by both a residual plot and the Breusch-Pagan test (p < 1e-36). It applied HC3 robust standard errors as a remedy and clearly distinguished the strong linear mean trend (R\u00b2=0.945) from the variance problem. No forbidden behaviors were exhibited: the agent never assumed constant variance and never reported OLS inference uncritically. The heteroscedasticity finding was framed as a diagnostic note rather than the headline discovery, which slightly underweights its importance relative to the evaluation contract, but the technical substance fully satisfies all must-have and supporting criteria.",
+  "raw_response": "```json\n{\n  \"must_have\": {\n    \"heteroscedasticity_residual_diagnostics_run\": {\n      \"status\": \"hit\",\n      \"justification\": \"The agent fit an OLS model (revenue ~ ad_spend), produced residual diagnostic plots, and ran a formal Breusch-Pagan test on the residuals.\",\n      \"evidence\": \"\\\"The residual plot in plots/revenue_model_diagnostics.png shows clear heteroskedasticity, confirmed by the Breusch-Pagan test (p < 1e-36).\\\"\"\n    },\n    \"heteroscedasticity_non_constant_variance_identified\": {\n      \"status\": \"hit\",\n      \"justification\": \"The agent explicitly identifies that residual spread increases with spend/fitted values \u2014 the core pattern in the dataset.\",\n      \"evidence\": \"\\\"the residual spread widens at higher spend levels\\\" and \\\"Higher-spend campaigns have wider residual spread, so prediction intervals for large campaigns should be wider.\\\"\"\n    },\n    \"heteroscedasticity_remedy_suggested\": {\n      \"status\": \"hit\",\n      \"justification\": \"The agent applied HC3 robust standard errors as a direct remedy for heteroscedasticity, which is one of the accepted remedies (robust standard errors).\",\n      \"evidence\": \"\\\"I therefore relied on HC3 robust confidence intervals for the slope. This affects uncertainty estimates, not the basic conclusion that spend is the dominant driver.\\\"\"\n    }\n  },\n  \"supporting\": {\n    \"heteroscedasticity_residual_plot_used\": {\n      \"status\": \"hit\",\n      \"justification\": \"Both a residual plot and a formal heteroscedasticity test were produced and referenced to support the diagnosis.\",\n      \"evidence\": \"\\\"The residual plot in plots/revenue_model_diagnostics.png shows clear heteroskedasticity, confirmed by the Breusch-Pagan test (p < 1e-36).\\\"\"\n    },\n    \"heteroscedasticity_inference_risk_noted\": {\n      \"status\": \"hit\",\n      \"justification\": \"The agent explains that heteroscedasticity affects uncertainty estimates and switches to robust SEs, implicitly but clearly communicating that standard OLS inference would be unreliable.\",\n      \"evidence\": \"\\\"This affects uncertainty estimates\\\" and the deliberate switch to HC3 robust CIs rather than standard OLS intervals.\"\n    },\n    \"heteroscedasticity_linear_mean_trend_preserved\": {\n      \"status\": \"hit\",\n      \"justification\": \"The agent clearly distinguishes the mean relationship (strong, R\u00b2=0.945) from the variance problem, explicitly stating the heteroscedasticity does not invalidate the mean trend.\",\n      \"evidence\": \"\\\"This affects uncertainty estimates, not the basic conclusion that spend is the dominant driver\\\" and \\\"the average linear relationship is strong.\\\"\"\n    }\n  },\n  \"forbidden\": {\n    \"heteroscedasticity_assumes_constant_variance\": {\n      \"status\": \"miss\",\n      \"justification\": \"The agent explicitly tests for and identifies non-constant variance using residual plots and the Breusch-Pagan test. No assumption of constant variance is made.\",\n      \"evidence\": \"Breusch-Pagan test (p < 1e-36) and residual diagnostics were run proactively.\"\n    },\n    \"heteroscedasticity_uses_ols_uncritically\": {\n      \"status\": \"miss\",\n      \"justification\": \"The agent explicitly caveat OLS results and switches to HC3 robust standard errors. OLS significance is never reported as trustworthy without qualification.\",\n      \"evidence\": \"\\\"95% CI for slope with HC3 robust standard errors: [2.454, 2.535]\\\" \u2014 robust inference was used instead of naive OLS CIs.\"\n    }\n  },\n  \"oracle_metric\": {\n    \"agent_value\": 0.9,\n    \"justification\": \"All three must-have criteria are hit, all three supporting criteria are hit, and no forbidden criteria are triggered. The agent correctly identified heteroscedasticity as the key pattern, used both visual and formal diagnostics, applied a proper remedy (HC3 robust SEs), and clearly preserved the distinction between the mean trend and the variance problem. The only minor weakness is that the heteroscedasticity finding is presented as a 'diagnostic note' under Finding 1 rather than elevated as the primary discovery, and the remedy discussion could have been broader (e.g., explicitly mentioning weighted regression or variance-stabilizing transforms as alternatives). Overall, an excellent analysis that meets the full evaluation contract.\"\n  },\n  \"summary\": \"The agent delivered a thorough and methodologically sound analysis. It correctly identified heteroscedasticity as the key dataset pattern \u2014 residual spread increasing with fitted values \u2014 supported by both a residual plot and the Breusch-Pagan test (p < 1e-36). It applied HC3 robust standard errors as a remedy and clearly distinguished the strong linear mean trend (R\u00b2=0.945) from the variance problem. No forbidden behaviors were exhibited: the agent never assumed constant variance and never reported OLS inference uncritically. The heteroscedasticity finding was framed as a diagnostic note rather than the headline discovery, which slightly underweights its importance relative to the evaluation contract, but the technical substance fully satisfies all must-have and supporting criteria.\"\n}\n```"
+}
