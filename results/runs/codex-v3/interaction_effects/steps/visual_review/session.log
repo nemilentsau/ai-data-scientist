@@ -1,0 +1,38 @@
+2026-04-04T15:43:44.648441Z  WARN codex_core::shell_snapshot: Failed to delete shell snapshot at "/private/var/folders/j_/dt6mk_nd7tbfpyx2v5z_lv6c0000gn/T/tmpis8z0vei/.codex-home/shell_snapshots/019d5925-c472-7873-a6e1-9de962df4ed4.tmp-1775317424218285000": Os { code: 2, kind: NotFound, message: "No such file or directory" }
+2026-04-04T15:43:49.251490Z  WARN codex_core::plugins::startup_sync: skipping startup remote plugin sync because curated marketplace is not ready codex_home=/private/var/folders/j_/dt6mk_nd7tbfpyx2v5z_lv6c0000gn/T/tmpis8z0vei/.codex-home
+2026-04-04T15:44:13.728344Z ERROR codex_core::tools::router: error=exec_command failed for `/bin/zsh -lc "python - <<'PY'
+import pandas as pd
+import statsmodels.formula.api as smf
+
+df = pd.read_csv('dataset.csv')
+# Test interaction and nonlinearity suggested by heatmap
+for c in ['ad_budget_usd','time_of_day_hour','channel_score','page_load_time_sec','previous_visits']:
+    df[c+'_z']=(df[c]-df[c].mean())/df[c].std()
+
+m_base = smf.logit('converted ~ ad_budget_usd_z + time_of_day_hour_z + channel_score_z + page_load_time_sec_z + previous_visits_z + C(device)', data=df).fit(disp=False)
+m_inter = smf.logit('converted ~ ad_budget_usd_z + time_of_day_hour_z * channel_score_z + page_load_time_sec_z + previous_visits_z + C(device)', data=df).fit(disp=False)
+m_timequad = smf.logit('converted ~ ad_budget_usd_z + time_of_day_hour_z + I(time_of_day_hour_z**2) + channel_score_z + page_load_time_sec_z + previous_visits_z + C(device)', data=df).fit(disp=False)
+m_scorequad = smf.logit('converted ~ ad_budget_usd_z + time_of_day_hour_z + channel_score_z + I(channel_score_z**2) + page_load_time_sec_z + previous_visits_z + C(device)', data=df).fit(disp=False)
+print('AIC base', m_base.aic)
+print('AIC interaction', m_inter.aic)
+print('AIC time quad', m_timequad.aic)
+print('AIC score quad', m_scorequad.aic)
+print('\\ninteraction params')
+print(m_inter.params.to_string())
+print('\\ninteraction pvalues')
+print(m_inter.pvalues.to_string())
+print('\\ntime quad p')
+print(m_timequad.pvalues.to_string())
+print('\\nscore quad p')
+print(m_scorequad.pvalues.to_string())
+PY"`: CreateProcess { message: "Codex(Sandbox(Denied { output: ExecToolCallOutput { exit_code: 1, stdout: StreamOutput { text: \"\", truncated_after_lines: None }, stderr: StreamOutput { text: \"zsh:1: can't create temp file for here document: operation not permitted\\n\", truncated_after_lines: None }, aggregated_output: StreamOutput { text: \"zsh:1: can't create temp file for here document: operation not permitted\\n\", truncated_after_lines: None }, duration: 0ns, timed_out: false }, network_policy_decision: None }))" }
+2026-04-04T15:47:46.047064Z  WARN codex_core::codex: stream disconnected - retrying sampling request (1/5 in 199ms)...
+2026-04-04T15:48:01.254558Z  WARN codex_core::codex: stream disconnected - retrying sampling request (2/5 in 370ms)...
+2026-04-04T15:48:16.629343Z  WARN codex_core::codex: stream disconnected - retrying sampling request (3/5 in 823ms)...
+2026-04-04T15:48:32.457584Z  WARN codex_core::codex: stream disconnected - retrying sampling request (4/5 in 1.687s)...
+2026-04-04T15:48:49.150782Z  WARN codex_core::codex: stream disconnected - retrying sampling request (5/5 in 3.389s)...
+2026-04-04T15:49:07.545445Z  WARN codex_core::client: falling back to HTTP
+2026-04-04T15:53:12.069255Z  WARN codex_core::codex: stream disconnected - retrying sampling request (1/5 in 188ms)...
+2026-04-04T15:55:53.759071Z  WARN codex_core::codex: stream disconnected - retrying sampling request (2/5 in 390ms)...
+2026-04-04T15:57:33.383177Z ERROR codex_core::tools::router: error=patch rejected: writing outside of the project; rejected by user approval settings
+2026-04-04T15:58:50.414740Z ERROR codex_core::tools::router: error=patch rejected: writing outside of the project; rejected by user approval settings

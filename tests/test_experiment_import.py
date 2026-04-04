@@ -198,6 +198,58 @@ def test_import_indexes_config_level_benchmark_report_and_claude_session_json(tm
     ) == 1
 
 
+def test_import_refreshes_static_dashboard_api_when_frontend_dist_exists(tmp_path: Path):
+    repo_root = tmp_path
+    _write_yaml(
+        repo_root / "results" / "configs" / "solo-codex.yaml",
+        {"name": "solo-codex", "team": [{"role": "codex"}]},
+    )
+    _write_run(repo_root / "results" / "runs" / "solo-codex" / "multimodal")
+
+    stale_api_dir = repo_root / "frontend" / "dist" / "api"
+    stale_api_dir.mkdir(parents=True, exist_ok=True)
+    _write_json(stale_api_dir / "experiments.json", {"experiments": [{"experiment_id": "stale"}]})
+    _write_json(
+        stale_api_dir / "experiments" / "stale.json",
+        {"experiment": {"experiment_id": "stale"}},
+    )
+
+    experiment_dir = import_legacy_experiment(
+        repo_root=repo_root,
+        experiment_id="exp_20260401_091500_imported",
+        title="Imported experiment",
+    )
+
+    manifest = json.loads((experiment_dir / "manifest.json").read_text())
+    experiments_api = json.loads((stale_api_dir / "experiments.json").read_text())
+    detail_api = json.loads(
+        (
+            stale_api_dir
+            / "experiments"
+            / "exp_20260401_091500_imported.json"
+        ).read_text()
+    )
+    artifact = next(
+        artifact for artifact in manifest["artifacts"] if artifact["type"] == "analysis_report"
+    )
+    decorated_artifact = next(
+        candidate
+        for candidate in detail_api["artifacts"]
+        if candidate["artifact_id"] == artifact["artifact_id"]
+    )
+
+    assert experiments_api["experiments"][0]["experiment_id"] == "exp_20260401_091500_imported"
+    assert not (stale_api_dir / "experiments" / "stale.json").exists()
+    assert detail_api["experiment"]["experiment_id"] == "exp_20260401_091500_imported"
+    assert "content_url" in decorated_artifact
+    assert (
+        repo_root
+        / "frontend"
+        / "dist"
+        / decorated_artifact["content_url"].lstrip("/")
+    ).exists()
+
+
 def test_import_includes_experiment_scoped_synthesis_docs_with_matching_front_matter(
     tmp_path: Path,
 ):

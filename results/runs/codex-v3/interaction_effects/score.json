@@ -1,0 +1,81 @@
+{
+  "dataset": "interaction_effects",
+  "config": "codex-v3",
+  "agent": "codex",
+  "verdict": "partial",
+  "run_status": "completed",
+  "rerun_recommended": false,
+  "run_error_reasons": [],
+  "core_insight_pass": false,
+  "required_coverage": 0.3333333333333333,
+  "supporting_coverage": 0.8333333333333334,
+  "oracle_attainment": 0.3799999999999999,
+  "oracle_metric_name": "roc_auc",
+  "oracle_agent_value": 0.69,
+  "fatal_errors": [],
+  "efficiency": {
+    "transcript_chars": 63573.0,
+    "trace_events": 71.0,
+    "report_chars": 6563.0
+  },
+  "criterion_results": [
+    {
+      "criterion_id": "interaction_effects_interaction_tested",
+      "group": "must_have",
+      "status": "partial",
+      "justification": "The agent tested a page_load_time_sec * device interaction term in logistic regression (AIC comparison shown), and created a descriptive heatmap of channel_score \u00d7 time_of_day_hour conversion rates. However, the agent never formally tested the key channel_score \u00d7 time_of_day_hour interaction term in any model, nor used a tree-based or other inherently non-additive model.",
+      "evidence": "m2 = smf.logit('converted ~ ad_budget_usd_z + time_of_day_hour_z + channel_score_z + page_load_time_sec_z * C(device) + previous_visits_z', data=df).fit() ... AIC base/inter 1669.49 1670.61"
+    },
+    {
+      "criterion_id": "interaction_effects_main_effects_only_underperforms",
+      "group": "must_have",
+      "status": "miss",
+      "justification": "The agent never built an interaction-aware model (with the key channel\u00d7time interaction) and compared its performance to the main-effects model. The only AIC comparison was between the base model and a page_load*device interaction model, which showed no improvement. No ROC-AUC comparison between main-effects-only and interaction-aware models is provided.",
+      "evidence": "ROC AUC 0.69 \u00b1 0.03 reported only for the main-effects logistic regression. No interaction-aware model performance is reported."
+    },
+    {
+      "criterion_id": "interaction_effects_channel_time_interaction_identified",
+      "group": "must_have",
+      "status": "partial",
+      "justification": "The agent descriptively identified that time_of_day_hour and channel_score 'compound' and created a heatmap showing rates from 13.3% to 72.9%. However, the agent treats these primarily as two strong independent main effects that happen to align, rather than formally identifying their interaction as THE key driver of the classification boundary. No formal interaction term was tested.",
+      "evidence": "Finding 3: 'Time of day and channel score compound' ... 'the strongest practical signal is to align delivery toward sessions that are both late-day and high-channel-score' ... heatmap shows 13.3% (0-6, low channel) to 72.9% (18-24, high channel)"
+    },
+    {
+      "criterion_id": "interaction_effects_interaction_visualized",
+      "group": "supporting",
+      "status": "hit",
+      "justification": "The agent created a time_channel_interaction_heatmap.png showing conversion rates across time-of-day bands and channel-score quartiles, clearly illustrating how conversion varies across combinations.",
+      "evidence": "time_channel_interaction_heatmap.png shows lowest-converting segment at 13.3% (0-6 plus bottom channel-score quartile) and highest at 72.9% (18-24 plus top channel-score quartile)"
+    },
+    {
+      "criterion_id": "interaction_effects_secondary_features_not_overstated",
+      "group": "supporting",
+      "status": "hit",
+      "justification": "The agent correctly identifies device, page_load_time_sec, ad_budget_usd, and previous_visits as weak/non-significant, with confidence intervals crossing 1.0 in the adjusted model, and explicitly cautions against overstating them.",
+      "evidence": "'ad_budget_usd, page_load_time_sec, previous_visits, and device indicators all have confidence intervals that cross 1.0' ... 'more spend per session, faster pages within the observed range, and device category do not show strong independent effects'"
+    },
+    {
+      "criterion_id": "interaction_effects_non_additive_language",
+      "group": "supporting",
+      "status": "partial",
+      "justification": "The agent uses language like 'compound' and 'both late-day and high-channel-score,' which hints at non-additivity. However, the report never explicitly states that the effect of one variable depends on the value of the other \u2014 the core non-additive insight. The framing remains largely as two independently strong effects that happen to combine well.",
+      "evidence": "'those factors compound' ... 'the best conversion outcomes occur when high-intent traffic arrives at high-intent times'"
+    },
+    {
+      "criterion_id": "interaction_effects_main_effects_only_conclusion",
+      "group": "forbidden",
+      "status": "miss",
+      "justification": "While the agent's formal modeling is primarily additive, they did test one interaction term (page_load*device), created a channel\u00d7time interaction heatmap, and acknowledged the compounding pattern. This shows awareness of interactions, even though the key interaction was not formally modeled. The agent did not completely ignore interactions.",
+      "evidence": "Tested page_load*device interaction; created time_channel_interaction_heatmap; mentioned 'compound' effect of time and channel."
+    },
+    {
+      "criterion_id": "interaction_effects_misses_interaction_pattern",
+      "group": "forbidden",
+      "status": "miss",
+      "justification": "The agent explicitly discusses the compounding effect of channel_score and time_of_day_hour and does not explain conversion entirely through separate main effects. Finding 3 specifically addresses their joint pattern.",
+      "evidence": "Finding 3: 'Time of day and channel score compound, while budget and page speed add little signal' ... heatmap shows clear interaction pattern"
+    }
+  ],
+  "summary": "The agent correctly identified time_of_day_hour and channel_score as the two dominant features, created a useful interaction heatmap showing their joint effect (13.3% to 72.9% conversion), and appropriately downplayed secondary features. However, the analysis fundamentally fails to formally test the channel_score \u00d7 time_of_day_hour interaction term, never builds an interaction-aware predictive model, and consequently never demonstrates that a main-effects-only model underperforms. The agent descriptively noticed the interaction pattern ('compound') but stopped short of the key analytical step: fitting an interaction term or tree-based model and showing its superiority. This results in a partial verdict \u2014 the right pattern was observed but not rigorously established.",
+  "raw_response": "```json\n{\n  \"must_have\": {\n    \"interaction_effects_interaction_tested\": {\n      \"status\": \"partial\",\n      \"justification\": \"The agent tested a page_load_time_sec * device interaction term in logistic regression (AIC comparison shown), and created a descriptive heatmap of channel_score \u00d7 time_of_day_hour conversion rates. However, the agent never formally tested the key channel_score \u00d7 time_of_day_hour interaction term in any model, nor used a tree-based or other inherently non-additive model.\",\n      \"evidence\": \"m2 = smf.logit('converted ~ ad_budget_usd_z + time_of_day_hour_z + channel_score_z + page_load_time_sec_z * C(device) + previous_visits_z', data=df).fit() ... AIC base/inter 1669.49 1670.61\"\n    },\n    \"interaction_effects_main_effects_only_underperforms\": {\n      \"status\": \"miss\",\n      \"justification\": \"The agent never built an interaction-aware model (with the key channel\u00d7time interaction) and compared its performance to the main-effects model. The only AIC comparison was between the base model and a page_load*device interaction model, which showed no improvement. No ROC-AUC comparison between main-effects-only and interaction-aware models is provided.\",\n      \"evidence\": \"ROC AUC 0.69 \u00b1 0.03 reported only for the main-effects logistic regression. No interaction-aware model performance is reported.\"\n    },\n    \"interaction_effects_channel_time_interaction_identified\": {\n      \"status\": \"partial\",\n      \"justification\": \"The agent descriptively identified that time_of_day_hour and channel_score 'compound' and created a heatmap showing rates from 13.3% to 72.9%. However, the agent treats these primarily as two strong independent main effects that happen to align, rather than formally identifying their interaction as THE key driver of the classification boundary. No formal interaction term was tested.\",\n      \"evidence\": \"Finding 3: 'Time of day and channel score compound' ... 'the strongest practical signal is to align delivery toward sessions that are both late-day and high-channel-score' ... heatmap shows 13.3% (0-6, low channel) to 72.9% (18-24, high channel)\"\n    }\n  },\n  \"supporting\": {\n    \"interaction_effects_interaction_visualized\": {\n      \"status\": \"hit\",\n      \"justification\": \"The agent created a time_channel_interaction_heatmap.png showing conversion rates across time-of-day bands and channel-score quartiles, clearly illustrating how conversion varies across combinations.\",\n      \"evidence\": \"time_channel_interaction_heatmap.png shows lowest-converting segment at 13.3% (0-6 plus bottom channel-score quartile) and highest at 72.9% (18-24 plus top channel-score quartile)\"\n    },\n    \"interaction_effects_secondary_features_not_overstated\": {\n      \"status\": \"hit\",\n      \"justification\": \"The agent correctly identifies device, page_load_time_sec, ad_budget_usd, and previous_visits as weak/non-significant, with confidence intervals crossing 1.0 in the adjusted model, and explicitly cautions against overstating them.\",\n      \"evidence\": \"'ad_budget_usd, page_load_time_sec, previous_visits, and device indicators all have confidence intervals that cross 1.0' ... 'more spend per session, faster pages within the observed range, and device category do not show strong independent effects'\"\n    },\n    \"interaction_effects_non_additive_language\": {\n      \"status\": \"partial\",\n      \"justification\": \"The agent uses language like 'compound' and 'both late-day and high-channel-score,' which hints at non-additivity. However, the report never explicitly states that the effect of one variable depends on the value of the other \u2014 the core non-additive insight. The framing remains largely as two independently strong effects that happen to combine well.\",\n      \"evidence\": \"'those factors compound' ... 'the best conversion outcomes occur when high-intent traffic arrives at high-intent times'\"\n    }\n  },\n  \"forbidden\": {\n    \"interaction_effects_main_effects_only_conclusion\": {\n      \"status\": \"miss\",\n      \"justification\": \"While the agent's formal modeling is primarily additive, they did test one interaction term (page_load*device), created a channel\u00d7time interaction heatmap, and acknowledged the compounding pattern. This shows awareness of interactions, even though the key interaction was not formally modeled. The agent did not completely ignore interactions.\",\n      \"evidence\": \"Tested page_load*device interaction; created time_channel_interaction_heatmap; mentioned 'compound' effect of time and channel.\"\n    },\n    \"interaction_effects_misses_interaction_pattern\": {\n      \"status\": \"miss\",\n      \"justification\": \"The agent explicitly discusses the compounding effect of channel_score and time_of_day_hour and does not explain conversion entirely through separate main effects. Finding 3 specifically addresses their joint pattern.\",\n      \"evidence\": \"Finding 3: 'Time of day and channel score compound, while budget and page speed add little signal' ... heatmap shows clear interaction pattern\"\n    }\n  },\n  \"oracle_metric\": {\n    \"agent_value\": 0.69,\n    \"justification\": \"The agent reports ROC AUC 0.69 \u00b1 0.03 from 5-fold cross-validated logistic regression, but this is a main-effects-only model, not an interaction-aware classifier. No interaction-aware model ROC-AUC was reported.\"\n  },\n  \"summary\": \"The agent correctly identified time_of_day_hour and channel_score as the two dominant features, created a useful interaction heatmap showing their joint effect (13.3% to 72.9% conversion), and appropriately downplayed secondary features. However, the analysis fundamentally fails to formally test the channel_score \u00d7 time_of_day_hour interaction term, never builds an interaction-aware predictive model, and consequently never demonstrates that a main-effects-only model underperforms. The agent descriptively noticed the interaction pattern ('compound') but stopped short of the key analytical step: fitting an interaction term or tree-based model and showing its superiority. This results in a partial verdict \u2014 the right pattern was observed but not rigorously established.\"\n}\n```"
+}

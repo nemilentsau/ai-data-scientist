@@ -6,9 +6,11 @@ import argparse
 import json
 import re
 import shutil
+from copy import deepcopy
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
+from urllib.parse import quote
 
 import yaml
 
@@ -280,6 +282,7 @@ def import_legacy_experiment(
     experiment_dir.mkdir(parents=True, exist_ok=True)
     _write_json(experiment_dir / "manifest.json", manifest)
     _write_json(experiments_dir / "index.json", load_experiments_index(db_path))
+    _refresh_frontend_dist_api(repo_root=repo_root, experiments_dir=experiments_dir)
 
     return experiment_dir
 
@@ -563,6 +566,82 @@ def _build_experiment_record(
 def _write_json(path: Path, payload: Any) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(payload, indent=2) + "\n")
+
+
+def _refresh_frontend_dist_api(*, repo_root: Path, experiments_dir: Path) -> None:
+    frontend_dist_dir = repo_root / "frontend" / "dist"
+    if not frontend_dist_dir.exists():
+        return
+
+    api_dir = frontend_dist_dir / "api"
+    detail_dir = api_dir / "experiments"
+
+    if api_dir.exists():
+        shutil.rmtree(api_dir)
+    detail_dir.mkdir(parents=True, exist_ok=True)
+
+    experiments_index_path = experiments_dir / "index.json"
+    if experiments_index_path.exists():
+        experiments = json.loads(experiments_index_path.read_text())
+    else:
+        experiments = []
+
+    _write_json(api_dir / "experiments.json", {"experiments": experiments})
+
+    for experiment in experiments:
+        experiment_id = experiment.get("experiment_id")
+        if not experiment_id:
+            continue
+
+        manifest_path = experiments_dir / experiment_id / "manifest.json"
+        if not manifest_path.exists():
+            continue
+
+        manifest = json.loads(manifest_path.read_text())
+        decorated_manifest = _decorate_manifest_for_frontend(manifest)
+        _write_json(detail_dir / f"{experiment_id}.json", decorated_manifest)
+
+        for artifact in manifest.get("artifacts", []):
+            artifact_path = artifact.get("path")
+            artifact_id = artifact.get("artifact_id")
+            if not artifact_path or not artifact_id:
+                continue
+
+            source_path = repo_root / artifact_path
+            if not source_path.exists():
+                continue
+
+            output_path = (
+                frontend_dist_dir
+                / _artifact_content_url(experiment_id, artifact).lstrip("/")
+            )
+            output_path.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(source_path, output_path)
+
+
+def _decorate_manifest_for_frontend(manifest: dict[str, Any]) -> dict[str, Any]:
+    decorated = deepcopy(manifest)
+    experiment_id = decorated.get("experiment", {}).get("experiment_id")
+    if not experiment_id:
+        return decorated
+
+    decorated["artifacts"] = [
+        {
+            **artifact,
+            "content_url": _artifact_content_url(experiment_id, artifact),
+        }
+        for artifact in decorated.get("artifacts", [])
+    ]
+    return decorated
+
+
+def _artifact_content_url(experiment_id: str, artifact: dict[str, Any]) -> str:
+    suffix = Path(str(artifact.get("path") or "")).suffix
+    encoded_experiment_id = quote(experiment_id, safe="")
+    encoded_artifact_id = quote(str(artifact.get("artifact_id") or ""), safe="")
+    return (
+        f"/api/artifacts/{encoded_experiment_id}/{encoded_artifact_id}/content{suffix}"
+    )
 
 
 def _media_type(path: Path, artifact_type: str) -> str:

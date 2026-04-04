@@ -1,0 +1,81 @@
+{
+  "dataset": "heteroscedasticity",
+  "config": "codex-v3",
+  "agent": "codex",
+  "verdict": "partial",
+  "run_status": "completed",
+  "rerun_recommended": false,
+  "run_error_reasons": [],
+  "core_insight_pass": false,
+  "required_coverage": 0.5,
+  "supporting_coverage": 0.8333333333333334,
+  "oracle_attainment": null,
+  "oracle_metric_name": null,
+  "oracle_agent_value": 0.35,
+  "fatal_errors": [],
+  "efficiency": {
+    "transcript_chars": 93932.0,
+    "trace_events": 64.0,
+    "report_chars": 8565.0
+  },
+  "criterion_results": [
+    {
+      "criterion_id": "heteroscedasticity_residual_diagnostics_run",
+      "group": "must_have",
+      "status": "hit",
+      "justification": "The agent computed studentized residuals, Cook's distance via statsmodels get_influence().summary_frame(), and produced a residual plot (revenue_model_residuals.png). Residual diagnostics were clearly executed beyond just fitting a mean trend.",
+      "evidence": "Session: 'resid = models[\"rev_linear\"].get_influence().summary_frame()' computing student_resid and cooks_d. Report references 'plots/revenue_model_residuals.png' and discusses outliers by studentized residual."
+    },
+    {
+      "criterion_id": "heteroscedasticity_non_constant_variance_identified",
+      "group": "must_have",
+      "status": "partial",
+      "justification": "The agent noticed the variance fan-out pattern but buried it as a minor caveat in the Limitations section rather than treating it as a key finding. The identification is present but significantly underweighted \u2014 it should have been the central discovery, not a footnote.",
+      "evidence": "Limitations section: 'The residual plot also shows wider variance at higher fitted revenue, so exact standard-error-based inference should be interpreted cautiously even though the high-level signal is clear.'"
+    },
+    {
+      "criterion_id": "heteroscedasticity_remedy_suggested",
+      "group": "must_have",
+      "status": "miss",
+      "justification": "The agent never recommended weighted regression, robust standard errors, or a variance-stabilizing transform. They noted inference should be 'interpreted cautiously' but offered no concrete remedy for the heteroscedasticity they observed.",
+      "evidence": "No mention of WLS, HC standard errors, log-transform, or any other variance-stabilizing technique anywhere in the report or session."
+    },
+    {
+      "criterion_id": "heteroscedasticity_residual_plot_used",
+      "group": "supporting",
+      "status": "hit",
+      "justification": "A residual plot was created and referenced in the report, and the agent used it to observe the variance pattern.",
+      "evidence": "Report: 'These are visible in plots/revenue_model_residuals.png' and 'The residual plot also shows wider variance at higher fitted revenue.'"
+    },
+    {
+      "criterion_id": "heteroscedasticity_inference_risk_noted",
+      "group": "supporting",
+      "status": "partial",
+      "justification": "The agent mentioned that inference should be cautious but did not explicitly explain the mechanism \u2014 that standard OLS standard errors, p-values, and confidence intervals are biased/inconsistent under heteroscedasticity.",
+      "evidence": "'exact standard-error-based inference should be interpreted cautiously even though the high-level signal is clear'"
+    },
+    {
+      "criterion_id": "heteroscedasticity_linear_mean_trend_preserved",
+      "group": "supporting",
+      "status": "hit",
+      "justification": "The agent clearly distinguished the strong linear mean relationship (R\u00b2=0.945) from the variance problem, explicitly noting 'the high-level signal is clear' while flagging the variance issue separately.",
+      "evidence": "Key Finding 1 emphasises 'revenue_usd ~ ad_spend_usd: R\u00b2 = 0.945' as valid. Limitations section separately notes the variance issue without dismissing the mean trend."
+    },
+    {
+      "criterion_id": "heteroscedasticity_assumes_constant_variance",
+      "group": "forbidden",
+      "status": "miss",
+      "justification": "The agent did not assume constant variance \u2014 they explicitly noted increasing variance at higher fitted values in the limitations section.",
+      "evidence": "'The residual plot also shows wider variance at higher fitted revenue'"
+    },
+    {
+      "criterion_id": "heteroscedasticity_uses_ols_uncritically",
+      "group": "forbidden",
+      "status": "miss",
+      "justification": "While the main findings sections present OLS p-values without inline caveats, the agent does add a caveat in the limitations section about OLS inference reliability. The caveat is weak and misplaced, but it exists, so OLS was not used entirely without caveats.",
+      "evidence": "Limitations: 'exact standard-error-based inference should be interpreted cautiously even though the high-level signal is clear'"
+    }
+  ],
+  "summary": "The agent conducted a thorough and technically competent marketing analysis but largely missed the forest for the trees. While residual diagnostics were properly executed and the heteroscedasticity pattern was observed in the residual plot, the agent treated the variance fan-out as a minor caveat rather than the dataset's defining feature. The entire report is oriented around channel/region/season comparisons and the strength of the linear spend-revenue relationship, with the non-constant variance mentioned only in a single sentence in the Limitations section. Critically, no remedy (weighted regression, robust standard errors, or variance-stabilizing transform) was suggested. The agent demonstrated good analytical mechanics but failed to recognise which signal was the important one for this dataset.",
+  "raw_response": "```json\n{\n  \"must_have\": {\n    \"heteroscedasticity_residual_diagnostics_run\": {\n      \"status\": \"hit\",\n      \"justification\": \"The agent computed studentized residuals, Cook's distance via statsmodels get_influence().summary_frame(), and produced a residual plot (revenue_model_residuals.png). Residual diagnostics were clearly executed beyond just fitting a mean trend.\",\n      \"evidence\": \"Session: 'resid = models[\\\"rev_linear\\\"].get_influence().summary_frame()' computing student_resid and cooks_d. Report references 'plots/revenue_model_residuals.png' and discusses outliers by studentized residual.\"\n    },\n    \"heteroscedasticity_non_constant_variance_identified\": {\n      \"status\": \"partial\",\n      \"justification\": \"The agent noticed the variance fan-out pattern but buried it as a minor caveat in the Limitations section rather than treating it as a key finding. The identification is present but significantly underweighted \u2014 it should have been the central discovery, not a footnote.\",\n      \"evidence\": \"Limitations section: 'The residual plot also shows wider variance at higher fitted revenue, so exact standard-error-based inference should be interpreted cautiously even though the high-level signal is clear.'\"\n    },\n    \"heteroscedasticity_remedy_suggested\": {\n      \"status\": \"miss\",\n      \"justification\": \"The agent never recommended weighted regression, robust standard errors, or a variance-stabilizing transform. They noted inference should be 'interpreted cautiously' but offered no concrete remedy for the heteroscedasticity they observed.\",\n      \"evidence\": \"No mention of WLS, HC standard errors, log-transform, or any other variance-stabilizing technique anywhere in the report or session.\"\n    }\n  },\n  \"supporting\": {\n    \"heteroscedasticity_residual_plot_used\": {\n      \"status\": \"hit\",\n      \"justification\": \"A residual plot was created and referenced in the report, and the agent used it to observe the variance pattern.\",\n      \"evidence\": \"Report: 'These are visible in plots/revenue_model_residuals.png' and 'The residual plot also shows wider variance at higher fitted revenue.'\"\n    },\n    \"heteroscedasticity_inference_risk_noted\": {\n      \"status\": \"partial\",\n      \"justification\": \"The agent mentioned that inference should be cautious but did not explicitly explain the mechanism \u2014 that standard OLS standard errors, p-values, and confidence intervals are biased/inconsistent under heteroscedasticity.\",\n      \"evidence\": \"'exact standard-error-based inference should be interpreted cautiously even though the high-level signal is clear'\"\n    },\n    \"heteroscedasticity_linear_mean_trend_preserved\": {\n      \"status\": \"hit\",\n      \"justification\": \"The agent clearly distinguished the strong linear mean relationship (R\u00b2=0.945) from the variance problem, explicitly noting 'the high-level signal is clear' while flagging the variance issue separately.\",\n      \"evidence\": \"Key Finding 1 emphasises 'revenue_usd ~ ad_spend_usd: R\u00b2 = 0.945' as valid. Limitations section separately notes the variance issue without dismissing the mean trend.\"\n    }\n  },\n  \"forbidden\": {\n    \"heteroscedasticity_assumes_constant_variance\": {\n      \"status\": \"miss\",\n      \"justification\": \"The agent did not assume constant variance \u2014 they explicitly noted increasing variance at higher fitted values in the limitations section.\",\n      \"evidence\": \"'The residual plot also shows wider variance at higher fitted revenue'\"\n    },\n    \"heteroscedasticity_uses_ols_uncritically\": {\n      \"status\": \"miss\",\n      \"justification\": \"While the main findings sections present OLS p-values without inline caveats, the agent does add a caveat in the limitations section about OLS inference reliability. The caveat is weak and misplaced, but it exists, so OLS was not used entirely without caveats.\",\n      \"evidence\": \"Limitations: 'exact standard-error-based inference should be interpreted cautiously even though the high-level signal is clear'\"\n    }\n  },\n  \"oracle_metric\": {\n    \"agent_value\": 0.35,\n    \"justification\": \"Verdict: partial. The agent ran proper residual diagnostics (must-have hit) and noticed the heteroscedasticity pattern (must-have partial), but critically failed to elevate it to a key finding or suggest any remedy (must-have miss). The core insight \u2014 that the variance fan-out is the dataset's defining feature \u2014 was treated as a minor limitation footnote rather than the central discovery. No forbidden criteria were triggered, but only 1 of 3 must-haves is fully hit.\"\n  },\n  \"summary\": \"The agent conducted a thorough and technically competent marketing analysis but largely missed the forest for the trees. While residual diagnostics were properly executed and the heteroscedasticity pattern was observed in the residual plot, the agent treated the variance fan-out as a minor caveat rather than the dataset's defining feature. The entire report is oriented around channel/region/season comparisons and the strength of the linear spend-revenue relationship, with the non-constant variance mentioned only in a single sentence in the Limitations section. Critically, no remedy (weighted regression, robust standard errors, or variance-stabilizing transform) was suggested. The agent demonstrated good analytical mechanics but failed to recognise which signal was the important one for this dataset.\"\n}"
+}

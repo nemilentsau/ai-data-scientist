@@ -1,0 +1,81 @@
+{
+  "dataset": "heteroscedasticity",
+  "config": "claude-v3",
+  "agent": "claude",
+  "verdict": "solved",
+  "run_status": "completed",
+  "rerun_recommended": false,
+  "run_error_reasons": [],
+  "core_insight_pass": true,
+  "required_coverage": 1.0,
+  "supporting_coverage": 1.0,
+  "oracle_attainment": null,
+  "oracle_metric_name": null,
+  "oracle_agent_value": 0.95,
+  "fatal_errors": [],
+  "efficiency": {
+    "transcript_chars": 195826.0,
+    "trace_events": 59.0,
+    "report_chars": 15654.0
+  },
+  "criterion_results": [
+    {
+      "criterion_id": "heteroscedasticity_residual_diagnostics_run",
+      "group": "must_have",
+      "status": "hit",
+      "justification": "The agent ran comprehensive residual diagnostics including residuals-vs-fitted plot, scale-location plot, Q-Q plot, residual histogram, Breusch-Pagan test, and Shapiro-Wilk test. This goes well beyond fitting only a mean trend.",
+      "evidence": "\"The model's residuals exhibit heteroscedasticity (Breusch-Pagan LM = 160.3, p < 0.001): absolute residual magnitude grows with predicted revenue, visible as a clear fan shape in the residuals-vs-fitted plot and a rising LOWESS trend in the scale-location plot. Residuals are also leptokurtic (excess kurtosis = 2.13, Shapiro-Wilk p < 0.001)\""
+    },
+    {
+      "criterion_id": "heteroscedasticity_non_constant_variance_identified",
+      "group": "must_have",
+      "status": "hit",
+      "justification": "The agent explicitly identifies that residual variance increases with fitted values / ad spend, supported by both visual diagnostics and a formal test. Finding 6 further quantifies the variance-spend relationship by decile.",
+      "evidence": "\"absolute residual magnitude grows with predicted revenue, visible as a clear fan shape in the residuals-vs-fitted plot and a rising LOWESS trend in the scale-location plot\" and \"The smallest decile has 2\u00d7 the coefficient of variation of the largest.\""
+    },
+    {
+      "criterion_id": "heteroscedasticity_remedy_suggested",
+      "group": "must_have",
+      "status": "hit",
+      "justification": "The agent recommends all three major remedy families: weighted least squares (actually fitted with weights = 1/spend\u00b2), heteroscedasticity-robust standard errors, and a variance-stabilizing log transform (though noting the log-log model has its own issues).",
+      "evidence": "\"a weighted least squares model (weights = 1/spend\u00b2) confirms the slope is robust (ROAS \u2248 2.48)\" and \"The linear OLS model with heteroscedasticity-robust standard errors is the most practical choice.\""
+    },
+    {
+      "criterion_id": "heteroscedasticity_residual_plot_used",
+      "group": "supporting",
+      "status": "hit",
+      "justification": "The agent produced a full regression diagnostics figure with four panels (residuals vs fitted with rolling \u00b11.96\u03c3 bands, Q-Q plot, residual histogram, scale-location plot with LOWESS) and ran the formal Breusch-Pagan test (LM = 160.3, p < 0.001).",
+      "evidence": "\"(Top-left) Residuals vs fitted with rolling \u00b11.96\u03c3 bands showing the fan-shaped heteroscedasticity. ... (Bottom-right) Scale-location plot with LOWESS smoother confirms rising residual spread.\""
+    },
+    {
+      "criterion_id": "heteroscedasticity_inference_risk_noted",
+      "group": "supporting",
+      "status": "hit",
+      "justification": "The agent explicitly warns that OLS standard errors are biased under the detected heteroscedasticity, noting they are underestimated for high-spend campaigns and that the blended residual SD misrepresents uncertainty at both ends of the spend range.",
+      "evidence": "\"While the OLS coefficient estimates are unbiased, standard errors are underestimated for high-spend campaigns. The constant residual standard deviation of ~$8,666 overstates precision for large campaigns and understates it for small ones.\""
+    },
+    {
+      "criterion_id": "heteroscedasticity_linear_mean_trend_preserved",
+      "group": "supporting",
+      "status": "hit",
+      "justification": "The agent carefully distinguishes the unbiased mean trend (Revenue \u2248 2.49 \u00d7 Spend, R\u00b2 = 0.945) from the variance problem, confirming the slope via WLS rather than discarding the model.",
+      "evidence": "\"The OLS coefficient estimates remain unbiased under heteroscedasticity, and a weighted least squares model (weights = 1/spend\u00b2) confirms the slope is robust (ROAS \u2248 2.48).\""
+    },
+    {
+      "criterion_id": "heteroscedasticity_assumes_constant_variance",
+      "group": "forbidden",
+      "status": "miss",
+      "justification": "The agent explicitly tested for and rejected constant variance using both visual diagnostics and a formal Breusch-Pagan test. No assumption of constant variance was made.",
+      "evidence": "\"Breusch-Pagan LM = 160.3, p < 0.001\" \u2014 non-constant variance is a central finding of the report."
+    },
+    {
+      "criterion_id": "heteroscedasticity_uses_ols_uncritically",
+      "group": "forbidden",
+      "status": "miss",
+      "justification": "The agent consistently caveats OLS inference, noting biased standard errors, recommending robust alternatives, and providing heteroscedasticity-aware prediction intervals rather than reporting OLS confidence as trustworthy.",
+      "evidence": "\"standard errors are underestimated for high-spend campaigns\" and the explicit recommendation for \"heteroscedasticity-robust standard errors\" as the practical choice."
+    }
+  ],
+  "summary": "The agent delivered a thorough and well-structured analysis that squarely addresses the heteroscedasticity discovery task. It ran full residual diagnostics (residual plots, scale-location plot, Breusch-Pagan test), clearly identified non-constant variance increasing with spend/fitted values, suggested all three standard remedies (WLS, robust SEs, log transform), preserved the linear mean trend while distinguishing it from the variance problem, and explicitly warned about the unreliability of standard OLS inference. No forbidden behaviors were observed \u2014 the agent neither assumed constant variance nor reported OLS results uncritically. The analysis goes beyond the minimum requirements by quantifying the variance pattern across spend deciles and providing heteroscedasticity-aware prediction intervals. The only mild criticism is organizational: heteroscedasticity is the dataset's signature feature but is introduced as a subordinate observation within a broader spend-revenue finding rather than being elevated to headline status.",
+  "raw_response": "```json\n{\n  \"must_have\": {\n    \"heteroscedasticity_residual_diagnostics_run\": {\n      \"status\": \"hit\",\n      \"justification\": \"The agent ran comprehensive residual diagnostics including residuals-vs-fitted plot, scale-location plot, Q-Q plot, residual histogram, Breusch-Pagan test, and Shapiro-Wilk test. This goes well beyond fitting only a mean trend.\",\n      \"evidence\": \"\\\"The model's residuals exhibit heteroscedasticity (Breusch-Pagan LM = 160.3, p < 0.001): absolute residual magnitude grows with predicted revenue, visible as a clear fan shape in the residuals-vs-fitted plot and a rising LOWESS trend in the scale-location plot. Residuals are also leptokurtic (excess kurtosis = 2.13, Shapiro-Wilk p < 0.001)\\\"\"\n    },\n    \"heteroscedasticity_non_constant_variance_identified\": {\n      \"status\": \"hit\",\n      \"justification\": \"The agent explicitly identifies that residual variance increases with fitted values / ad spend, supported by both visual diagnostics and a formal test. Finding 6 further quantifies the variance-spend relationship by decile.\",\n      \"evidence\": \"\\\"absolute residual magnitude grows with predicted revenue, visible as a clear fan shape in the residuals-vs-fitted plot and a rising LOWESS trend in the scale-location plot\\\" and \\\"The smallest decile has 2\u00d7 the coefficient of variation of the largest.\\\"\"\n    },\n    \"heteroscedasticity_remedy_suggested\": {\n      \"status\": \"hit\",\n      \"justification\": \"The agent recommends all three major remedy families: weighted least squares (actually fitted with weights = 1/spend\u00b2), heteroscedasticity-robust standard errors, and a variance-stabilizing log transform (though noting the log-log model has its own issues).\",\n      \"evidence\": \"\\\"a weighted least squares model (weights = 1/spend\u00b2) confirms the slope is robust (ROAS \u2248 2.48)\\\" and \\\"The linear OLS model with heteroscedasticity-robust standard errors is the most practical choice.\\\"\"\n    }\n  },\n  \"supporting\": {\n    \"heteroscedasticity_residual_plot_used\": {\n      \"status\": \"hit\",\n      \"justification\": \"The agent produced a full regression diagnostics figure with four panels (residuals vs fitted with rolling \u00b11.96\u03c3 bands, Q-Q plot, residual histogram, scale-location plot with LOWESS) and ran the formal Breusch-Pagan test (LM = 160.3, p < 0.001).\",\n      \"evidence\": \"\\\"(Top-left) Residuals vs fitted with rolling \u00b11.96\u03c3 bands showing the fan-shaped heteroscedasticity. ... (Bottom-right) Scale-location plot with LOWESS smoother confirms rising residual spread.\\\"\"\n    },\n    \"heteroscedasticity_inference_risk_noted\": {\n      \"status\": \"hit\",\n      \"justification\": \"The agent explicitly warns that OLS standard errors are biased under the detected heteroscedasticity, noting they are underestimated for high-spend campaigns and that the blended residual SD misrepresents uncertainty at both ends of the spend range.\",\n      \"evidence\": \"\\\"While the OLS coefficient estimates are unbiased, standard errors are underestimated for high-spend campaigns. The constant residual standard deviation of ~$8,666 overstates precision for large campaigns and understates it for small ones.\\\"\"\n    },\n    \"heteroscedasticity_linear_mean_trend_preserved\": {\n      \"status\": \"hit\",\n      \"justification\": \"The agent carefully distinguishes the unbiased mean trend (Revenue \u2248 2.49 \u00d7 Spend, R\u00b2 = 0.945) from the variance problem, confirming the slope via WLS rather than discarding the model.\",\n      \"evidence\": \"\\\"The OLS coefficient estimates remain unbiased under heteroscedasticity, and a weighted least squares model (weights = 1/spend\u00b2) confirms the slope is robust (ROAS \u2248 2.48).\\\"\"\n    }\n  },\n  \"forbidden\": {\n    \"heteroscedasticity_assumes_constant_variance\": {\n      \"status\": \"miss\",\n      \"justification\": \"The agent explicitly tested for and rejected constant variance using both visual diagnostics and a formal Breusch-Pagan test. No assumption of constant variance was made.\",\n      \"evidence\": \"\\\"Breusch-Pagan LM = 160.3, p < 0.001\\\" \u2014 non-constant variance is a central finding of the report.\"\n    },\n    \"heteroscedasticity_uses_ols_uncritically\": {\n      \"status\": \"miss\",\n      \"justification\": \"The agent consistently caveats OLS inference, noting biased standard errors, recommending robust alternatives, and providing heteroscedasticity-aware prediction intervals rather than reporting OLS confidence as trustworthy.\",\n      \"evidence\": \"\\\"standard errors are underestimated for high-spend campaigns\\\" and the explicit recommendation for \\\"heteroscedasticity-robust standard errors\\\" as the practical choice.\"\n    }\n  },\n  \"oracle_metric\": {\n    \"agent_value\": 0.95,\n    \"justification\": \"The agent achieved a clean sweep: all three must-have criteria are solidly hit, all three supporting criteria are hit, and neither forbidden criterion is triggered. The heteroscedasticity diagnosis is not a side note but a recurring theme woven through Findings 1 and 6, the Limitations section, and the Revenue Prediction section. The only minor deduction is that the agent could have more forcefully foregrounded heteroscedasticity as the key dataset pattern rather than burying it within the broader (correct but less central) narrative about ad spend being the sole revenue driver. Overall, this is an exemplary analysis that identifies the core pattern, supports it with both visual and formal evidence, proposes multiple remedies, preserves the mean trend, and warns about inference risks.\"\n  },\n  \"summary\": \"The agent delivered a thorough and well-structured analysis that squarely addresses the heteroscedasticity discovery task. It ran full residual diagnostics (residual plots, scale-location plot, Breusch-Pagan test), clearly identified non-constant variance increasing with spend/fitted values, suggested all three standard remedies (WLS, robust SEs, log transform), preserved the linear mean trend while distinguishing it from the variance problem, and explicitly warned about the unreliability of standard OLS inference. No forbidden behaviors were observed \u2014 the agent neither assumed constant variance nor reported OLS results uncritically. The analysis goes beyond the minimum requirements by quantifying the variance pattern across spend deciles and providing heteroscedasticity-aware prediction intervals. The only mild criticism is organizational: heteroscedasticity is the dataset's signature feature but is introduced as a subordinate observation within a broader spend-revenue finding rather than being elevated to headline status.\"\n}"
+}
