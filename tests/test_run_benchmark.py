@@ -3,9 +3,9 @@
 import json
 from pathlib import Path
 
+import run_benchmark as run_benchmark_wrapper
 import yaml
-
-import run_benchmark
+from ai_data_scientist.cli import benchmark as benchmark_cli
 from datasets.generator import NAME_TO_FILENAME
 
 
@@ -19,6 +19,10 @@ def _write_json(path: Path, payload: dict) -> None:
     path.write_text(json.dumps(payload, indent=2))
 
 
+def test_root_wrapper_exposes_package_main():
+    assert run_benchmark_wrapper.main is benchmark_cli.main
+
+
 def test_benchmark_run_refreshes_experiment_catalog_from_current_results(
     tmp_path: Path, monkeypatch
 ):
@@ -27,7 +31,6 @@ def test_benchmark_run_refreshes_experiment_catalog_from_current_results(
     configs_dir = results_dir / "configs"
     runs_dir = results_dir / "runs"
     datasets_dir = repo_root / "datasets" / "generated"
-    harness_dir = repo_root / "harness"
 
     _write_yaml(
         configs_dir / "solo-codex.yaml",
@@ -39,18 +42,21 @@ def test_benchmark_run_refreshes_experiment_catalog_from_current_results(
         },
     )
     datasets_dir.mkdir(parents=True, exist_ok=True)
-    harness_dir.mkdir(parents=True, exist_ok=True)
     dataset_csv = datasets_dir / NAME_TO_FILENAME["multimodal"]
     dataset_csv.write_text("feature,target\n1,2\n")
 
-    monkeypatch.setattr(run_benchmark, "ROOT", repo_root)
-    monkeypatch.setattr(run_benchmark, "DATASETS_DIR", datasets_dir)
-    monkeypatch.setattr(run_benchmark, "RESULTS_DIR", results_dir)
-    monkeypatch.setattr(run_benchmark, "CONFIGS_DIR", configs_dir)
-    monkeypatch.setattr(run_benchmark, "RUNS_DIR", runs_dir)
-    monkeypatch.setattr(run_benchmark, "HARNESS_DIR", harness_dir)
+    monkeypatch.setattr(benchmark_cli, "ROOT", repo_root)
+    monkeypatch.setattr(benchmark_cli, "DATASETS_DIR", datasets_dir)
+    monkeypatch.setattr(benchmark_cli, "RESULTS_DIR", results_dir)
+    monkeypatch.setattr(benchmark_cli, "CONFIGS_DIR", configs_dir)
+    monkeypatch.setattr(benchmark_cli, "RUNS_DIR", runs_dir)
 
-    def fake_run_agent(config: dict, config_name: str, dataset_name: str, dataset_csv: Path):
+    def fake_run_workflow_for_dataset(
+        config: dict,
+        config_name: str,
+        dataset_name: str,
+        dataset_csv: Path,
+    ):
         run_dir = runs_dir / config_name / dataset_name
         run_dir.mkdir(parents=True, exist_ok=True)
         (run_dir / "analysis_report.md").write_text("# Analysis\n")
@@ -84,10 +90,10 @@ def test_benchmark_run_refreshes_experiment_catalog_from_current_results(
         report_path.write_text("# Report\n")
         return report_path
 
-    monkeypatch.setattr(run_benchmark, "generate_datasets", lambda: None)
-    monkeypatch.setattr(run_benchmark, "run_agent", fake_run_agent)
-    monkeypatch.setattr(run_benchmark, "score_results", fake_score_results)
-    monkeypatch.setattr(run_benchmark, "generate_report", fake_generate_report)
+    monkeypatch.setattr(benchmark_cli, "generate_datasets", lambda: None)
+    monkeypatch.setattr(benchmark_cli, "run_workflow_for_dataset", fake_run_workflow_for_dataset)
+    monkeypatch.setattr(benchmark_cli, "score_results", fake_score_results)
+    monkeypatch.setattr(benchmark_cli, "generate_report", fake_generate_report)
     monkeypatch.setattr(
         "sys.argv",
         [
@@ -104,7 +110,7 @@ def test_benchmark_run_refreshes_experiment_catalog_from_current_results(
         ],
     )
 
-    run_benchmark.main()
+    benchmark_cli.main()
 
     manifest_path = (
         results_dir

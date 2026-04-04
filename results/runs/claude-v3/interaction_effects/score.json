@@ -1,0 +1,81 @@
+{
+  "dataset": "interaction_effects",
+  "config": "claude-v3",
+  "agent": "claude",
+  "verdict": "solved",
+  "run_status": "completed",
+  "rerun_recommended": false,
+  "run_error_reasons": [],
+  "core_insight_pass": true,
+  "required_coverage": 1.0,
+  "supporting_coverage": 1.0,
+  "oracle_attainment": 0.4079999999999999,
+  "oracle_metric_name": "roc_auc",
+  "oracle_agent_value": 0.704,
+  "fatal_errors": [],
+  "efficiency": {
+    "transcript_chars": 195000.0,
+    "trace_events": 52.0,
+    "report_chars": 18262.0
+  },
+  "criterion_results": [
+    {
+      "criterion_id": "interaction_effects_interaction_tested",
+      "group": "must_have",
+      "status": "hit",
+      "justification": "The agent explicitly tested a logistic regression interaction term (channel_score \u00d7 time_of_day_hour) and compared it to a main-effects-only model via likelihood ratio test and AIC. Also used tree-based models (Random Forest, Gradient Boosting) capable of capturing non-additive effects.",
+      "evidence": "A logistic regression with main effects only (channel_score + time_of_day_hour) yields AIC = 1662.1. Adding the interaction term drops AIC to 1645.1 (likelihood ratio test: chi-squared = 19.0, p < 0.001)."
+    },
+    {
+      "criterion_id": "interaction_effects_main_effects_only_underperforms",
+      "group": "must_have",
+      "status": "hit",
+      "justification": "The agent directly compared main-effects-only vs interaction-aware models on both AIC and cross-validated AUC-ROC, clearly showing the main-effects-only model underperforms.",
+      "evidence": "Logistic regression (no interaction): AUC 0.692 \u00b1 0.026 vs Logistic regression (with interaction): AUC 0.700 \u00b1 0.026. Parsimonious 3-term interaction model achieved AUC = 0.704. AIC drops from 1662.1 to 1645.1 with interaction term (LRT p < 0.001)."
+    },
+    {
+      "criterion_id": "interaction_effects_channel_time_interaction_identified",
+      "group": "must_have",
+      "status": "hit",
+      "justification": "The agent's primary finding explicitly identifies the channel_score \u00d7 time_of_day_hour interaction as the key driver. The standardized coefficient analysis confirms it is an order of magnitude larger than any other feature.",
+      "evidence": "The single most important finding is that channel score and time of day interact synergistically to drive conversion... the interaction term is highly significant (p = 1.6 x 10^-5)... The interaction term's standardized coefficient (0.71) is an order of magnitude larger than any other feature."
+    },
+    {
+      "criterion_id": "interaction_effects_interaction_visualized",
+      "group": "supporting",
+      "status": "hit",
+      "justification": "The agent produced multiple visualizations: a 5\u00d75 heatmap of conversion rates across channel-score and time-of-day quintiles, a summary dashboard, detailed interaction plots, and corrective diagnostics with residual and super-additive effect maps. Also provided tabulated conversion rates for key scenario combinations.",
+      "evidence": "Summary dashboard showing the interaction effect. The heatmap (top-left) shows conversion rates from 12% (low CS + late evening) to 75% (high CS + late evening). The synergy plot (top-center) shows observed rates systematically exceeding additive predictions at the high end."
+    },
+    {
+      "criterion_id": "interaction_effects_secondary_features_not_overstated",
+      "group": "supporting",
+      "status": "hit",
+      "justification": "The agent explicitly identifies ad_budget, page_load_time, device, and previous_visits as non-predictive, backed by statistical tests. Also warns that Gradient Boosting's impurity-based importance misleadingly ranks ad_budget second, and demonstrates this is an artifact via permutation importance.",
+      "evidence": "Ad budget is entirely uncorrelated with conversion... Page load time, device, and previous visits are non-predictive... removing ad_budget_usd from the Gradient Boosting model actually improves cross-validated AUC from 0.679 to 0.686."
+    },
+    {
+      "criterion_id": "interaction_effects_non_additive_language",
+      "group": "supporting",
+      "status": "hit",
+      "justification": "The agent uses clear non-additive language explaining that the effect of one variable depends on the value of the other, explicitly calling it a crossing interaction and noting the time-of-day effect reverses direction depending on channel score level.",
+      "evidence": "the evening conversion boost only materializes when channel quality is high. At low channel quality, time of day does not matter... This is stronger than simple synergy: the time-of-day effect reverses direction at low channel scores (flat or slightly negative) versus high channel scores (strongly positive)."
+    },
+    {
+      "criterion_id": "interaction_effects_main_effects_only_conclusion",
+      "group": "forbidden",
+      "status": "miss",
+      "justification": "The agent did not conclude from a purely additive model. The entire analysis is structured around testing and confirming the interaction, with main-effects-only analysis presented only as a baseline to show its inadequacy.",
+      "evidence": "Four models were evaluated... the interaction model outperforms main-effects-only in both AIC and AUC."
+    },
+    {
+      "criterion_id": "interaction_effects_misses_interaction_pattern",
+      "group": "forbidden",
+      "status": "miss",
+      "justification": "The agent's primary finding IS the interaction pattern. They explicitly warn that marginal main effects are misleading in isolation and that the time-of-day effect is entirely driven by high-channel-score sessions.",
+      "evidence": "Critically, this marginal effect is misleading in isolation. As shown in Finding 1, the time-of-day effect is entirely driven by high-channel-score sessions. At low channel scores (CS 0\u20130.2), there is no time-of-day effect at all."
+    }
+  ],
+  "summary": "This is an exemplary analysis that fully satisfies all evaluation criteria. The agent correctly identified the channel_score \u00d7 time_of_day_hour crossing interaction as the dominant driver of conversion, rigorously demonstrated that main-effects-only models underperform (AUC 0.692 vs 0.704, AIC 1662 vs 1645), and provided extensive visualization and tabulation of the interaction pattern. Secondary features were appropriately dismissed with statistical evidence, including a sophisticated debunking of misleading impurity-based feature importance for ad_budget via permutation importance. The non-additive nature of the relationship was explained in clear, precise language. No forbidden criteria were triggered. Verdict: solved.",
+  "raw_response": "```json\n{\n  \"must_have\": {\n    \"interaction_effects_interaction_tested\": {\n      \"status\": \"hit\",\n      \"justification\": \"The agent explicitly tested a logistic regression interaction term (channel_score \u00d7 time_of_day_hour) and compared it to a main-effects-only model via likelihood ratio test and AIC. Also used tree-based models (Random Forest, Gradient Boosting) capable of capturing non-additive effects.\",\n      \"evidence\": \"A logistic regression with main effects only (channel_score + time_of_day_hour) yields AIC = 1662.1. Adding the interaction term drops AIC to 1645.1 (likelihood ratio test: chi-squared = 19.0, p < 0.001).\"\n    },\n    \"interaction_effects_main_effects_only_underperforms\": {\n      \"status\": \"hit\",\n      \"justification\": \"The agent directly compared main-effects-only vs interaction-aware models on both AIC and cross-validated AUC-ROC, clearly showing the main-effects-only model underperforms.\",\n      \"evidence\": \"Logistic regression (no interaction): AUC 0.692 \u00b1 0.026 vs Logistic regression (with interaction): AUC 0.700 \u00b1 0.026. Parsimonious 3-term interaction model achieved AUC = 0.704. AIC drops from 1662.1 to 1645.1 with interaction term (LRT p < 0.001).\"\n    },\n    \"interaction_effects_channel_time_interaction_identified\": {\n      \"status\": \"hit\",\n      \"justification\": \"The agent's primary finding explicitly identifies the channel_score \u00d7 time_of_day_hour interaction as the key driver. The standardized coefficient analysis confirms it is an order of magnitude larger than any other feature.\",\n      \"evidence\": \"The single most important finding is that channel score and time of day interact synergistically to drive conversion... the interaction term is highly significant (p = 1.6 x 10^-5)... The interaction term's standardized coefficient (0.71) is an order of magnitude larger than any other feature.\"\n    }\n  },\n  \"supporting\": {\n    \"interaction_effects_interaction_visualized\": {\n      \"status\": \"hit\",\n      \"justification\": \"The agent produced multiple visualizations: a 5\u00d75 heatmap of conversion rates across channel-score and time-of-day quintiles, a summary dashboard, detailed interaction plots, and corrective diagnostics with residual and super-additive effect maps. Also provided tabulated conversion rates for key scenario combinations.\",\n      \"evidence\": \"Summary dashboard showing the interaction effect. The heatmap (top-left) shows conversion rates from 12% (low CS + late evening) to 75% (high CS + late evening). The synergy plot (top-center) shows observed rates systematically exceeding additive predictions at the high end.\"\n    },\n    \"interaction_effects_secondary_features_not_overstated\": {\n      \"status\": \"hit\",\n      \"justification\": \"The agent explicitly identifies ad_budget, page_load_time, device, and previous_visits as non-predictive, backed by statistical tests. Also warns that Gradient Boosting's impurity-based importance misleadingly ranks ad_budget second, and demonstrates this is an artifact via permutation importance.\",\n      \"evidence\": \"Ad budget is entirely uncorrelated with conversion... Page load time, device, and previous visits are non-predictive... removing ad_budget_usd from the Gradient Boosting model actually improves cross-validated AUC from 0.679 to 0.686.\"\n    },\n    \"interaction_effects_non_additive_language\": {\n      \"status\": \"hit\",\n      \"justification\": \"The agent uses clear non-additive language explaining that the effect of one variable depends on the value of the other, explicitly calling it a crossing interaction and noting the time-of-day effect reverses direction depending on channel score level.\",\n      \"evidence\": \"the evening conversion boost only materializes when channel quality is high. At low channel quality, time of day does not matter... This is stronger than simple synergy: the time-of-day effect reverses direction at low channel scores (flat or slightly negative) versus high channel scores (strongly positive).\"\n    }\n  },\n  \"forbidden\": {\n    \"interaction_effects_main_effects_only_conclusion\": {\n      \"status\": \"miss\",\n      \"justification\": \"The agent did not conclude from a purely additive model. The entire analysis is structured around testing and confirming the interaction, with main-effects-only analysis presented only as a baseline to show its inadequacy.\",\n      \"evidence\": \"Four models were evaluated... the interaction model outperforms main-effects-only in both AIC and AUC.\"\n    },\n    \"interaction_effects_misses_interaction_pattern\": {\n      \"status\": \"miss\",\n      \"justification\": \"The agent's primary finding IS the interaction pattern. They explicitly warn that marginal main effects are misleading in isolation and that the time-of-day effect is entirely driven by high-channel-score sessions.\",\n      \"evidence\": \"Critically, this marginal effect is misleading in isolation. As shown in Finding 1, the time-of-day effect is entirely driven by high-channel-score sessions. At low channel scores (CS 0\u20130.2), there is no time-of-day effect at all.\"\n    }\n  },\n  \"oracle_metric\": {\n    \"agent_value\": 0.704,\n    \"justification\": \"The agent reports the best interaction-aware model AUC as 0.704 for the parsimonious 3-term logistic model (channel_score, time_of_day_hour, and their interaction). Cross-validated result for the full interaction logistic model was 0.700 \u00b1 0.026.\"\n  },\n  \"summary\": \"This is an exemplary analysis that fully satisfies all evaluation criteria. The agent correctly identified the channel_score \u00d7 time_of_day_hour crossing interaction as the dominant driver of conversion, rigorously demonstrated that main-effects-only models underperform (AUC 0.692 vs 0.704, AIC 1662 vs 1645), and provided extensive visualization and tabulation of the interaction pattern. Secondary features were appropriately dismissed with statistical evidence, including a sophisticated debunking of misleading impurity-based feature importance for ad_budget via permutation importance. The non-additive nature of the relationship was explained in clear, precise language. No forbidden criteria were triggered. Verdict: solved.\"\n}\n```"
+}

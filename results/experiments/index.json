@@ -1,5 +1,26 @@
 [
   {
+    "experiment_id": "exp_20260404_experiment-3-visual-pilot",
+    "title": "Experiment 3 - Visual Pilot",
+    "source_kind": "legacy_import",
+    "created_at": "2026-04-04T20:26:48Z",
+    "updated_at": "2026-04-04T20:26:48Z",
+    "summary": {
+      "num_agent_runs": 6,
+      "num_artifacts": 83,
+      "num_cases": 6,
+      "num_evaluations": 6,
+      "num_workflow_runs": 6,
+      "verdict_counts": {
+        "failed": 0,
+        "partial": 1,
+        "run_error": 0,
+        "solved": 4,
+        "wrong": 1
+      }
+    }
+  },
+  {
     "experiment_id": "exp_20260403_173315_hypothesis-driven-v2-prompt",
     "title": "Hypothesis-driven v2 prompt",
     "source_kind": "legacy_import",

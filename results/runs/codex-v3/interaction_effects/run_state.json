@@ -1,0 +1,43 @@
+{
+  "backend": "codex_cli",
+  "dataset_name": "interaction_effects",
+  "work_dir": "/var/folders/j_/dt6mk_nd7tbfpyx2v5z_lv6c0000gn/T/tmpht3jtrd0",
+  "results_dir": "/Users/andreinemilentsau/Projects/ai-data-scientist/results/runs/codex-v3/interaction_effects",
+  "status": "completed",
+  "error": null,
+  "cleaned_up": true,
+  "completed_steps": [
+    "analyst",
+    "visual_review"
+  ],
+  "skipped_steps": [],
+  "matched_inputs": {
+    "analyst": [],
+    "visual_review": [
+      "plots/ad_budget_vs_conversion.png",
+      "plots/conversion_by_time_and_score.png",
+      "plots/conversion_vs_channel_score.png",
+      "plots/model_calibration.png"
+    ]
+  },
+  "steps": {
+    "analyst": {
+      "backend": "codex_cli",
+      "session_id": "019d5a23-5ccf-7581-b098-bf4d121a52bd",
+      "step_id": "analyst",
+      "raw_trace_path": "/Users/andreinemilentsau/Projects/ai-data-scientist/results/runs/codex-v3/interaction_effects/steps/analyst/trace.jsonl",
+      "final_message_path": "/Users/andreinemilentsau/Projects/ai-data-scientist/results/runs/codex-v3/interaction_effects/steps/analyst/final_message.md",
+      "session_log_path": "/Users/andreinemilentsau/Projects/ai-data-scientist/results/runs/codex-v3/interaction_effects/steps/analyst/session.log",
+      "session_output_path": null
+    },
+    "visual_review": {
+      "backend": "codex_cli",
+      "session_id": "019d5a23-5ccf-7581-b098-bf4d121a52bd",
+      "step_id": "visual_review",
+      "raw_trace_path": "/Users/andreinemilentsau/Projects/ai-data-scientist/results/runs/codex-v3/interaction_effects/steps/visual_review/trace.jsonl",
+      "final_message_path": "/Users/andreinemilentsau/Projects/ai-data-scientist/results/runs/codex-v3/interaction_effects/steps/visual_review/final_message.md",
+      "session_log_path": "/Users/andreinemilentsau/Projects/ai-data-scientist/results/runs/codex-v3/interaction_effects/steps/visual_review/session.log",
+      "session_output_path": null
+    }
+  }
+}

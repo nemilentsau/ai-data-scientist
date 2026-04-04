@@ -1,0 +1,48 @@
+{
+  "backend": "claude_cli",
+  "dataset_name": "interaction_effects",
+  "work_dir": "/var/folders/j_/dt6mk_nd7tbfpyx2v5z_lv6c0000gn/T/tmp9dvaoqzo",
+  "results_dir": "/Users/andreinemilentsau/Projects/ai-data-scientist/results/runs/claude-v3/interaction_effects",
+  "status": "completed",
+  "error": null,
+  "cleaned_up": true,
+  "completed_steps": [
+    "analyst",
+    "visual_review"
+  ],
+  "skipped_steps": [],
+  "matched_inputs": {
+    "analyst": [],
+    "visual_review": [
+      "plots/01_channel_score_vs_conversion.png",
+      "plots/02_time_of_day_vs_conversion.png",
+      "plots/03_ad_budget_analysis.png",
+      "plots/04_page_load_time_analysis.png",
+      "plots/05_interaction_time_channel.png",
+      "plots/06_previous_visits_analysis.png",
+      "plots/07_model_comparison.png",
+      "plots/08_summary_dashboard.png",
+      "plots/09_model_diagnostics.png"
+    ]
+  },
+  "steps": {
+    "analyst": {
+      "backend": "claude_cli",
+      "session_id": "2466a58d-85e7-4167-8472-c2c8871afa24",
+      "step_id": "analyst",
+      "raw_trace_path": "/Users/andreinemilentsau/Projects/ai-data-scientist/results/runs/claude-v3/interaction_effects/steps/analyst/trace.jsonl",
+      "final_message_path": "/Users/andreinemilentsau/Projects/ai-data-scientist/results/runs/claude-v3/interaction_effects/steps/analyst/final_message.md",
+      "session_log_path": "/Users/andreinemilentsau/Projects/ai-data-scientist/results/runs/claude-v3/interaction_effects/steps/analyst/session.log",
+      "session_output_path": "/Users/andreinemilentsau/Projects/ai-data-scientist/results/runs/claude-v3/interaction_effects/steps/analyst/session.json"
+    },
+    "visual_review": {
+      "backend": "claude_cli",
+      "session_id": "2466a58d-85e7-4167-8472-c2c8871afa24",
+      "step_id": "visual_review",
+      "raw_trace_path": "/Users/andreinemilentsau/Projects/ai-data-scientist/results/runs/claude-v3/interaction_effects/steps/visual_review/trace.jsonl",
+      "final_message_path": "/Users/andreinemilentsau/Projects/ai-data-scientist/results/runs/claude-v3/interaction_effects/steps/visual_review/final_message.md",
+      "session_log_path": "/Users/andreinemilentsau/Projects/ai-data-scientist/results/runs/claude-v3/interaction_effects/steps/visual_review/session.log",
+      "session_output_path": "/Users/andreinemilentsau/Projects/ai-data-scientist/results/runs/claude-v3/interaction_effects/steps/visual_review/session.json"
+    }
+  }
+}

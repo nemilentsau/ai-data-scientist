@@ -5,9 +5,11 @@ import sqlite3
 from datetime import UTC, datetime
 from pathlib import Path
 
+import experiment_import as experiment_import_wrapper
 import yaml
-
-from experiment_import import build_experiment_id, import_legacy_experiment, main
+from ai_data_scientist.cli import experiment_import as experiment_import_cli
+from ai_data_scientist.experiments.ids import build_experiment_id
+from ai_data_scientist.experiments.importer import import_legacy_experiment
 
 
 def _write_json(path: Path, payload: dict) -> None:
@@ -80,6 +82,10 @@ def test_build_experiment_id_slugifies_title_and_can_omit_slug():
         == "exp_20260401_081508_imported-solo-comparison"
     )
     assert build_experiment_id(fixed_time) == "exp_20260401_081508"
+
+
+def test_root_wrapper_exposes_package_main():
+    assert experiment_import_wrapper.main is experiment_import_cli.main
 
 
 def test_import_records_normalized_entities_and_preserves_paths(tmp_path: Path):
@@ -196,6 +202,58 @@ def test_import_indexes_config_level_benchmark_report_and_claude_session_json(tm
         "SELECT COUNT(*) FROM artifacts WHERE type = ?",
         ("benchmark_report",),
     ) == 1
+
+
+def test_import_refreshes_static_dashboard_api_when_frontend_dist_exists(tmp_path: Path):
+    repo_root = tmp_path
+    _write_yaml(
+        repo_root / "results" / "configs" / "solo-codex.yaml",
+        {"name": "solo-codex", "team": [{"role": "codex"}]},
+    )
+    _write_run(repo_root / "results" / "runs" / "solo-codex" / "multimodal")
+
+    stale_api_dir = repo_root / "frontend" / "dist" / "api"
+    stale_api_dir.mkdir(parents=True, exist_ok=True)
+    _write_json(stale_api_dir / "experiments.json", {"experiments": [{"experiment_id": "stale"}]})
+    _write_json(
+        stale_api_dir / "experiments" / "stale.json",
+        {"experiment": {"experiment_id": "stale"}},
+    )
+
+    experiment_dir = import_legacy_experiment(
+        repo_root=repo_root,
+        experiment_id="exp_20260401_091500_imported",
+        title="Imported experiment",
+    )
+
+    manifest = json.loads((experiment_dir / "manifest.json").read_text())
+    experiments_api = json.loads((stale_api_dir / "experiments.json").read_text())
+    detail_api = json.loads(
+        (
+            stale_api_dir
+            / "experiments"
+            / "exp_20260401_091500_imported.json"
+        ).read_text()
+    )
+    artifact = next(
+        artifact for artifact in manifest["artifacts"] if artifact["type"] == "analysis_report"
+    )
+    decorated_artifact = next(
+        candidate
+        for candidate in detail_api["artifacts"]
+        if candidate["artifact_id"] == artifact["artifact_id"]
+    )
+
+    assert experiments_api["experiments"][0]["experiment_id"] == "exp_20260401_091500_imported"
+    assert not (stale_api_dir / "experiments" / "stale.json").exists()
+    assert detail_api["experiment"]["experiment_id"] == "exp_20260401_091500_imported"
+    assert "content_url" in decorated_artifact
+    assert (
+        repo_root
+        / "frontend"
+        / "dist"
+        / decorated_artifact["content_url"].lstrip("/")
+    ).exists()
 
 
 def test_import_includes_experiment_scoped_synthesis_docs_with_matching_front_matter(
@@ -410,7 +468,7 @@ def test_cli_writes_metadata_for_requested_filters_and_explicit_id(
     _write_run(repo_root / "results" / "runs" / "solo-codex" / "multimodal")
     _write_run(repo_root / "results" / "runs" / "solo-codex" / "mnar")
 
-    exit_code = main(
+    exit_code = experiment_import_cli.main(
         [
             "--repo-root",
             str(repo_root),
@@ -451,9 +509,12 @@ def test_cli_generates_experiment_id_when_not_provided(
         {"name": "solo-baseline", "team": [{"role": "claude"}]},
     )
     _write_run(repo_root / "results" / "runs" / "solo-baseline" / "concept_drift")
-    monkeypatch.setattr("experiment_import.build_experiment_id", lambda slug=None: "exp_auto_id")
+    monkeypatch.setattr(
+        "ai_data_scientist.cli.experiment_import.build_experiment_id",
+        lambda slug=None: "exp_auto_id",
+    )
 
-    exit_code = main(
+    exit_code = experiment_import_cli.main(
         [
             "--repo-root",
             str(repo_root),
@@ -472,7 +533,7 @@ def test_cli_generates_experiment_id_when_not_provided(
 
 def test_cli_requires_title_argument():
     try:
-        main([])
+        experiment_import_cli.main([])
     except SystemExit as exc:
         assert exc.code == 2
     else:

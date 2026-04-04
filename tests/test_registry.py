@@ -1,7 +1,6 @@
 """Tests for dataset registry metadata and evaluation contracts."""
 
 import pytest
-
 from datasets.generator import GENERATORS
 from datasets.registry import (
     CONTRACTS_DIR,

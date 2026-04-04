@@ -1,0 +1,5 @@
+Completed the analysis and wrote the results to [analysis_report.md](/var/folders/j_/dt6mk_nd7tbfpyx2v5z_lv6c0000gn/T/tmpz7o69t03/analysis_report.md). The plots are in [/var/folders/j_/dt6mk_nd7tbfpyx2v5z_lv6c0000gn/T/tmpz7o69t03/plots](/var/folders/j_/dt6mk_nd7tbfpyx2v5z_lv6c0000gn/T/tmpz7o69t03/plots).
+
+The main finding is that `sq_ft` overwhelmingly explains rent variation: a size-only linear model gets R² 0.897, and the full model only improves cross-validated R² by about 0.013. I also found that the apparent parking discount is mostly composition/confounding, and that `distance_to_center_km`, `year_built`, and `pet_friendly` add very little signal once size and room counts are included.
+
+For reproducibility, the analysis is implemented in [run_analysis.py](/var/folders/j_/dt6mk_nd7tbfpyx2v5z_lv6c0000gn/T/tmpz7o69t03/run_analysis.py).

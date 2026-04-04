@@ -1,0 +1,44 @@
+{
+  "backend": "codex_cli",
+  "dataset_name": "heteroscedasticity",
+  "work_dir": "/var/folders/j_/dt6mk_nd7tbfpyx2v5z_lv6c0000gn/T/tmpi0i7tlf1",
+  "results_dir": "/Users/andreinemilentsau/Projects/ai-data-scientist/results/runs/codex-v3/heteroscedasticity",
+  "status": "completed",
+  "error": null,
+  "cleaned_up": true,
+  "completed_steps": [
+    "analyst",
+    "visual_review"
+  ],
+  "skipped_steps": [],
+  "matched_inputs": {
+    "analyst": [],
+    "visual_review": [
+      "plots/ctr_vs_cpc.png",
+      "plots/monthly_revenue_and_roas.png",
+      "plots/revenue_model_diagnostics.png",
+      "plots/revenue_vs_spend.png",
+      "plots/roas_by_channel.png"
+    ]
+  },
+  "steps": {
+    "analyst": {
+      "backend": "codex_cli",
+      "session_id": "019d5a1e-a729-7e41-8d80-e1fb16be0eb4",
+      "step_id": "analyst",
+      "raw_trace_path": "/Users/andreinemilentsau/Projects/ai-data-scientist/results/runs/codex-v3/heteroscedasticity/steps/analyst/trace.jsonl",
+      "final_message_path": "/Users/andreinemilentsau/Projects/ai-data-scientist/results/runs/codex-v3/heteroscedasticity/steps/analyst/final_message.md",
+      "session_log_path": "/Users/andreinemilentsau/Projects/ai-data-scientist/results/runs/codex-v3/heteroscedasticity/steps/analyst/session.log",
+      "session_output_path": null
+    },
+    "visual_review": {
+      "backend": "codex_cli",
+      "session_id": "019d5a1e-a729-7e41-8d80-e1fb16be0eb4",
+      "step_id": "visual_review",
+      "raw_trace_path": "/Users/andreinemilentsau/Projects/ai-data-scientist/results/runs/codex-v3/heteroscedasticity/steps/visual_review/trace.jsonl",
+      "final_message_path": "/Users/andreinemilentsau/Projects/ai-data-scientist/results/runs/codex-v3/heteroscedasticity/steps/visual_review/final_message.md",
+      "session_log_path": "/Users/andreinemilentsau/Projects/ai-data-scientist/results/runs/codex-v3/heteroscedasticity/steps/visual_review/session.log",
+      "session_output_path": null
+    }
+  }
+}
