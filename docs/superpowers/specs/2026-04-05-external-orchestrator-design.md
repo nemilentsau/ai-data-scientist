@@ -25,6 +25,9 @@ These decisions are in scope for the first implementation and should be treated 
 9. The analysis stage is split into `analysis_planner` and `analysis_executor`.
 10. `final_editor` is not in the main loop and is excluded from v1.
 11. Reframing escalation is controlled by the verifier in v1.
+12. Cross-round continuity uses published ledgers plus bounded role memory, not CLI session persistence.
+13. Role memory is written by a separate `memory_curator` agent once per round after `verifier`.
+14. `memory_curator` reads published artifacts only, never private invocation outputs.
 
 ## Decisions Explicitly Deferred
 
@@ -106,7 +109,8 @@ The default v1 loop is:
 4. `analysis_executor`
 5. `method_critic` and `visual_critic` in parallel
 6. `verifier`
-7. loop decision
+7. `memory_curator`
+8. loop decision
 
 Possible loop outcomes:
 
@@ -116,6 +120,8 @@ Possible loop outcomes:
 - `fail_terminal`: stop unsuccessfully
 
 This is a state machine, not a sequential step list.
+
+The `memory_curator` runs after `verifier` and before the next loop decision is materialized for the next round.
 
 ## Role Definitions
 
@@ -257,6 +263,34 @@ Outputs:
 
 The verifier is the acceptance gate for v1. Critics identify problems; verifier determines whether the system should stop, revise, or reframe.
 
+### `memory_curator`
+
+Purpose:
+
+- compress the current published round state into bounded continuity artifacts for later same-role invocations
+- preserve what was already tried, what is still open, and what should not be repeated blindly
+
+Inputs:
+
+- published framing artifacts
+- published planning artifacts
+- published execution artifacts
+- published critique artifacts
+- published verification artifacts
+- shared ledgers
+- artifact index
+
+Outputs:
+
+- `memory/task_framer.md`
+- `memory/analysis_planner.md`
+
+Non-goals:
+
+- does not inspect private invocation logs or scratch files
+- does not control workflow routing
+- does not produce new analytical judgments about the dataset itself
+
 ## Orchestrator Responsibilities
 
 The external orchestrator is plain code. It does not interpret free-form markdown to infer workflow state. It reads machine-readable outputs from agents and applies fixed routing policy.
@@ -327,9 +361,12 @@ results/runs/<config>/<dataset>/
   artifacts/
     profile/
     framing/
+    planning/
     analysis/
     critiques/
     verification/
+    memory/
+    ledgers/
   invocations/
   orchestration/
     run_state.json
@@ -338,6 +375,43 @@ results/runs/<config>/<dataset>/
 ```
 
 The canonical tree should contain only artifacts that later steps are allowed to rely on.
+
+## Shared Ledgers And Role Memory
+
+Cross-round persistence should come from published artifacts, not CLI thread state.
+
+### Shared Ledgers
+
+These are structured cross-role state files. They are the machine-readable source of truth for what the workflow currently believes has happened.
+
+Suggested v1 ledgers:
+
+- `ledgers/hypothesis_ledger.json`
+- `ledgers/experiment_ledger.json`
+- `ledgers/issue_ledger.json`
+
+Purpose:
+
+- track stable ids across rounds
+- record which hypotheses and requests were proposed
+- record what was completed, blocked, rejected, or superseded
+- let later roles reference prior work without replaying the whole history
+
+### Role Memory
+
+These are bounded prompt-facing summaries for later invocations of the same role.
+
+Suggested v1 role memory files:
+
+- `memory/task_framer.md`
+- `memory/analysis_planner.md`
+
+Rules:
+
+1. role memory is rewritten each round, not appended forever
+2. role memory is derived from published artifacts only
+3. role memory exists to prevent repeated requests and forgotten context, not to preserve full reasoning transcripts
+4. `analysis_executor`, critics, and verifier do not get persistent same-role memory in v1
 
 ## Publish Contract
 
@@ -379,6 +453,7 @@ Active runtime roles:
 4. `method_critic`
 5. `visual_critic`
 6. `verifier`
+7. `memory_curator`
 
 Prompt guidance:
 
@@ -435,7 +510,8 @@ The orchestrator uses fixed routing policy:
 4. run `analysis_executor`
 5. run critics in parallel
 6. run verifier
-7. route by verifier verdict
+7. run `memory_curator`
+8. route by verifier verdict
 
 Routing:
 
@@ -443,6 +519,8 @@ Routing:
 - `revise` -> run `analysis_planner` again, then `analysis_executor`, with critique and verification artifacts included
 - `reframe` -> run `task_framer` again with verifier reasoning included, then restart with `analysis_planner`
 - `fail_terminal` -> mark run failed
+
+The next role invocation may read the latest published role memory, but never any private session state from prior invocations.
 
 ### Retry Policy
 
@@ -515,6 +593,8 @@ The new runtime needs:
 - invocation-private workdirs
 - publish contracts
 - structured role outputs
+- shared ledgers
+- bounded role memory
 - clearer prompt separation between active runtime and historical prompts
 
 ## Implementation Approach
@@ -531,6 +611,7 @@ Build the new orchestration substrate without the full loop:
 - transition log
 - publish contract validation
 - backend-per-role config shape
+- ledger storage
 
 Success checkpoint:
 
@@ -556,10 +637,11 @@ Add:
 - `method_critic`
 - `visual_critic`
 - `verifier`
+- `memory_curator`
 
 Success checkpoint:
 
-- a complete single-round run produces critique artifacts and a verifier verdict using the published planning and execution artifacts
+- a complete single-round run produces critique artifacts, a verifier verdict, and bounded role memory using only published artifacts
 
 ### Phase 4: Loop Control
 
@@ -583,6 +665,7 @@ Suggested experiments:
 1. `analysis_planner + analysis_executor` versus a single combined analyst role
 2. critics with full artifact access versus reduced artifact access
 3. parallel critics versus serial critics
+4. bounded role memory versus no role memory
 
 These experiments should evaluate:
 
@@ -598,6 +681,7 @@ These experiments should evaluate:
 3. final editorial pass
 4. autonomous LLM loop coordinator
 5. unbounded critique and repair loops
+6. private invocation outputs as inputs to `memory_curator`
 
 ## Success Criteria
 
@@ -609,4 +693,5 @@ V1 is successful when:
 4. the orchestrator loop is driven by structured outputs, not hidden thread state
 5. the analysis stage produces separate planning artifacts and execution artifacts
 6. both critics operate on the full published artifact set, including plots
-7. the active prompt set is materially smaller and cleaner than the current draft direction
+7. cross-round continuity is carried by shared ledgers plus bounded role memory, not CLI session reuse
+8. the active prompt set is materially smaller and cleaner than the current draft direction
