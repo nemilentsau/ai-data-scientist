@@ -22,7 +22,7 @@ These decisions are in scope for the first implementation and should be treated 
 6. Full agent traces, logs, and scratch outputs remain available from the private invocation workspace.
 7. Prompts are role-first and backend-agnostic in v1.
 8. The main workflow is a loop, not a fixed linear pipeline.
-9. `analyst_revision` is not a separate role. A revision is another `analyst` invocation.
+9. The analysis stage is split into `analysis_planner` and `analysis_executor`.
 10. `final_editor` is not in the main loop and is excluded from v1.
 11. Reframing escalation is controlled by the verifier in v1.
 
@@ -102,16 +102,17 @@ The default v1 loop is:
 
 1. `profile_dataset`
 2. `task_framer`
-3. `analyst`
-4. `method_critic` and `visual_critic` in parallel
-5. `verifier`
-6. loop decision
+3. `analysis_planner`
+4. `analysis_executor`
+5. `method_critic` and `visual_critic` in parallel
+6. `verifier`
+7. loop decision
 
 Possible loop outcomes:
 
 - `pass`: stop successfully
-- `revise`: run another `analyst` invocation using critique and verification outputs
-- `reframe`: run `task_framer` again, then continue the loop
+- `revise`: run another `analysis_planner -> analysis_executor` round using critique and verification outputs
+- `reframe`: run `task_framer` again, then continue with a new `analysis_planner -> analysis_executor` round
 - `fail_terminal`: stop unsuccessfully
 
 This is a state machine, not a sequential step list.
@@ -144,12 +145,13 @@ Non-goals:
 - does not write the main report
 - does not own loop control
 
-### `analyst`
+### `analysis_planner`
 
 Purpose:
 
-- produce the main analysis for the current round
-- respond to critique and verification artifacts in later rounds
+- turn framing into a concrete analysis plan for the current round
+- define the exact hypotheses, evidence requirements, plots, and statistical checks the executor must produce
+- respond to critique and verification artifacts in later rounds by revising the plan
 
 Inputs:
 
@@ -161,14 +163,44 @@ Inputs:
 
 Outputs:
 
+- `analysis_plan.md`
+- `hypotheses.json`
+- `experiment_plan.json`
+- revision planning memo when applicable
+
+Non-goals:
+
+- does not write the main report
+- does not execute the statistical work itself
+
+### `analysis_executor`
+
+Purpose:
+
+- execute the current analysis plan
+- write code, generate plots, run statistical tests, and produce the report and evidence artifacts
+
+Inputs:
+
+- dataset
+- profile artifacts
+- framing artifacts
+- planning artifacts from `analysis_planner`
+- prior critique artifacts when revising
+- prior verification artifacts when revising or reframing
+
+Outputs:
+
 - `analysis_report.md`
 - plots
 - structured findings
 - claim-to-evidence map
-- revision response memo when applicable
+- stats artifacts
+- revision execution memo when applicable
 
 Non-goals:
 
+- does not decide the analytical goal for the round
 - does not decide whether the run is complete
 
 ### `method_critic`
@@ -176,6 +208,14 @@ Non-goals:
 Purpose:
 
 - challenge framing adherence, inferential rigor, missing analyses, and unsupported claims
+
+Inputs:
+
+- framing artifacts
+- planning artifacts
+- report artifacts
+- plots and plot manifest
+- structured findings and claim-to-evidence map
 
 Outputs:
 
@@ -187,6 +227,14 @@ Purpose:
 
 - inspect plot evidence directly
 - identify contradictions, missing plot classes, or visually obvious structure not reflected in the report
+
+Inputs:
+
+- framing artifacts
+- planning artifacts
+- report artifacts
+- plots and plot manifest
+- structured findings and claim-to-evidence map
 
 Outputs:
 
@@ -297,13 +345,14 @@ Each role has a declared publish contract. Example shape:
 
 ```json
 {
-  "role": "analyst",
+  "role": "analysis_executor",
   "declared_outputs": [
     "artifacts/analysis/analysis_report.md",
     "artifacts/analysis/findings.json",
     "artifacts/analysis/claim_evidence_map.json",
     "artifacts/analysis/plots/*.png",
-    "artifacts/analysis/revision_response.md"
+    "artifacts/analysis/stats/*.json",
+    "artifacts/analysis/revision_execution.md"
   ]
 }
 ```
@@ -325,10 +374,11 @@ V1 uses role-first, backend-agnostic prompts.
 Active runtime roles:
 
 1. `task_framer`
-2. `analyst`
-3. `method_critic`
-4. `visual_critic`
-5. `verifier`
+2. `analysis_planner`
+3. `analysis_executor`
+4. `method_critic`
+5. `visual_critic`
+6. `verifier`
 
 Prompt guidance:
 
@@ -381,16 +431,17 @@ The orchestrator uses fixed routing policy:
 
 1. run `profile_dataset`
 2. start with `task_framer`
-3. run `analyst`
-4. run critics in parallel
-5. run verifier
-6. route by verifier verdict
+3. run `analysis_planner`
+4. run `analysis_executor`
+5. run critics in parallel
+6. run verifier
+7. route by verifier verdict
 
 Routing:
 
 - `pass` -> mark run complete
-- `revise` -> run `analyst` again with critique and verification artifacts included
-- `reframe` -> run `task_framer` again with verifier reasoning included
+- `revise` -> run `analysis_planner` again, then `analysis_executor`, with critique and verification artifacts included
+- `reframe` -> run `task_framer` again with verifier reasoning included, then restart with `analysis_planner`
 - `fail_terminal` -> mark run failed
 
 ### Retry Policy
@@ -400,7 +451,7 @@ V1 should be bounded.
 Recommended bounds:
 
 - one initial framing round
-- up to two analyst rounds before terminal failure unless a reframe occurs
+- up to two planning/execution rounds before terminal failure unless a reframe occurs
 - at most one reframe cycle in v1
 - explicit failure if retry budget is exhausted
 
@@ -413,7 +464,8 @@ Role and backend are separate dimensions.
 Examples:
 
 - `task_framer` may run on Claude
-- `analyst` may run on Codex
+- `analysis_planner` may run on Claude
+- `analysis_executor` may run on Codex
 - critics may run on either backend
 
 This mapping should be config-driven. The orchestrator owns backend selection for each invocation.
@@ -465,6 +517,80 @@ The new runtime needs:
 - structured role outputs
 - clearer prompt separation between active runtime and historical prompts
 
+## Implementation Approach
+
+This should not be built as one large refactor. V1 should be delivered in vertical slices with runnable checkpoints.
+
+### Phase 1: Runtime Skeleton
+
+Build the new orchestration substrate without the full loop:
+
+- invocation-private workdirs
+- canonical artifact tree
+- invocation manifests
+- transition log
+- publish contract validation
+- backend-per-role config shape
+
+Success checkpoint:
+
+- one role can run in an isolated invocation and publish declared outputs into the canonical tree
+
+### Phase 2: Preprocessing And Planning/Execution Path
+
+Add the first complete analytical path:
+
+- `profile_dataset`
+- `task_framer`
+- `analysis_planner`
+- `analysis_executor`
+
+Success checkpoint:
+
+- one dataset run can produce framing artifacts, planning artifacts, report artifacts, plot artifacts, and stats artifacts without any shared CLI session state
+
+### Phase 3: Critique And Verification
+
+Add:
+
+- `method_critic`
+- `visual_critic`
+- `verifier`
+
+Success checkpoint:
+
+- a complete single-round run produces critique artifacts and a verifier verdict using the published planning and execution artifacts
+
+### Phase 4: Loop Control
+
+Add the bounded loop:
+
+- `pass`
+- `revise`
+- `reframe`
+- `fail_terminal`
+
+Success checkpoint:
+
+- the orchestrator can route deterministically through at least one revision cycle and one reframe cycle according to verifier output
+
+### Phase 5: Architecture Experiments
+
+Use experiments to resolve uncertain role-boundary questions instead of locking them in prematurely.
+
+Suggested experiments:
+
+1. `analysis_planner + analysis_executor` versus a single combined analyst role
+2. critics with full artifact access versus reduced artifact access
+3. parallel critics versus serial critics
+
+These experiments should evaluate:
+
+- benchmark quality
+- artifact completeness
+- tendency to skip required checks
+- cost and latency
+
 ## Out Of Scope For V1
 
 1. specialist probe library in the default path
@@ -481,4 +607,6 @@ V1 is successful when:
 2. canonical shared context flows only through published artifacts
 3. the system can show full per-invocation logs without polluting canonical artifacts
 4. the orchestrator loop is driven by structured outputs, not hidden thread state
-5. the active prompt set is materially smaller and cleaner than the current draft direction
+5. the analysis stage produces separate planning artifacts and execution artifacts
+6. both critics operate on the full published artifact set, including plots
+7. the active prompt set is materially smaller and cleaner than the current draft direction
