@@ -113,6 +113,7 @@ class ClaudeCliAdapter(BackendAdapter):
             role=role,
             artifact_inputs=artifact_inputs,
             role_memory=None,
+            invocation_cwd=invocation.work_dir,
         )
         result = self.invoke(role, context, invocation, prompt)
         return SessionHandle(

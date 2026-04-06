@@ -144,6 +144,7 @@ def _run_role(
         role=role,
         artifact_inputs=invocation_inputs,
         role_memory=role_memory,
+        invocation_cwd=invocation.work_dir,
     )
     adapter = _prepare_backend_adapter(
         backend=role.backend,

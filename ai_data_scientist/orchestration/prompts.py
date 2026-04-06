@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 from pathlib import Path
 
 from ai_data_scientist.orchestration.models import RoleSpec, WorkflowStep
@@ -39,6 +40,7 @@ def render_step_prompt(
         role=role,
         artifact_inputs=image_paths,
         role_memory=None,
+        invocation_cwd=None,
     )
 
 
@@ -48,13 +50,16 @@ def render_role_prompt(
     role: RoleSpec,
     artifact_inputs: list[Path],
     role_memory: Path | None,
+    invocation_cwd: Path | None,
 ) -> str:
     """Load a role prompt and prepend published artifacts plus optional role memory."""
     prompt = load_prompt_text(root, role.prompt).strip()
 
     artifact_lines = []
     for path in artifact_inputs:
-        if path.is_absolute():
+        if invocation_cwd is not None and path.is_absolute():
+            display_path = Path(os.path.relpath(path, invocation_cwd))
+        elif path.is_absolute():
             try:
                 display_path = path.relative_to(root)
             except ValueError:
@@ -73,7 +78,8 @@ def render_role_prompt(
             prefix += f"Role memory for this invocation:\n{memory_text}\n\n"
 
     prefix += (
-        "Published input artifacts for this invocation:\n"
+        "Published input artifacts for this invocation "
+        "(paths are relative to the current working directory):\n"
         f"{'\n'.join(artifact_lines)}\n\n"
     )
     return prefix + prompt

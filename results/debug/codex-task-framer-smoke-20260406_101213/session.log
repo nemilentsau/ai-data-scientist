@@ -1,0 +1,7 @@
+dataset=pure_noise
+project_root=/Users/andreinemilentsau/Projects/ai-data-scientist
+work_dir=/var/folders/j_/dt6mk_nd7tbfpyx2v5z_lv6c0000gn/T/tmpqn2ndrr_
+max_turns=workflow
+tools=workflow-managed
+codex-cli 0.117.0
+

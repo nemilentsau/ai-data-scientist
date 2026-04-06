@@ -1,0 +1,25 @@
+{
+  "primary_frame": "Predict employee performance_rating from workplace and experience features (regression)",
+  "alternative_frames": [
+    "Classify employees into performance tiers (high/medium/low) using binned performance_rating",
+    "Identify which workplace factors most associate with satisfaction_score",
+    "Predict salary_band from employee attributes (multi-class classification)",
+    "Cluster employees by work profile to discover latent segments (unsupervised)"
+  ],
+  "required_checks": [
+    "Test each feature for statistically significant correlation with performance_rating before modeling",
+    "Check for multicollinearity among numeric predictors",
+    "Verify performance_rating distribution shape and detect outliers",
+    "Examine commute_minutes for heavy right skew and potential outliers",
+    "Confirm salary_band level frequencies are sufficient for stratified analysis",
+    "Run a baseline permutation or null-model test to establish whether any predictive signal exists"
+  ],
+  "framing_risks": [
+    "No explicit target variable is designated; performance_rating is assumed as target based on column semantics",
+    "Features may be independently generated with no genuine predictive relationship to any target (pure noise risk); any detected correlations could be spurious",
+    "Dataset has zero nulls and uniformly 800 rows, which is atypical of real HR data and suggests synthetic generation",
+    "salary_band is ambiguous: it could be a predictor or an alternative target depending on the business question",
+    "No temporal ordering or causal metadata is present, so causal claims from any model would be unjustified",
+    "With 8 candidate predictors and 800 rows, multiple-testing and overfitting risks are moderate"
+  ]
+}

@@ -260,8 +260,8 @@ def test_codex_bridge_uses_invocation_copies_for_prompt_and_attachments(
     original_image.write_bytes(b"png")
     run_context.matched_inputs["analyst"] = [original_image]
 
-    def fake_render_role_prompt(*, root, role, artifact_inputs, role_memory):
-        del root, role, role_memory
+    def fake_render_role_prompt(*, root, role, artifact_inputs, role_memory, invocation_cwd):
+        del root, role, role_memory, invocation_cwd
         recorded_artifact_inputs.append(list(artifact_inputs))
         return "Analyze the published artifacts."
 
@@ -370,14 +370,51 @@ def test_render_role_prompt_uses_published_artifacts_and_role_memory_only(tmp_pa
         ),
         artifact_inputs=published_artifacts,
         role_memory=role_memory,
+        invocation_cwd=None,
     )
 
     assert "Role memory for this invocation:" in rendered
     assert "Do not repeat exp_1." in rendered
-    assert "Published input artifacts for this invocation:" in rendered
+    assert "Published input artifacts for this invocation" in rendered
     assert "framing.json" in rendered
     assert "schema.json" in rendered
     assert "Plan the next round." in rendered
+
+
+def test_render_role_prompt_uses_paths_relative_to_invocation_workspace(tmp_path: Path):
+    prompt_root = tmp_path / "repo"
+    prompt_file = prompt_root / "prompts" / "active" / "task-framer.md"
+    prompt_file.parent.mkdir(parents=True, exist_ok=True)
+    prompt_file.write_text("Write framing.json.\n")
+
+    invocation_root = (
+        tmp_path
+        / "results"
+        / "runs"
+        / "run-1"
+        / "invocations"
+        / "task-framer-0001"
+    )
+    artifact = invocation_root / "input" / "artifacts" / "profile" / "schema.json"
+    artifact.parent.mkdir(parents=True, exist_ok=True)
+    artifact.write_text("{}")
+    invocation_cwd = invocation_root / "workspace"
+    invocation_cwd.mkdir(parents=True, exist_ok=True)
+
+    rendered = prompts.render_role_prompt(
+        root=prompt_root,
+        role=RoleSpec(
+            role="task_framer",
+            backend="claude_cli",
+            prompt="prompts/active/task-framer.md",
+        ),
+        artifact_inputs=[artifact],
+        role_memory=None,
+        invocation_cwd=invocation_cwd,
+    )
+
+    assert "../input/artifacts/profile/schema.json" in rendered
+    assert "results/runs/run-1/invocations/task-framer-0001" not in rendered
 
 
 def test_runner_executes_task_framer_planner_executor_in_order(
@@ -414,9 +451,12 @@ def test_runner_executes_task_framer_planner_executor_in_order(
     }
     render_calls: list[tuple[str, list[Path]]] = []
 
-    def fake_render_role_prompt(*, root, role, artifact_inputs, role_memory):
+    rendered_cwds: list[Path | None] = []
+
+    def fake_render_role_prompt(*, root, role, artifact_inputs, role_memory, invocation_cwd):
         del root, role_memory
         render_calls.append((role.role, list(artifact_inputs)))
+        rendered_cwds.append(invocation_cwd)
         assert artifact_inputs
         assert all(path.is_relative_to(results_dir / "invocations") for path in artifact_inputs)
         assert all("/artifacts/" not in str(path) or "/input/artifacts/" in str(path) for path in artifact_inputs)
@@ -505,6 +545,11 @@ def test_runner_executes_task_framer_planner_executor_in_order(
         "task_framer",
         "analysis_planner",
         "analysis_executor",
+    ]
+    assert rendered_cwds == [
+        results_dir / "invocations" / "task-framer-0001" / "workspace",
+        results_dir / "invocations" / "analysis-planner-0001" / "workspace",
+        results_dir / "invocations" / "analysis-executor-0001" / "workspace",
     ]
     assert (results_dir / "artifacts" / "profile" / "schema.json").exists()
     assert (results_dir / "artifacts" / "dataset" / "dataset.csv").exists()

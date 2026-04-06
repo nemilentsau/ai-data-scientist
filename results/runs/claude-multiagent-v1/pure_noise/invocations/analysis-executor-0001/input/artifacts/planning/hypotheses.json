@@ -1,0 +1,101 @@
+[
+  {
+    "id": "H-01",
+    "title": "Performance rating is normally distributed and unimodal",
+    "description": "The target variable performance_rating follows a single normal distribution with no hidden subpopulations.",
+    "null_hypothesis": "performance_rating is drawn from a single normal distribution.",
+    "alternative_hypothesis": "performance_rating deviates from normality or contains multiple modes.",
+    "test_method": "Shapiro-Wilk test for normality; visual inspection of histogram+KDE for multimodality.",
+    "significance_level": 0.05,
+    "linked_experiments": ["EXP-01"],
+    "linked_framing_check": "Verify performance_rating distribution shape and check for subpopulations"
+  },
+  {
+    "id": "H-02",
+    "title": "Numeric features have linear associations with performance rating",
+    "description": "At least one numeric feature (years_experience, training_hours, team_size, projects_completed, satisfaction_score, commute_minutes, remote_pct) has a statistically significant Pearson correlation with performance_rating.",
+    "null_hypothesis": "All Pearson correlations between numeric features and performance_rating are zero.",
+    "alternative_hypothesis": "At least one Pearson correlation is significantly different from zero after FDR correction.",
+    "test_method": "Pearson correlation with p-values for each feature vs performance_rating; Benjamini-Hochberg correction.",
+    "significance_level": 0.05,
+    "linked_experiments": ["EXP-03", "EXP-11"],
+    "linked_framing_check": "Test for linear and nonlinear associations between each feature and performance_rating"
+  },
+  {
+    "id": "H-03",
+    "title": "Numeric features have nonlinear associations with performance rating",
+    "description": "At least one feature has a nonlinear relationship with performance_rating detectable via rank correlation or distance correlation even if linear correlation is near zero.",
+    "null_hypothesis": "Spearman rho and distance correlation between each feature and performance_rating are zero.",
+    "alternative_hypothesis": "At least one nonlinear association is significant after FDR correction.",
+    "test_method": "Spearman correlation and distance correlation for each feature vs performance_rating; permutation test for distance correlation significance.",
+    "significance_level": 0.05,
+    "linked_experiments": ["EXP-04", "EXP-11"],
+    "linked_framing_check": "Test for linear and nonlinear associations between each feature and performance_rating"
+  },
+  {
+    "id": "H-04",
+    "title": "Performance rating differs across salary bands",
+    "description": "Mean or median performance_rating varies significantly across the five salary_band groups (L1-L5).",
+    "null_hypothesis": "performance_rating distributions are identical across all salary_band groups.",
+    "alternative_hypothesis": "At least one salary_band group has a different performance_rating distribution.",
+    "test_method": "Kruskal-Wallis H-test across salary_band groups; post-hoc Dunn test if significant.",
+    "significance_level": 0.05,
+    "linked_experiments": ["EXP-05", "EXP-11"],
+    "linked_framing_check": "Verify performance_rating distribution shape and check for subpopulations"
+  },
+  {
+    "id": "H-05",
+    "title": "Numeric features exhibit multicollinearity",
+    "description": "Pairwise correlations among numeric predictors are large enough to cause instability in regression estimates (VIF > 5).",
+    "null_hypothesis": "All pairwise correlations among predictors are near zero and VIF values are below 5.",
+    "alternative_hypothesis": "At least one pair of predictors has |r| > 0.5 or VIF > 5.",
+    "test_method": "Pearson correlation matrix; VIF computation from OLS regression.",
+    "significance_level": null,
+    "linked_experiments": ["EXP-06"],
+    "linked_framing_check": "Check pairwise correlations among all numeric features for multicollinearity"
+  },
+  {
+    "id": "H-06",
+    "title": "A predictive model for performance rating beats the no-skill baseline",
+    "description": "A regression model (linear or random forest) achieves cross-validated R-squared significantly greater than zero and RMSE significantly below the target standard deviation (~10).",
+    "null_hypothesis": "No model achieves R-squared significantly greater than zero (permutation test p >= 0.05).",
+    "alternative_hypothesis": "At least one model achieves R-squared significantly greater than zero.",
+    "test_method": "5-fold cross-validated R-squared for OLS and random forest; permutation test comparing observed R-squared to null distribution from 100 target shuffles.",
+    "significance_level": 0.05,
+    "linked_experiments": ["EXP-07", "EXP-08"],
+    "linked_framing_check": "Evaluate whether model performance exceeds a no-skill baseline"
+  },
+  {
+    "id": "H-07",
+    "title": "Salary band is predictable from numeric features",
+    "description": "A classifier trained on numeric features predicts salary_band significantly better than the majority-class baseline (L5: 170/800 = 21.25%).",
+    "null_hypothesis": "Classification accuracy does not exceed majority-class baseline.",
+    "alternative_hypothesis": "Classification accuracy is significantly above majority-class baseline.",
+    "test_method": "Random forest classifier with 5-fold CV; compare accuracy to 21.25% baseline; binomial test on accuracy.",
+    "significance_level": 0.05,
+    "linked_experiments": ["EXP-09"],
+    "linked_framing_check": "Test whether salary_band is predictable from numeric features"
+  },
+  {
+    "id": "H-08",
+    "title": "Natural employee segments exist in the feature space",
+    "description": "K-Means clustering on standardized numeric features yields clusters with silhouette score meaningfully above random expectation, indicating non-random structure.",
+    "null_hypothesis": "No cluster solution achieves silhouette score above what would be expected from uniformly random data of the same dimensionality.",
+    "alternative_hypothesis": "At least one k yields silhouette score substantially above random expectation.",
+    "test_method": "K-Means for k=2..6; silhouette scores; compare to reference silhouette from shuffled data.",
+    "significance_level": null,
+    "linked_experiments": ["EXP-10"],
+    "linked_framing_check": "Assess whether any observed associations survive multiple-comparison correction"
+  },
+  {
+    "id": "H-09",
+    "title": "Observed associations survive multiple-comparison correction",
+    "description": "After collecting all p-values from hypothesis tests H-02 through H-07, at least one remains significant under Benjamini-Hochberg FDR correction at alpha=0.05.",
+    "null_hypothesis": "No p-value survives FDR correction -- all apparent associations are compatible with chance.",
+    "alternative_hypothesis": "At least one test remains significant after FDR correction.",
+    "test_method": "Benjamini-Hochberg procedure on the full set of p-values collected from all tests.",
+    "significance_level": 0.05,
+    "linked_experiments": ["EXP-11"],
+    "linked_framing_check": "Assess whether any observed associations survive multiple-comparison correction"
+  }
+]
