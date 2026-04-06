@@ -64,6 +64,30 @@ def _write_run(
     (plots_dir / "scatter.png").write_bytes(b"png")
 
 
+def _write_invocation(
+    run_dir: Path,
+    *,
+    invocation_id: str,
+    role: str,
+) -> None:
+    invocation_dir = run_dir / "invocations" / invocation_id
+    (invocation_dir / "logs").mkdir(parents=True, exist_ok=True)
+    (invocation_dir / "output").mkdir(parents=True, exist_ok=True)
+    (invocation_dir / "trace").mkdir(parents=True, exist_ok=True)
+    (invocation_dir / "manifest.json").write_text(
+        json.dumps(
+            {
+                "invocation_id": invocation_id,
+                "role": role,
+                "status": "completed",
+            },
+            indent=2,
+        )
+    )
+    (invocation_dir / "logs" / "session.log").write_text(f"{role} log")
+    (invocation_dir / "output" / "final_message.md").write_text(f"{role} done")
+
+
 def _db_count(db_path: Path, table: str) -> int:
     with sqlite3.connect(db_path) as conn:
         return conn.execute(f"SELECT COUNT(*) FROM {table}").fetchone()[0]
@@ -202,6 +226,121 @@ def test_import_indexes_config_level_benchmark_report_and_claude_session_json(tm
         "SELECT COUNT(*) FROM artifacts WHERE type = ?",
         ("benchmark_report",),
     ) == 1
+
+
+def test_import_records_multiple_agent_runs_and_canonical_artifacts_for_multiagent_case(
+    tmp_path: Path,
+):
+    repo_root = tmp_path
+    _write_yaml(
+        repo_root / "results" / "configs" / "codex-multiagent-v1.yaml",
+        {
+            "name": "codex-multiagent-v1",
+            "description": "External orchestrator with Codex execution",
+            "roles": {
+                "task_framer": {
+                    "backend": "claude_cli",
+                    "prompt": "prompts/active/task-framer.md",
+                },
+                "analysis_planner": {
+                    "backend": "claude_cli",
+                    "prompt": "prompts/active/analysis-planner.md",
+                },
+                "analysis_executor": {
+                    "backend": "codex_cli",
+                    "prompt": "prompts/active/analysis-executor.md",
+                },
+                "method_critic": {
+                    "backend": "claude_cli",
+                    "prompt": "prompts/active/method-critic.md",
+                },
+                "visual_critic": {
+                    "backend": "claude_cli",
+                    "prompt": "prompts/active/visual-critic.md",
+                },
+                "verifier": {
+                    "backend": "claude_cli",
+                    "prompt": "prompts/active/verifier.md",
+                },
+                "memory_curator": {
+                    "backend": "claude_cli",
+                    "prompt": "prompts/active/memory-curator.md",
+                },
+            },
+            "runtime": {
+                "max_revision_rounds": 1,
+                "max_reframes": 1,
+                "memory_curator": True,
+            },
+        },
+    )
+    run_dir = repo_root / "results" / "runs" / "codex-multiagent-v1" / "multimodal"
+    analysis_dir = run_dir / "artifacts" / "analysis"
+    analysis_dir.mkdir(parents=True, exist_ok=True)
+    (analysis_dir / "analysis_report.md").write_text("# Analysis\n")
+    (analysis_dir / "findings.json").write_text('{"items":[{"id":"finding_1"}]}')
+    (analysis_dir / "claim_evidence_map.json").write_text('{"claims":[]}')
+    (analysis_dir / "plots").mkdir(parents=True, exist_ok=True)
+    (analysis_dir / "plots" / "distribution.png").write_bytes(b"png")
+    (analysis_dir / "plots" / "diagnostics").mkdir(parents=True, exist_ok=True)
+    (analysis_dir / "plots" / "diagnostics" / "residuals.png").write_bytes(b"png")
+    (analysis_dir / "stats").mkdir(exist_ok=True)
+    (analysis_dir / "stats" / "summary.json").write_text('{"rows": 10}')
+
+    verification_dir = run_dir / "artifacts" / "verification"
+    verification_dir.mkdir(parents=True, exist_ok=True)
+    (verification_dir / "verification.json").write_text('{"verdict":"pass"}')
+    (run_dir / "score.json").write_text(
+        json.dumps(
+            {
+                "verdict": "partial",
+                "run_status": "completed",
+                "core_insight_pass": False,
+                "required_coverage": 0.5,
+                "supporting_coverage": 0.25,
+                "fatal_errors": [],
+                "summary": "partial result",
+            },
+            indent=2,
+        )
+    )
+
+    _write_invocation(run_dir, invocation_id="task_framer-0001", role="task_framer")
+    _write_invocation(run_dir, invocation_id="analysis_planner-0001", role="analysis_planner")
+    _write_invocation(run_dir, invocation_id="analysis_executor-0001", role="analysis_executor")
+
+    experiment_dir = import_legacy_experiment(
+        repo_root=repo_root,
+        experiment_id="exp_20260406_120000_multiagent",
+        title="Multiagent import",
+    )
+
+    manifest = json.loads((experiment_dir / "manifest.json").read_text())
+    artifact_paths = {artifact["path"] for artifact in manifest["artifacts"]}
+
+    assert len(manifest["agent_runs"]) == 3
+    assert {run["role"] for run in manifest["agent_runs"]} == {
+        "task_framer",
+        "analysis_planner",
+        "analysis_executor",
+    }
+    assert any(
+        artifact["type"] == "analysis_report"
+        and artifact["path"]
+        == "results/runs/codex-multiagent-v1/multimodal/artifacts/analysis/analysis_report.md"
+        for artifact in manifest["artifacts"]
+    )
+    assert any(
+        artifact["type"] == "plot"
+        and artifact["path"]
+        == "results/runs/codex-multiagent-v1/multimodal/artifacts/analysis/plots/diagnostics/residuals.png"
+        for artifact in manifest["artifacts"]
+    )
+    assert (
+        "results/runs/codex-multiagent-v1/multimodal/artifacts/verification/verification.json"
+        in artifact_paths
+    )
+    assert manifest["cases"][0]["artifact_count"] >= 2
 
 
 def test_import_refreshes_static_dashboard_api_when_frontend_dist_exists(tmp_path: Path):

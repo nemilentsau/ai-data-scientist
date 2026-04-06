@@ -1,7 +1,9 @@
 """Tests for prompt building and deterministic scoring helpers."""
 
+import json
 import tempfile
 from pathlib import Path
+from types import SimpleNamespace
 
 from datasets.registry import OracleMetric, get_dataset
 from reviewer.scorer import (
@@ -117,6 +119,19 @@ def test_run_state_marks_missing_outputs_as_run_error():
     assert "missing analysis report (analysis_report.md)" in reasons
 
 
+def test_run_state_accepts_canonical_analysis_report_path():
+    with tempfile.TemporaryDirectory() as tmp:
+        run_dir = Path(tmp)
+        report_path = run_dir / "artifacts" / "analysis" / "analysis_report.md"
+        report_path.parent.mkdir(parents=True, exist_ok=True)
+        report_path.write_text("report")
+
+        run_status, reasons = assess_run_state(run_dir)
+
+    assert run_status == "completed"
+    assert reasons == []
+
+
 def test_run_state_marks_complete_outputs_as_completed():
     with tempfile.TemporaryDirectory() as tmp:
         run_dir = Path(tmp)
@@ -153,3 +168,63 @@ def test_score_result_dataclass_uses_structured_fields():
     assert result.verdict == "solved"
     assert result.run_status == "completed"
     assert result.oracle_attainment == 0.9
+
+
+def test_score_analysis_reads_invocation_traces_for_transcript_and_efficiency(monkeypatch):
+    captured: dict[str, str] = {}
+
+    with tempfile.TemporaryDirectory() as tmp:
+        run_dir = Path(tmp)
+        report_path = run_dir / "artifacts" / "analysis" / "analysis_report.md"
+        report_path.parent.mkdir(parents=True, exist_ok=True)
+        report_path.write_text("# Analysis\n")
+
+        first_trace = run_dir / "invocations" / "analysis-planner-0001" / "trace" / "trace.jsonl"
+        first_trace.parent.mkdir(parents=True, exist_ok=True)
+        first_trace.write_text('{"event":"planner"}\n')
+
+        second_trace = run_dir / "invocations" / "analysis-executor-0001" / "trace" / "trace.jsonl"
+        second_trace.parent.mkdir(parents=True, exist_ok=True)
+        second_trace.write_text('{"event":"executor"}\n')
+
+        dataset_meta = get_dataset("pure_noise")
+
+        def fake_build_prompt(dataset_metadata, analysis_report, session_transcript):
+            del dataset_metadata, analysis_report
+            captured["transcript"] = session_transcript
+            return "prompt"
+
+        def fake_subprocess_run(*args, **kwargs):
+            del args, kwargs
+            return SimpleNamespace(
+                returncode=0,
+                stdout=json.dumps(
+                    {
+                        "result": json.dumps(
+                            {
+                                "must_have": {},
+                                "supporting": {},
+                                "forbidden": {},
+                                "summary": "partial result",
+                            }
+                        )
+                    }
+                ),
+                stderr="",
+            )
+
+        monkeypatch.setattr("reviewer.scorer.build_reviewer_prompt", fake_build_prompt)
+        monkeypatch.setattr("reviewer.scorer.subprocess.run", fake_subprocess_run)
+
+        from reviewer.scorer import score_analysis
+
+        result = score_analysis(
+            dataset_name="pure_noise",
+            agent="analysis_executor",
+            dataset_metadata=dataset_meta,
+            results_dir=run_dir,
+        )
+
+    assert '{"event":"planner"}' in captured["transcript"]
+    assert '{"event":"executor"}' in captured["transcript"]
+    assert result.efficiency["trace_events"] == 2.0

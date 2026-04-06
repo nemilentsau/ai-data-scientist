@@ -1,7 +1,8 @@
-"""Tests for benchmark orchestration and experiment catalog refresh."""
+"""Tests for benchmark orchestration and scoring migration."""
 
 import json
 from pathlib import Path
+from types import SimpleNamespace
 
 import run_benchmark as run_benchmark_wrapper
 import yaml
@@ -23,7 +24,7 @@ def test_root_wrapper_exposes_package_main():
     assert run_benchmark_wrapper.main is benchmark_cli.main
 
 
-def test_benchmark_run_refreshes_experiment_catalog_from_current_results(
+def test_benchmark_run_uses_new_multiagent_config_and_canonical_analysis_report(
     tmp_path: Path, monkeypatch
 ):
     repo_root = tmp_path
@@ -33,12 +34,52 @@ def test_benchmark_run_refreshes_experiment_catalog_from_current_results(
     datasets_dir = repo_root / "datasets" / "generated"
 
     _write_yaml(
-        configs_dir / "solo-codex.yaml",
+        configs_dir / "codex-multiagent-v1.yaml",
         {
-            "name": "solo-codex",
-            "description": "Single Codex agent",
-            "team": [{"role": "codex", "model": "gpt-5.4"}],
-            "harness": "harness/run_codex.sh",
+            "name": "codex-multiagent-v1",
+            "description": "External orchestrator with Codex execution",
+            "roles": {
+                "task_framer": {
+                    "backend": "claude_cli",
+                    "prompt": "prompts/active/task-framer.md",
+                    "model": "claude-opus-4-6",
+                },
+                "analysis_planner": {
+                    "backend": "claude_cli",
+                    "prompt": "prompts/active/analysis-planner.md",
+                    "model": "claude-opus-4-6",
+                },
+                "analysis_executor": {
+                    "backend": "codex_cli",
+                    "prompt": "prompts/active/analysis-executor.md",
+                    "model": "gpt-5.4",
+                },
+                "method_critic": {
+                    "backend": "claude_cli",
+                    "prompt": "prompts/active/method-critic.md",
+                    "model": "claude-opus-4-6",
+                },
+                "visual_critic": {
+                    "backend": "claude_cli",
+                    "prompt": "prompts/active/visual-critic.md",
+                    "model": "claude-opus-4-6",
+                },
+                "verifier": {
+                    "backend": "claude_cli",
+                    "prompt": "prompts/active/verifier.md",
+                    "model": "claude-opus-4-6",
+                },
+                "memory_curator": {
+                    "backend": "claude_cli",
+                    "prompt": "prompts/active/memory-curator.md",
+                    "model": "claude-opus-4-6",
+                },
+            },
+            "runtime": {
+                "max_revision_rounds": 1,
+                "max_reframes": 1,
+                "memory_curator": True,
+            },
         },
     )
     datasets_dir.mkdir(parents=True, exist_ok=True)
@@ -51,76 +92,78 @@ def test_benchmark_run_refreshes_experiment_catalog_from_current_results(
     monkeypatch.setattr(benchmark_cli, "CONFIGS_DIR", configs_dir)
     monkeypatch.setattr(benchmark_cli, "RUNS_DIR", runs_dir)
 
+    prompt_capture: dict[str, str] = {}
+
     def fake_run_workflow_for_dataset(
         config: dict,
         config_name: str,
         dataset_name: str,
         dataset_csv: Path,
     ):
+        assert config_name == "codex-multiagent-v1"
+        assert config["roles"]["analysis_executor"]["backend"] == "codex_cli"
         run_dir = runs_dir / config_name / dataset_name
         run_dir.mkdir(parents=True, exist_ok=True)
-        (run_dir / "analysis_report.md").write_text("# Analysis\n")
-        (run_dir / "trace.jsonl").write_text('{"event":"tool"}\n')
-        (run_dir / "session.log").write_text("session log")
-        (run_dir / "final_message.md").write_text("final summary")
-        plots_dir = run_dir / "plots"
-        plots_dir.mkdir(exist_ok=True)
-        (plots_dir / "distribution.png").write_bytes(b"png")
+        analysis_dir = run_dir / "artifacts" / "analysis"
+        analysis_dir.mkdir(parents=True, exist_ok=True)
+        (analysis_dir / "analysis_report.md").write_text("# Analysis\n")
+        (analysis_dir / "findings.json").write_text('{"items": []}')
+        verification_dir = run_dir / "artifacts" / "verification"
+        verification_dir.mkdir(parents=True, exist_ok=True)
+        (verification_dir / "verification.json").write_text('{"verdict":"pass"}')
+        invocation_dir = run_dir / "invocations" / "analysis_executor-0001"
+        (invocation_dir / "output").mkdir(parents=True, exist_ok=True)
+        (invocation_dir / "logs").mkdir(exist_ok=True)
+        (invocation_dir / "manifest.json").write_text(
+            json.dumps({"invocation_id": "analysis_executor-0001", "role": "analysis_executor"})
+        )
+        (invocation_dir / "output" / "analysis_report.md").write_text("# Analysis\n")
         return True
 
-    def fake_score_results(dataset_names: list[str], config_name: str, config: dict):
-        for dataset_name in dataset_names:
-            _write_json(
-                runs_dir / config_name / dataset_name / "score.json",
-                {
-                    "verdict": "partial",
-                    "run_status": "completed",
-                    "core_insight_pass": False,
-                    "required_coverage": 0.5,
-                    "supporting_coverage": 0.25,
-                    "fatal_errors": [],
-                    "summary": "partial result",
-                },
-            )
-        return [object()]
+    def fake_build_reviewer_prompt(dataset_metadata, analysis_report, session_transcript):
+        del dataset_metadata, session_transcript
+        prompt_capture["analysis_report"] = analysis_report
+        return "prompt"
 
-    def fake_generate_report(scores: list[object], config_name: str):
-        report_path = runs_dir / config_name / "benchmark_report.md"
-        report_path.parent.mkdir(parents=True, exist_ok=True)
-        report_path.write_text("# Report\n")
-        return report_path
+    def fake_subprocess_run(*args, **kwargs):
+        del args, kwargs
+        return SimpleNamespace(
+            returncode=0,
+            stdout=json.dumps(
+                {
+                    "result": json.dumps(
+                        {
+                            "must_have": {},
+                            "supporting": {},
+                            "forbidden": {},
+                            "summary": "partial result",
+                        }
+                    )
+                }
+            ),
+            stderr="",
+        )
 
     monkeypatch.setattr(benchmark_cli, "generate_datasets", lambda: None)
     monkeypatch.setattr(benchmark_cli, "run_workflow_for_dataset", fake_run_workflow_for_dataset)
-    monkeypatch.setattr(benchmark_cli, "score_results", fake_score_results)
-    monkeypatch.setattr(benchmark_cli, "generate_report", fake_generate_report)
+    monkeypatch.setattr("reviewer.scorer.build_reviewer_prompt", fake_build_reviewer_prompt)
+    monkeypatch.setattr("reviewer.scorer.subprocess.run", fake_subprocess_run)
     monkeypatch.setattr(
         "sys.argv",
         [
             "run_benchmark.py",
             "--config",
-            "solo-codex",
+            "codex-multiagent-v1",
             "--datasets",
             "multimodal",
             "--skip-generate",
-            "--experiment-id",
-            "exp_20260401_130000_live",
-            "--experiment-title",
-            "Live benchmark",
+            "--skip-import",
         ],
     )
 
     benchmark_cli.main()
 
-    manifest_path = (
-        results_dir
-        / "experiments"
-        / "exp_20260401_130000_live"
-        / "manifest.json"
-    )
-    manifest = json.loads(manifest_path.read_text())
-
-    assert manifest_path.exists()
-    assert manifest["experiment"]["experiment_id"] == "exp_20260401_130000_live"
-    assert manifest["cases"][0]["dataset"] == "multimodal"
-    assert any(artifact["type"] == "benchmark_report" for artifact in manifest["artifacts"])
+    run_dir = runs_dir / "codex-multiagent-v1" / "multimodal"
+    assert (run_dir / "artifacts" / "analysis" / "analysis_report.md").exists()
+    assert (run_dir / "artifacts" / "verification" / "verification.json").exists()
+    assert prompt_capture.get("analysis_report") == "# Analysis\n"

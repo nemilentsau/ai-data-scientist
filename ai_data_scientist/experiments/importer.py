@@ -95,7 +95,10 @@ def import_legacy_experiment(
 
             case_id = f"case_{experiment_id}_{config_name}_{dataset_name}"
             workflow_run_id = f"workflow_{case_id}_01"
-            agent_run_id = f"agent_{workflow_run_id}_01"
+            default_status = _workflow_status(
+                has_analysis_report=False,
+                evaluation=None,
+            )
 
             case_artifacts = _collect_case_artifacts(
                 repo_root=repo_root,
@@ -103,11 +106,40 @@ def import_legacy_experiment(
                 config_snapshot_id=config_record["config_snapshot_id"],
                 case_id=case_id,
                 workflow_run_id=workflow_run_id,
-                agent_run_id=agent_run_id,
                 run_dir=dataset_dir,
             )
             artifact_records.extend(case_artifacts)
             case_artifact_ids = [artifact["artifact_id"] for artifact in case_artifacts]
+            has_analysis_report = any(
+                artifact["type"] == "analysis_report" for artifact in case_artifacts
+            )
+            default_status = _workflow_status(
+                has_analysis_report=has_analysis_report,
+                evaluation=None,
+            )
+            case_agent_records = _collect_case_agent_runs(
+                repo_root=repo_root,
+                experiment_id=experiment_id,
+                config_snapshot_id=config_record["config_snapshot_id"],
+                case_id=case_id,
+                workflow_run_id=workflow_run_id,
+                run_dir=dataset_dir,
+                config_payload=config_record.get("config", {}),
+                default_status=default_status,
+            )
+            if not case_agent_records:
+                case_agent_records = [
+                    _build_fallback_agent_record(
+                        experiment_id=experiment_id,
+                        config_snapshot_id=config_record["config_snapshot_id"],
+                        case_id=case_id,
+                        workflow_run_id=workflow_run_id,
+                        status=default_status,
+                        config_payload=config_record.get("config", {}),
+                    )
+                ]
+            agent_records.extend(case_agent_records)
+            case_agent_ids = [record["agent_run_id"] for record in case_agent_records]
 
             evaluation = _build_evaluation_record(
                 repo_root=repo_root,
@@ -122,9 +154,7 @@ def import_legacy_experiment(
                 evaluation_id = evaluation["evaluation_id"]
 
             workflow_status = _workflow_status(
-                has_analysis_report=any(
-                    artifact["type"] == "analysis_report" for artifact in case_artifacts
-                ),
+                has_analysis_report=has_analysis_report,
                 evaluation=evaluation,
             )
 
@@ -138,26 +168,9 @@ def import_legacy_experiment(
                     "source_kind": "legacy_import",
                     "source_path": dataset_dir.relative_to(repo_root).as_posix(),
                     "config_snapshot_id": config_record["config_snapshot_id"],
-                    "agent_run_ids": [agent_run_id],
+                    "agent_run_ids": case_agent_ids,
                     "artifact_ids": case_artifact_ids,
                     "evaluation_id": evaluation_id,
-                }
-            )
-
-            primary_agent = primary_agent_metadata(config_record.get("config", {}))
-            agent_records.append(
-                {
-                    "agent_run_id": agent_run_id,
-                    "experiment_id": experiment_id,
-                    "case_id": case_id,
-                    "workflow_run_id": workflow_run_id,
-                    "config_snapshot_id": config_record["config_snapshot_id"],
-                    "role": primary_agent.get("role", config_name),
-                    "model": primary_agent.get("model"),
-                    "parent_agent_run_id": None,
-                    "status": workflow_status,
-                    "source_kind": "legacy_import",
-                    "artifact_ids": case_artifact_ids,
                 }
             )
 
@@ -170,7 +183,7 @@ def import_legacy_experiment(
                     "config_snapshot_id": config_record["config_snapshot_id"],
                     "workflow_run_ids": [workflow_run_id],
                     "latest_workflow_run_id": workflow_run_id,
-                    "agent_run_ids": [agent_run_id],
+                    "agent_run_ids": case_agent_ids,
                     "artifact_ids": case_artifact_ids,
                     "evaluation_id": evaluation_id,
                 }
@@ -272,29 +285,14 @@ def _collect_case_artifacts(
     config_snapshot_id: str,
     case_id: str,
     workflow_run_id: str,
-    agent_run_id: str,
+    agent_run_id: str | None = None,
     run_dir: Path,
 ) -> list[dict[str, Any]]:
     records: list[dict[str, Any]] = []
-    for path in sorted(run_dir.iterdir()):
-        if path.is_dir():
-            if path.name == "plots":
-                for plot_path in sorted(path.iterdir()):
-                    if plot_path.is_file() and plot_path.suffix.lower() in PLOT_EXTENSIONS:
-                        records.append(
-                            _build_artifact_record(
-                                repo_root=repo_root,
-                                experiment_id=experiment_id,
-                                config_snapshot_id=config_snapshot_id,
-                                path=plot_path,
-                                artifact_type="plot",
-                                role="harness_output",
-                                case_id=case_id,
-                                workflow_run_id=workflow_run_id,
-                                agent_run_id=agent_run_id,
-                            )
-                        )
-                continue
+    for path in sorted(run_dir.rglob("*")):
+        if not path.is_file():
+            continue
+        if "invocations" in path.parts:
             continue
 
         artifact_type, role = _artifact_type_and_role(path)
@@ -312,6 +310,79 @@ def _collect_case_artifacts(
             )
         )
     return records
+
+
+def _collect_case_agent_runs(
+    *,
+    repo_root: Path,
+    experiment_id: str,
+    config_snapshot_id: str,
+    case_id: str,
+    workflow_run_id: str,
+    run_dir: Path,
+    config_payload: dict[str, Any],
+    default_status: str,
+) -> list[dict[str, Any]]:
+    invocation_root = run_dir / "invocations"
+    if not invocation_root.exists():
+        return []
+
+    records: list[dict[str, Any]] = []
+    for manifest_path in sorted(invocation_root.rglob("manifest.json")):
+        invocation_dir = manifest_path.parent
+        if not invocation_dir.is_dir():
+            continue
+        try:
+            payload = json.loads(manifest_path.read_text())
+        except json.JSONDecodeError:
+            payload = {}
+        invocation_id = str(payload.get("invocation_id") or invocation_dir.name)
+        role = str(payload.get("role") or invocation_dir.name.split("-", maxsplit=1)[0])
+        model = _role_model_from_config(config_payload, role)
+        status = str(payload.get("status") or default_status)
+        records.append(
+            {
+                "agent_run_id": f"agent_{workflow_run_id}_{invocation_id}",
+                "experiment_id": experiment_id,
+                "case_id": case_id,
+                "workflow_run_id": workflow_run_id,
+                "config_snapshot_id": config_snapshot_id,
+                "role": role,
+                "model": model,
+                "parent_agent_run_id": None,
+                "status": status,
+                "source_kind": "orchestration_import",
+                "artifact_ids": [],
+                "invocation_id": invocation_id,
+                "source_path": invocation_dir.relative_to(repo_root).as_posix(),
+            }
+        )
+    return records
+
+
+def _build_fallback_agent_record(
+    *,
+    experiment_id: str,
+    config_snapshot_id: str,
+    case_id: str,
+    workflow_run_id: str,
+    status: str,
+    config_payload: dict[str, Any],
+) -> dict[str, Any]:
+    primary_agent = primary_agent_metadata(config_payload)
+    return {
+        "agent_run_id": f"agent_{workflow_run_id}_01",
+        "experiment_id": experiment_id,
+        "case_id": case_id,
+        "workflow_run_id": workflow_run_id,
+        "config_snapshot_id": config_snapshot_id,
+        "role": primary_agent.get("role") or "agent",
+        "model": primary_agent.get("model"),
+        "parent_agent_run_id": None,
+        "status": status,
+        "source_kind": "legacy_import",
+        "artifact_ids": [],
+    }
 
 
 def _collect_experiment_synthesis_artifacts(
@@ -361,6 +432,16 @@ def _collect_experiment_synthesis_artifacts(
 def _artifact_type_and_role(path: Path) -> tuple[str, str]:
     if path.name == "analysis_report.md":
         return "analysis_report", "harness_output"
+    if path.name == "framing.json":
+        return "framing", "harness_output"
+    if path.name in {"analysis_plan.md", "hypotheses.json", "experiment_plan.json"}:
+        return "planning_artifact", "harness_output"
+    if path.name == "findings.json":
+        return "findings", "harness_output"
+    if path.name == "claim_evidence_map.json":
+        return "claim_evidence_map", "harness_output"
+    if path.name == "verification.json":
+        return "verification", "harness_output"
     if path.name == "score.json":
         return "score", "evaluation_output"
     if path.name == "trace.jsonl":
@@ -369,9 +450,26 @@ def _artifact_type_and_role(path: Path) -> tuple[str, str]:
         return "session", "session_output"
     if path.name == "final_message.md":
         return "final_message", "harness_output"
+    if "plots" in path.parts and path.suffix.lower() in PLOT_EXTENSIONS:
+        return "plot", "harness_output"
+    if "stats" in path.parts and path.suffix.lower() == ".json":
+        return "stats_json", "harness_output"
     if path.suffix == ".py":
         return "generated_code", "harness_output"
     return "artifact", "harness_output"
+
+
+def _role_model_from_config(config_payload: dict[str, Any], role_name: str) -> str | None:
+    roles = config_payload.get("roles")
+    if isinstance(roles, dict):
+        raw_role = roles.get(role_name)
+        if isinstance(raw_role, dict):
+            model = str(raw_role.get("model") or "").strip()
+            if model:
+                return model
+    primary = primary_agent_metadata(config_payload)
+    model = str(primary.get("model") or "").strip()
+    return model or None
 
 
 def _build_artifact_record(
@@ -491,7 +589,16 @@ def _build_experiment_record(
 
 
 def _media_type(path: Path, artifact_type: str) -> str:
-    if artifact_type in {"score", "session"} and path.suffix == ".json":
+    if artifact_type in {
+        "score",
+        "session",
+        "framing",
+        "planning_artifact",
+        "findings",
+        "claim_evidence_map",
+        "verification",
+        "stats_json",
+    } and path.suffix == ".json":
         return "application/json"
     if artifact_type == "trace":
         return "application/x-ndjson"

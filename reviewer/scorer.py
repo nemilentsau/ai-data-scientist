@@ -114,9 +114,12 @@ def assess_run_state(results_dir: Path) -> tuple[RunStatus, list[str]]:
     """Determine whether a run completed enough to score analytically."""
     missing_artifacts: list[str] = []
 
-    report_path = results_dir / "analysis_report.md"
+    report_path = _analysis_report_path(results_dir)
     if not report_path.exists():
         missing_artifacts.append("missing analysis report (analysis_report.md)")
+        missing_artifacts.append(
+            "missing analysis report (artifacts/analysis/analysis_report.md)"
+        )
 
     if missing_artifacts:
         return "run_error", missing_artifacts
@@ -338,12 +341,13 @@ def _collect_efficiency_metrics(results_dir: Path, session_transcript: str) -> d
         "transcript_chars": float(len(session_transcript)),
     }
 
-    trace_path = results_dir / "trace.jsonl"
-    if trace_path.exists():
-        with trace_path.open() as trace_file:
-            metrics["trace_events"] = float(sum(1 for _ in trace_file))
+    trace_paths = _trace_paths(results_dir)
+    if trace_paths:
+        metrics["trace_events"] = float(
+            sum(sum(1 for _ in trace_path.open()) for trace_path in trace_paths)
+        )
 
-    report_path = results_dir / "analysis_report.md"
+    report_path = _analysis_report_path(results_dir)
     if report_path.exists():
         metrics["report_chars"] = float(len(report_path.read_text()))
 
@@ -358,28 +362,16 @@ def score_analysis(
 ) -> ScoreResult:
     """Score an agent's analysis using Claude CLI as the structured reviewer."""
     evaluation_spec = get_evaluation_spec(dataset_metadata)
-    report_path = results_dir / "analysis_report.md"
+    report_path = _analysis_report_path(results_dir)
     analysis_report = (
         report_path.read_text() if report_path.exists() else "[No analysis report found]"
     )
 
-    trace_path = results_dir / "trace.jsonl"
-    if trace_path.exists():
-        session_transcript = trace_path.read_text()
-    elif agent == "claude":
-        transcript_path = results_dir / "session.json"
-        session_transcript = (
-            transcript_path.read_text()
-            if transcript_path.exists()
-            else "[No session transcript found]"
-        )
+    trace_paths = _trace_paths(results_dir)
+    if trace_paths:
+        session_transcript = "\n".join(path.read_text() for path in trace_paths)
     else:
-        transcript_path = results_dir / "session.log"
-        session_transcript = (
-            transcript_path.read_text()
-            if transcript_path.exists()
-            else "[No session transcript found]"
-        )
+        session_transcript = _read_session_transcript(results_dir, agent)
 
     run_status, run_error_reasons = assess_run_state(results_dir)
     if run_status == "run_error":
@@ -488,3 +480,51 @@ def score_analysis(
         summary=summary,
         raw_response=raw_response,
     )
+
+
+def _analysis_report_path(results_dir: Path) -> Path:
+    canonical_path = results_dir / "artifacts" / "analysis" / "analysis_report.md"
+    if canonical_path.exists():
+        return canonical_path
+    legacy_path = results_dir / "analysis_report.md"
+    if legacy_path.exists():
+        return legacy_path
+    return canonical_path
+
+
+def _trace_path(results_dir: Path) -> Path:
+    trace_paths = _trace_paths(results_dir)
+    if trace_paths:
+        return trace_paths[0]
+    legacy_path = results_dir / "trace.jsonl"
+    if legacy_path.exists():
+        return legacy_path
+    return results_dir / "trace.jsonl"
+
+
+def _trace_paths(results_dir: Path) -> list[Path]:
+    invocation_root = results_dir / "invocations"
+    if invocation_root.exists():
+        paths = [
+            path
+            for path in sorted(invocation_root.rglob("trace.jsonl"))
+            if path.is_file()
+        ]
+        if paths:
+            return paths
+
+    orchestration_trace = results_dir / "orchestration" / "trace.jsonl"
+    if orchestration_trace.exists():
+        return [orchestration_trace]
+    return []
+
+
+def _read_session_transcript(results_dir: Path, agent: str) -> str:
+    if agent == "claude":
+        transcript_path = results_dir / "session.json"
+        if transcript_path.exists():
+            return transcript_path.read_text()
+    transcript_path = results_dir / "session.log"
+    if transcript_path.exists():
+        return transcript_path.read_text()
+    return "[No session transcript found]"

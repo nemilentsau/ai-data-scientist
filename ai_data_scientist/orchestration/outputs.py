@@ -4,8 +4,33 @@ from __future__ import annotations
 
 import json
 import shutil
+from pathlib import Path
 
-from ai_data_scientist.orchestration.models import RunContext, SessionHandle
+from ai_data_scientist.orchestration.models import InvocationContext, PublishContract, RunContext, SessionHandle
+
+
+def _copy_declared_output(*, source_root: Path, destination_root: Path, relative_output: Path) -> Path | None:
+    output_path = Path(relative_output)
+    if output_path.is_absolute() or any(part == ".." for part in output_path.parts):
+        raise ValueError(f"Declared output must be relative: {relative_output}")
+
+    source_path = source_root / output_path
+    if not source_path.exists():
+        return None
+
+    destination_path = destination_root / output_path
+    destination_path.parent.mkdir(parents=True, exist_ok=True)
+    if source_path.is_dir():
+        shutil.copytree(source_path, destination_path, dirs_exist_ok=True)
+    else:
+        shutil.copy2(source_path, destination_path)
+    return destination_path
+
+
+def _published_relative_path(role: str, relative_output: Path) -> Path:
+    if role == "memory_curator" and relative_output.parts[:1] == ("memory",):
+        return Path(*relative_output.parts[1:])
+    return relative_output
 
 
 def publish_top_level_outputs(context: RunContext, final_session: SessionHandle) -> None:
@@ -30,6 +55,64 @@ def publish_top_level_outputs(context: RunContext, final_session: SessionHandle)
 
     for code_path in context.work_dir.glob("*.py"):
         shutil.copy2(code_path, context.results_dir / code_path.name)
+
+
+def stage_declared_outputs(
+    *,
+    invocation: InvocationContext,
+    contract: PublishContract,
+) -> list[Path]:
+    """Stage declared outputs from the private workspace into the output area."""
+    staged: list[Path] = []
+    for relative_output in contract.declared_outputs:
+        staged_path = _copy_declared_output(
+            source_root=invocation.work_dir,
+            destination_root=invocation.output_dir,
+            relative_output=relative_output,
+        )
+        if staged_path is not None:
+            staged.append(staged_path)
+    return staged
+
+
+def publish_declared_outputs(
+    *,
+    run_dir: Path,
+    invocation: InvocationContext,
+    contract: PublishContract,
+) -> list[Path]:
+    """Publish only declared outputs from the invocation output staging area."""
+    role_dirs = {
+        "task_framer": "framing",
+        "analysis_planner": "planning",
+        "analysis_executor": "analysis",
+        "method_critic": "critiques/method_critic",
+        "visual_critic": "critiques/visual_critic",
+        "verifier": "verification",
+        "memory_curator": "memory",
+    }
+    destination_root = run_dir / "artifacts" / role_dirs[contract.role]
+    destination_root.mkdir(parents=True, exist_ok=True)
+
+    published: list[Path] = []
+    for relative_output in contract.declared_outputs:
+        source_output_path = Path(relative_output)
+        if source_output_path.is_absolute() or any(part == ".." for part in source_output_path.parts):
+            raise ValueError(f"Declared output must be relative: {relative_output}")
+
+        source_path = invocation.output_dir / source_output_path
+        if not source_path.exists():
+            continue
+
+        destination_relative_output = _published_relative_path(contract.role, source_output_path)
+        destination_path = destination_root / destination_relative_output
+        destination_path.parent.mkdir(parents=True, exist_ok=True)
+        if source_path.is_dir():
+            shutil.copytree(source_path, destination_path, dirs_exist_ok=True)
+        else:
+            shutil.copy2(source_path, destination_path)
+        published.append(destination_path)
+    return published
 
 
 def write_run_state(context: RunContext) -> None:
@@ -66,4 +149,3 @@ def write_run_state(context: RunContext) -> None:
         },
     }
     context.run_state_path.write_text(json.dumps(payload, indent=2))
-

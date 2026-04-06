@@ -9,13 +9,16 @@ from pathlib import Path
 from ai_data_scientist.orchestration.adapters.base import BackendAdapter
 from ai_data_scientist.orchestration.models import (
     BackendCapabilities,
+    InvocationContext,
+    InvocationResult,
+    RoleSpec,
     RunContext,
     SessionHandle,
     WorkflowExecutionError,
     WorkflowStep,
 )
-from ai_data_scientist.orchestration.prompts import render_step_prompt
-from ai_data_scientist.orchestration.trace import extract_codex_thread_id
+from ai_data_scientist.orchestration.prompts import render_role_prompt
+from ai_data_scientist.orchestration.workspace import create_invocation_context
 
 
 class CodexCliAdapter(BackendAdapter):
@@ -24,9 +27,9 @@ class CodexCliAdapter(BackendAdapter):
     backend_name = "codex_cli"
 
     def capabilities(self) -> BackendCapabilities:
-        return BackendCapabilities(supports_resume=True, supports_image_attachments=True)
+        return BackendCapabilities(supports_resume=False, supports_image_attachments=True)
 
-    def prepare_context(self, context: RunContext) -> None:
+    def prepare_run(self, context: RunContext) -> None:
         codex_home = context.work_dir / ".codex-home"
         codex_home.mkdir(parents=True, exist_ok=True)
         (codex_home / "shell_snapshots").mkdir(exist_ok=True)
@@ -39,9 +42,22 @@ class CodexCliAdapter(BackendAdapter):
         context.env["CODEX_HOME"] = str(codex_home)
         context.top_session_log_path = self._write_top_session_header(context)
 
+    def invoke(
+        self,
+        role: RoleSpec,
+        context: RunContext,
+        invocation: InvocationContext,
+        prompt: str,
+    ) -> InvocationResult:
+        result = self._run_invocation(role=role, context=context, invocation=invocation, prompt=prompt)
+        return InvocationResult(
+            status="completed",
+            final_message_path=result.final_message_path,
+            raw_trace_path=result.raw_trace_path,
+        )
+
     def start_step(self, step: WorkflowStep, context: RunContext) -> SessionHandle:
-        image_paths = context.matched_inputs.get(step.id, [])
-        return self._run_step(step=step, context=context, session=None, image_paths=image_paths)
+        return self._run_legacy_step(step, context)
 
     def continue_step(
         self,
@@ -49,8 +65,8 @@ class CodexCliAdapter(BackendAdapter):
         context: RunContext,
         session: SessionHandle,
     ) -> SessionHandle:
-        image_paths = context.matched_inputs.get(step.id, [])
-        return self._run_step(step=step, context=context, session=session, image_paths=image_paths)
+        del session
+        return self._run_legacy_step(step, context)
 
     def collect_step_outputs(
         self,
@@ -60,42 +76,61 @@ class CodexCliAdapter(BackendAdapter):
     ) -> None:
         del step, context, session
 
-    def _run_step(
-        self,
-        *,
-        step: WorkflowStep,
-        context: RunContext,
-        session: SessionHandle | None,
-        image_paths: list[Path],
-    ) -> SessionHandle:
-        step_dir = context.step_dir(step.id)
-        step_trace = step_dir / "trace.jsonl"
-        step_log = step_dir / "session.log"
-        step_final = step_dir / "final_message.md"
-        prompt = render_step_prompt(
+    def _run_legacy_step(self, step: WorkflowStep, context: RunContext) -> SessionHandle:
+        role = RoleSpec(
+            role=step.role,
+            backend=self.backend_name,
+            prompt=step.prompt,
+            model=step.model,
+            tools=step.tools,
+            max_turns=step.max_turns,
+        )
+        invocation = create_invocation_context(
+            run_dir=context.results_dir,
+            role=role,
+            artifact_inputs=[],
+        )
+        artifact_inputs = self._materialize_invocation_inputs(
+            invocation=invocation,
+            sources=context.matched_inputs.get(step.id, []),
+            source_root=context.work_dir,
+        )
+        prompt = render_role_prompt(
             root=self.root,
-            step=step,
-            image_paths=image_paths,
-            attachment_mode="codex",
+            role=role,
+            artifact_inputs=artifact_inputs,
+            role_memory=None,
+        )
+        result = self.invoke(role, context, invocation, prompt)
+        return SessionHandle(
+            backend=self.backend_name,
+            session_id=invocation.invocation_id,
+            step_id=step.id,
+            raw_trace_path=result.raw_trace_path or invocation.trace_dir / "trace.jsonl",
+            final_message_path=result.final_message_path or invocation.output_dir / "final_message.md",
+            session_log_path=invocation.logs_dir / "session.log",
         )
 
+    def _run_invocation(
+        self,
+        *,
+        role: RoleSpec,
+        context: RunContext,
+        invocation: InvocationContext,
+        prompt: str,
+    ) -> InvocationResult:
+        step_trace = invocation.trace_dir / "trace.jsonl"
+        step_log = invocation.logs_dir / "session.log"
+        step_final = invocation.output_dir / "final_message.md"
+        image_paths = self._invocation_image_paths(invocation)
         command = (
-            self._build_start_command(step, context, prompt, step_final, image_paths)
-            if session is None
-            else self._build_continue_command(
-                step,
-                context,
-                prompt,
-                step_final,
-                image_paths,
-                session.session_id,
-            )
+            self._build_fresh_command(role, invocation, prompt, step_final, image_paths)
         )
 
         with step_trace.open("w") as stdout_handle, step_log.open("w") as stderr_handle:
             completed = subprocess.run(
                 command,
-                cwd=context.work_dir,
+                cwd=invocation.work_dir,
                 env=context.env,
                 check=False,
                 stdout=stdout_handle,
@@ -105,34 +140,31 @@ class CodexCliAdapter(BackendAdapter):
 
         if completed.returncode != 0:
             raise WorkflowExecutionError(
-                f"Codex step '{step.id}' failed with exit code {completed.returncode}."
+                f"Codex invocation '{invocation.invocation_id}' failed with exit code {completed.returncode}."
             )
 
-        session_id = (
-            session.session_id if session is not None else extract_codex_thread_id(step_trace)
-        )
-        return SessionHandle(
-            backend=self.backend_name,
-            session_id=session_id,
-            step_id=step.id,
-            raw_trace_path=step_trace,
+        if not step_final.exists():
+            step_final.write_text("")
+
+        return InvocationResult(
+            status="completed",
             final_message_path=step_final,
-            session_log_path=step_log,
+            raw_trace_path=step_trace,
         )
 
-    def _build_start_command(
+    def _build_fresh_command(
         self,
-        step: WorkflowStep,
-        context: RunContext,
+        role: RoleSpec,
+        invocation: InvocationContext,
         prompt: str,
         final_message_path: Path,
         image_paths: list[Path],
     ) -> list[str]:
         command = ["codex", "-a", "never"]
-        if step.model:
-            command.extend(["-m", step.model])
+        if role.model:
+            command.extend(["-m", role.model])
         for path in image_paths:
-            command.extend(["-i", str(path.resolve())])
+            command.extend(["-i", str(path)])
         command.extend(
             [
                 "--disable",
@@ -145,7 +177,7 @@ class CodexCliAdapter(BackendAdapter):
                 "--json",
                 "--skip-git-repo-check",
                 "-C",
-                str(context.work_dir),
+                str(invocation.work_dir),
                 "-o",
                 str(final_message_path),
                 prompt,
@@ -153,37 +185,32 @@ class CodexCliAdapter(BackendAdapter):
         )
         return command
 
-    def _build_continue_command(
+    def _materialize_invocation_inputs(
         self,
-        step: WorkflowStep,
-        context: RunContext,
-        prompt: str,
-        final_message_path: Path,
-        image_paths: list[Path],
-        session_id: str,
-    ) -> list[str]:
-        command = [
-            "codex",
-            "-a",
-            "never",
-            "-s",
-            "workspace-write",
-            "-C",
-            str(context.work_dir),
-            "--disable",
-            "plugins",
-            "--disable",
-            "shell_snapshot",
-            "exec",
-            "resume",
+        *,
+        invocation: InvocationContext,
+        sources: list[Path],
+        source_root: Path,
+    ) -> list[Path]:
+        copied_inputs: list[Path] = []
+        for source_path in sources:
+            try:
+                relative_path = source_path.relative_to(source_root)
+            except ValueError:
+                relative_path = Path(source_path.name)
+            destination = invocation.input_dir / relative_path
+            destination.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(source_path, destination)
+            copied_inputs.append(destination)
+        return copied_inputs
+
+    def _invocation_image_paths(self, invocation: InvocationContext) -> list[Path]:
+        image_suffixes = {".png", ".jpg", ".jpeg", ".gif", ".webp", ".bmp", ".tiff"}
+        return [
+            path
+            for path in sorted(invocation.input_dir.rglob("*"))
+            if path.is_file() and path.suffix.lower() in image_suffixes
         ]
-        if step.model:
-            command.extend(["-m", step.model])
-        command.extend(["--json", "--skip-git-repo-check", "-o", str(final_message_path)])
-        for path in image_paths:
-            command.extend(["-i", str(path.resolve())])
-        command.extend([session_id, prompt])
-        return command
 
     def _write_top_session_header(self, context: RunContext) -> Path:
         session_log = context.results_dir / "session.log"

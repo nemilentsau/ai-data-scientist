@@ -4,6 +4,9 @@ from ai_data_scientist.orchestration.adapters.base import BackendAdapter
 from ai_data_scientist.orchestration.config import normalize_workflow_config, primary_agent_metadata
 from ai_data_scientist.orchestration.models import (
     BackendCapabilities,
+    OrchestratorSpec,
+    RoleSpec,
+    RuntimePolicy,
     RunContext,
     SessionHandle,
     WorkflowExecutionError,
@@ -27,6 +30,9 @@ __all__ = [
     "BENCHMARK_VENV_DIRNAME",
     "BackendAdapter",
     "BackendCapabilities",
+    "OrchestratorSpec",
+    "RoleSpec",
+    "RuntimePolicy",
     "RunContext",
     "SessionHandle",
     "WorkflowExecutionError",

@@ -1,0 +1,35 @@
+name: claude-multiagent-v1
+description: External orchestrator with Claude execution
+roles:
+  task_framer:
+    backend: claude_cli
+    prompt: prompts/active/task-framer.md
+    model: claude-opus-4-6
+  analysis_planner:
+    backend: claude_cli
+    prompt: prompts/active/analysis-planner.md
+    model: claude-opus-4-6
+  analysis_executor:
+    backend: claude_cli
+    prompt: prompts/active/analysis-executor.md
+    model: claude-opus-4-6
+  method_critic:
+    backend: claude_cli
+    prompt: prompts/active/method-critic.md
+    model: claude-opus-4-6
+  visual_critic:
+    backend: claude_cli
+    prompt: prompts/active/visual-critic.md
+    model: claude-opus-4-6
+  verifier:
+    backend: claude_cli
+    prompt: prompts/active/verifier.md
+    model: claude-opus-4-6
+  memory_curator:
+    backend: claude_cli
+    prompt: prompts/active/memory-curator.md
+    model: claude-opus-4-6
+runtime:
+  max_revision_rounds: 1
+  max_reframes: 1
+  memory_curator: true

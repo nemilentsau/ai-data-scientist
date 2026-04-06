@@ -41,14 +41,13 @@ Produces 20 CSVs in `datasets/generated/` with opaque filenames.
 ### Run the full benchmark
 
 ```bash
-uv run python run_benchmark.py --config solo-baseline
-uv run python run_benchmark.py --config solo-codex
-uv run python run_benchmark.py --config codex-v3
+uv run python run_benchmark.py --config codex-multiagent-v1
+uv run python run_benchmark.py --config claude-multiagent-v1
 ```
 
 This will:
 1. Generate all 20 datasets
-2. Run the selected agent config in an isolated temp directory per dataset
+2. Run the selected multiagent config in an isolated temp directory per dataset
 3. Score each agent's output using the LLM reviewer
 4. Produce a per-config report at `results/runs/<config>/benchmark_report.md`
 5. Refresh an experiment manifest in `results/experiments/...`
@@ -57,42 +56,30 @@ The runner refreshes experiment metadata automatically unless you pass `--skip-i
 By default it creates a new experiment per invocation. To compare multiple configs inside the same experiment, reuse `--experiment-id` across runs and set `--experiment-title` on the first one.
 
 ```bash
-uv run python run_benchmark.py --config solo-baseline --experiment-id exp_solo_compare --experiment-title "Solo compare"
-uv run python run_benchmark.py --config solo-codex --experiment-id exp_solo_compare
+uv run python run_benchmark.py --config claude-multiagent-v1 --experiment-id exp_multiagent_compare --experiment-title "Multiagent compare"
+uv run python run_benchmark.py --config codex-multiagent-v1 --experiment-id exp_multiagent_compare
 ```
 
 ### Workflow configs
 
-The runner now supports both legacy single-agent configs and ordered multi-step workflows.
-
-Legacy configs still work unchanged:
+The runner now uses the external orchestrator config shape:
 
 ```yaml
-name: solo-codex
-team:
-  - role: codex
-    prompt: prompts/analyst-generic.md
-    max_turns: 30
-harness: harness/run_codex.sh
-```
-
-New workflow configs use a backend plus ordered steps:
-
-```yaml
-name: codex-v3
-backend: codex_cli
-workflow:
-  steps:
-    - id: analyst
-      role: analyst
-      prompt: prompts/analyst-v2.md
-      max_turns: 30
-    - id: visual_review
-      role: visual_reviewer
-      prompt: prompts/visual-review.md
-      image_inputs:
-        - plots/*.png
-      required: true
+name: codex-multiagent-v1
+roles:
+  task_framer:
+    backend: claude_cli
+    prompt: prompts/active/task-framer.md
+  analysis_planner:
+    backend: claude_cli
+    prompt: prompts/active/analysis-planner.md
+  analysis_executor:
+    backend: codex_cli
+    prompt: prompts/active/analysis-executor.md
+runtime:
+  max_revision_rounds: 1
+  max_reframes: 1
+  memory_curator: true
 ```
 
 The current built-in backends are:
@@ -105,7 +92,7 @@ The current built-in backends are:
 Use the import CLI for existing run folders that were created before automatic experiment refresh existed, or when you want to rebuild metadata from `results/runs/...`.
 
 ```bash
-uv run python experiment_import.py --title "Legacy Solo Benchmark Import"
+uv run python experiment_import.py --title "Historical Benchmark Import"
 ```
 
 This creates:
@@ -126,37 +113,37 @@ to the matching case details inside that experiment.
 ### Run a single agent on a single dataset
 
 ```bash
-# Run Claude on simpsons_paradox only (skip dataset generation if CSVs exist)
-uv run python run_benchmark.py --config solo-baseline --datasets simpsons_paradox --skip-generate
+# Run the Claude executor stack on simpsons_paradox only
+uv run python run_benchmark.py --config claude-multiagent-v1 --datasets simpsons_paradox --skip-generate
 
-# Run Codex on two specific datasets
-uv run python run_benchmark.py --config solo-codex --datasets pure_noise quadratic --skip-generate
+# Run the Codex executor stack on two specific datasets
+uv run python run_benchmark.py --config codex-multiagent-v1 --datasets pure_noise quadratic --skip-generate
 
-# Run agent only, skip scoring
-uv run python run_benchmark.py --config solo-baseline --datasets mnar --skip-generate --skip-score
+# Run the workflow only, skip scoring
+uv run python run_benchmark.py --config claude-multiagent-v1 --datasets mnar --skip-generate --skip-score
 ```
 
 ### Other subset options
 
 ```bash
-# All datasets, single agent
-uv run python run_benchmark.py --config solo-baseline
+# All datasets with the Claude executor stack
+uv run python run_benchmark.py --config claude-multiagent-v1
 
 # Re-score existing results without re-running agents
-uv run python run_benchmark.py --config solo-codex --skip-generate --skip-run
+uv run python run_benchmark.py --config codex-multiagent-v1 --skip-generate --skip-run
 ```
 
 ## Tracing
 
-Every agent run produces a top-level `trace.jsonl` in its results directory. For multi-step workflows, it is an append-only concatenation of the per-step traces in execution order.
+Every agent run produces a canonical `invocations/<role>-0001/` tree under its results directory. Canonical published artifacts live under `artifacts/` and are what the importer and scorer read.
 
-**Claude Code** — Uses [hooks](https://docs.anthropic.com/en/docs/claude-code/hooks) (`.claude/hooks/trace.sh`) registered in `.claude/settings.json`. The `PostToolUse` and `PostToolUseFailure` hooks fire after every tool call and append JSON lines to a per-step trace, which the orchestrator then appends into the top-level `trace.jsonl`. Each line contains:
+**Claude Code** — Uses [hooks](https://docs.anthropic.com/en/docs/claude-code/hooks) (`.claude/hooks/trace.sh`) registered in `.claude/settings.json`. The `PostToolUse` and `PostToolUseFailure` hooks fire after every tool call and append JSON lines to the invocation trace. Each line contains:
 
 ```json
 {"timestamp":"2026-03-15T12:00:00Z","event":"PostToolUse","tool":"Bash","tool_input":{"command":"python analysis.py"},"tool_response":"...","cwd":"/tmp/work"}
 ```
 
-**Codex CLI** — Uses `codex exec` and `codex exec resume` in a shared workspace. Each step streams JSONL events to a step trace, and the orchestrator appends those events into the top-level `trace.jsonl`. Codex stderr is saved per step and aggregated into the top-level `session.log`.
+**Codex CLI** — Uses `codex exec` in a fresh invocation workspace. Each run streams JSONL events to an invocation trace, and Codex stderr is saved per invocation in `invocations/.../logs/session.log`.
 
 The reviewer reads `trace.jsonl` (when available) instead of the raw session log, giving it full visibility into the agent's step-by-step reasoning.
 
@@ -175,14 +162,8 @@ ai-data-scientist/
 │   ├── generator.py          # 20 dataset generators + filename mapping
 │   ├── registry.py           # Ground-truth metadata per dataset
 │   └── generated/            # Output CSVs (git-ignored)
-├── harness/
-│   ├── prompt_template.txt   # Legacy fallback prompt
-│   ├── run_claude.sh         # Legacy shim / reference runner
-│   └── run_codex.sh          # Legacy shim / reference runner
 ├── prompts/
-│   ├── analyst-generic.md
-│   ├── analyst-v2.md
-│   └── visual-review.md
+│   └── active/               # Current orchestrator role prompts
 ├── ai_data_scientist/
 │   ├── cli/                  # Benchmark + import CLIs
 │   ├── orchestration/        # Workflow runner, workspace prep, backend adapters

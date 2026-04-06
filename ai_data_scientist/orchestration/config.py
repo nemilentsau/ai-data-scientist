@@ -4,9 +4,13 @@ from __future__ import annotations
 
 from typing import Any
 
-from ai_data_scientist.orchestration.models import DEFAULT_TOOLS, WorkflowSpec, WorkflowStep
+from ai_data_scientist.orchestration.models import (
+    DEFAULT_TOOLS,
+    OrchestratorSpec,
+    RoleSpec,
+    RuntimePolicy,
+)
 
-DEFAULT_PROMPT_PATH = "harness/prompt_template.txt"
 BACKEND_ROLE_NAMES = {
     "codex_cli": "codex",
     "claude_cli": "claude",
@@ -51,99 +55,111 @@ def _normalize_tools(value: Any) -> tuple[str, ...]:
 
 
 def _normalize_prompt_ref(value: Any) -> str:
-    prompt = str(value or DEFAULT_PROMPT_PATH).strip()
-    return prompt or DEFAULT_PROMPT_PATH
+    prompt = str(value or "").strip()
+    if not prompt:
+        raise ValueError("Orchestrator roles must declare an explicit prompt path.")
+    return prompt
 
 
-def _build_old_style_workflow(config: dict[str, Any]) -> WorkflowSpec:
-    team = config.get("team") or []
-    primary = team[0] if team else {}
-    backend = infer_backend_name(config)
-    if backend is None:
-        raise ValueError("Could not infer backend from legacy config.")
+def _build_orchestrator_spec(config: dict[str, Any]) -> OrchestratorSpec:
+    roles_data = config.get("roles")
+    runtime_data = config.get("runtime")
+    if not isinstance(roles_data, dict) or not roles_data:
+        raise ValueError("Orchestrator configs must declare roles and runtime.")
+    if not isinstance(runtime_data, dict):
+        raise ValueError("Orchestrator configs must declare roles and runtime.")
 
-    step = WorkflowStep(
-        id="analyst",
-        role="analyst",
-        prompt=_normalize_prompt_ref(primary.get("prompt")),
-        model=str(primary.get("model", "") or ""),
-        tools=_normalize_tools(primary.get("tools")),
-        max_turns=int(primary.get("max_turns", 30) or 30),
-        image_inputs=(),
-        required=True,
-    )
-    return WorkflowSpec(
-        name=str(config.get("name") or "benchmark-workflow"),
-        description=str(config.get("description") or ""),
-        backend=backend,
-        steps=(step,),
-    )
-
-
-def _build_new_style_workflow(config: dict[str, Any]) -> WorkflowSpec:
-    backend = normalize_backend_name(config.get("backend"))
-    if backend is None:
-        raise ValueError("New-style workflow configs must declare backend.")
-
-    workflow = config.get("workflow") or {}
-    steps_data = workflow.get("steps")
-    if not isinstance(steps_data, list) or not steps_data:
-        raise ValueError("New-style workflow configs must declare workflow.steps.")
-
-    steps: list[WorkflowStep] = []
-    for index, raw_step in enumerate(steps_data, start=1):
-        steps.append(
-            WorkflowStep(
-                id=str(raw_step.get("id") or f"step_{index}"),
-                role=str(raw_step.get("role") or raw_step.get("id") or f"step_{index}"),
-                prompt=_normalize_prompt_ref(raw_step.get("prompt")),
-                model=str(raw_step.get("model", "") or ""),
-                tools=_normalize_tools(raw_step.get("tools")),
-                max_turns=int(raw_step.get("max_turns", 30) or 30),
-                image_inputs=tuple(
-                    str(item) for item in raw_step.get("image_inputs", []) or []
-                ),
-                required=bool(raw_step.get("required", True)),
-            )
+    roles: dict[str, RoleSpec] = {}
+    for role_name, raw_role in roles_data.items():
+        if not isinstance(raw_role, dict):
+            raise ValueError(f"Role '{role_name}' must be a mapping.")
+        backend = normalize_backend_name(raw_role.get("backend"))
+        if backend is None:
+            raise ValueError(f"Role '{role_name}' must declare a backend.")
+        prompt = _normalize_prompt_ref(raw_role.get("prompt"))
+        roles[role_name] = RoleSpec(
+            role=role_name,
+            backend=backend,
+            prompt=prompt,
+            model=str(raw_role.get("model", "") or ""),
+            tools=_normalize_tools(raw_role.get("tools")),
+            max_turns=int(raw_role.get("max_turns", 30) or 30),
         )
 
-    return WorkflowSpec(
+    runtime = RuntimePolicy(
+        max_revision_rounds=int(runtime_data.get("max_revision_rounds", 1) or 1),
+        max_reframes=int(runtime_data.get("max_reframes", 1) or 1),
+        memory_curator=bool(runtime_data.get("memory_curator", True)),
+    )
+
+    return OrchestratorSpec(
         name=str(config.get("name") or "benchmark-workflow"),
         description=str(config.get("description") or ""),
-        backend=backend,
-        steps=tuple(steps),
+        roles=roles,
+        runtime=runtime,
     )
 
 
-def normalize_workflow_config(config: dict[str, Any]) -> WorkflowSpec:
-    """Normalize legacy and new workflow config shapes."""
-    if "workflow" in config:
-        return _build_new_style_workflow(config)
-    return _build_old_style_workflow(config)
+def normalize_workflow_config(config: dict[str, Any]) -> OrchestratorSpec:
+    """Normalize the current orchestrator config shape."""
+    if "team" in config or "workflow" in config:
+        raise ValueError(
+            "Legacy runtime configs are no longer supported; use roles + runtime."
+        )
+    if "roles" in config or "runtime" in config:
+        return _build_orchestrator_spec(config)
+    raise ValueError("Orchestrator configs must declare roles and runtime.")
 
 
 def primary_agent_metadata(config: dict[str, Any]) -> dict[str, str | None]:
     """Infer provider role/model for scoring and imports."""
+    if "roles" in config or "runtime" in config:
+        roles = config.get("roles")
+        runtime = config.get("runtime")
+        if not isinstance(roles, dict) or not isinstance(runtime, dict) or not roles:
+            raise ValueError("roles + runtime configs must define at least one role mapping.")
+
+        preferred_role_name = next(
+            (
+                candidate
+                for candidate in ("analysis_executor", "analysis_planner", "task_framer")
+                if candidate in roles
+            ),
+            next(iter(roles.keys())),
+        )
+        primary_role = roles.get(preferred_role_name)
+        if not isinstance(primary_role, dict):
+            raise ValueError("roles + runtime configs must map role names to mappings.")
+        return {
+            "role": preferred_role_name,
+            "model": str(primary_role.get("model") or "") or None,
+        }
+
     team = config.get("team") or []
     primary = team[0] if team else {}
     backend = infer_backend_name(config) or "codex_cli"
 
-    if primary.get("role") and "model" in primary:
+    if isinstance(primary, dict) and primary.get("role"):
         return {
             "role": str(primary["role"]),
             "model": str(primary.get("model") or "") or None,
         }
 
-    try:
-        spec = normalize_workflow_config(config)
-    except ValueError:
+    workflow = config.get("workflow") or {}
+    steps = workflow.get("steps") if isinstance(workflow, dict) else []
+    if isinstance(steps, list) and steps:
+        first_step = steps[0] if isinstance(steps[0], dict) else {}
+        if first_step.get("role") or first_step.get("id"):
+            return {
+                "role": str(first_step.get("role") or first_step.get("id")),
+                "model": str(first_step.get("model") or "") or None,
+            }
         return {
-            "role": str(config.get("name") or "agent"),
-            "model": None,
+            "role": BACKEND_ROLE_NAMES.get(backend, backend),
+            "model": str(first_step.get("model") or "") or None,
         }
 
     return {
-        "role": BACKEND_ROLE_NAMES.get(spec.backend, backend),
-        "model": spec.steps[0].model or None,
+        "role": str(config.get("name") or "agent"),
+        "model": None,
     }
-
