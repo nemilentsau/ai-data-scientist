@@ -1,9 +1,0 @@
-{
-  "status": "completed",
-  "actual_r2": -0.098,
-  "null_r2_mean": -0.0956,
-  "null_r2_95pct": -0.0465,
-  "empirical_p_value": 0.51,
-  "H-NOISE": "not rejected (data is noise)",
-  "plot": "plots/null_distribution.png"
-}

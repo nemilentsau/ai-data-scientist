@@ -1,7 +1,0 @@
-{
-  "status": "completed",
-  "max_mi": 0.0559,
-  "any_exceeds_null_95": true,
-  "H-NONLIN-NONE": "rejected (check features)",
-  "plot": "plots/mi_scores.png"
-}

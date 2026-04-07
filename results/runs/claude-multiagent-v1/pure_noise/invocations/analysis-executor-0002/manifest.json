@@ -1,7 +1,0 @@
-{
-  "invocation_id": "analysis-executor-0002",
-  "role": "analysis_executor",
-  "backend": "claude_cli",
-  "model": "claude-opus-4-6",
-  "status": "completed"
-}

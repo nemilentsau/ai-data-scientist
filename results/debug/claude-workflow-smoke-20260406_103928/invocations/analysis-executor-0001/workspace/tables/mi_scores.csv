@@ -1,8 +1,0 @@
-feature,mi_score,mi_95pct_null,exceeds_null
-years_experience,0.0032,0.0404,False
-training_hours,0.0271,0.0375,False
-team_size,0.0559,0.0447,True
-projects_completed,0.001,0.0335,False
-satisfaction_score,0.0,0.0384,False
-commute_minutes,0.0073,0.0418,False
-remote_pct,0.0,0.0298,False

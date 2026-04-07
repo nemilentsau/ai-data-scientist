@@ -1,1 +1,0 @@
-`framing.json` written. The primary frame targets predicting `performance_rating` — the most natural outcome in this HR dataset. Key risks flag that the data may contain no genuine signal: sample rows show no visible feature-outcome structure, salary bands don't track experience or performance, and all features appear independently distributed.

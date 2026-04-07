@@ -1,7 +1,0 @@
-{
-  "status": "completed",
-  "max_abs_r": 0.086,
-  "flagged_features": [],
-  "H-CORR-NONE": "not rejected",
-  "plot": "plots/correlation_heatmap.png"
-}

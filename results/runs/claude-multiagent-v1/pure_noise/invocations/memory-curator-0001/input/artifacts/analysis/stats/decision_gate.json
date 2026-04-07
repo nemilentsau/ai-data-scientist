@@ -1,9 +1,0 @@
-{
-  "signal_detected": false,
-  "r2_exceeds_null_95th": false,
-  "any_corr_survives_bonferroni_vs_target": false,
-  "observed_r2": 0.01359,
-  "null_95th_pct_r2": 0.023385,
-  "permutation_pvalue": 0.4595,
-  "rf_cv_r2_mean": -0.085703
-}

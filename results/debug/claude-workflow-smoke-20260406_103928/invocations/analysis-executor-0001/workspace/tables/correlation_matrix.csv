@@ -1,8 +1,0 @@
-feature,pearson_r,pearson_p_adj,spearman_r,spearman_p_adj
-years_experience,-0.0149,1.0,-0.0041,1.0
-training_hours,0.0455,1.0,0.0391,1.0
-team_size,-0.086,0.1049,-0.0832,0.1303
-projects_completed,0.0164,1.0,0.0153,1.0
-satisfaction_score,0.0014,1.0,0.0147,1.0
-commute_minutes,-0.0062,1.0,0.0084,1.0
-remote_pct,0.0232,1.0,0.0291,1.0

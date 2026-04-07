@@ -1,7 +1,0 @@
-{
-  "invocation_id": "method-critic-0001",
-  "role": "method_critic",
-  "backend": "claude_cli",
-  "model": "claude-opus-4-6",
-  "status": "completed"
-}
