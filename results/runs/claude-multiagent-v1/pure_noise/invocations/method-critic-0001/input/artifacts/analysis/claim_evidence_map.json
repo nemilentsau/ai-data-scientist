@@ -1,0 +1,37 @@
+[
+  {
+    "claim_id": "C-01",
+    "claim": "The dataset contains no predictive signal: performance_rating is statistically independent of all predictor columns.",
+    "evidence_ids": ["F-NOISE-01", "F-CORR-01", "F-REG-01", "F-RF-01", "F-INDEP-01"],
+    "strength": "strong",
+    "details": "Confirmed by four independent methods: (1) zero Bonferroni-surviving correlations, (2) OLS R² indistinguishable from null permutation distribution (p = 0.46), (3) negative cross-validated RF R², (4) chi-squared independence of salary_band and remote_pct."
+  },
+  {
+    "claim_id": "C-02",
+    "claim": "All columns are mutually independent — the dataset was generated from independent random distributions.",
+    "evidence_ids": ["F-MULTI-01", "F-PCA-01", "F-SAL-01", "F-INDEP-01"],
+    "strength": "strong",
+    "details": "VIF values near 1.0 for all predictors, PCA variance ratios near uniform (1/8), no salary_band group differences in any feature, and chi-squared independence between salary_band and remote_pct."
+  },
+  {
+    "claim_id": "C-03",
+    "claim": "commute_minutes is the only column with notable distributional anomaly (right-skew and outliers).",
+    "evidence_ids": ["F-COMM-01"],
+    "strength": "moderate",
+    "details": "Skewness = 1.77, 6.1% outliers beyond the IQR upper fence. All other numeric columns have |skewness| < 0.25 and kurtosis consistent with symmetric distributions."
+  },
+  {
+    "claim_id": "C-04",
+    "claim": "salary_band is randomly assigned with no relation to any other variable.",
+    "evidence_ids": ["F-SAL-01", "F-INDEP-01"],
+    "strength": "strong",
+    "details": "Kruskal-Wallis tests across 8 numeric features all non-significant after Bonferroni correction. Chi-squared test of salary_band vs remote_pct: p = 0.978."
+  },
+  {
+    "claim_id": "C-05",
+    "claim": "Any predictive model on this dataset will perform no better than predicting the mean.",
+    "evidence_ids": ["F-REG-01", "F-RF-01", "F-NOISE-01"],
+    "strength": "strong",
+    "details": "OLS adjusted R² = -0.0002. RF 5-fold CV R² = -0.086. Both are at or below zero, meaning the models do not outperform a constant-mean baseline."
+  }
+]

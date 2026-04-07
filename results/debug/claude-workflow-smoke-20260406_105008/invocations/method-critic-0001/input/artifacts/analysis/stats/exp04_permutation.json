@@ -1,0 +1,8 @@
+{
+  "observed_r_squared": 0.009833,
+  "permutation_r_squared_mean": 0.009093,
+  "permutation_r_squared_max": 0.024307,
+  "empirical_p_value": 0.38,
+  "n_permutations": 200,
+  "conclusion": "no_signal"
+}

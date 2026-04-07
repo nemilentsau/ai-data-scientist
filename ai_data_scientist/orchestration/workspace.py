@@ -29,8 +29,8 @@ SHARED_PACKAGES = (
 )
 
 ROLE_INPUT_ARTIFACT_DIRS: dict[str, tuple[str, ...]] = {
-    "task_framer": ("dataset", "profile"),
-    "analysis_planner": ("dataset", "profile", "framing"),
+    "task_framer": ("profile",),
+    "analysis_planner": ("profile", "framing"),
     "analysis_executor": ("dataset", "profile", "framing", "planning"),
 }
 FULL_PUBLISHED_ARTIFACT_ROLES = {

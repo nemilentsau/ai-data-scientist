@@ -1,0 +1,30 @@
+[
+  {
+    "feature": "years_experience",
+    "VIF": 1.006
+  },
+  {
+    "feature": "training_hours",
+    "VIF": 1.013
+  },
+  {
+    "feature": "team_size",
+    "VIF": 1.005
+  },
+  {
+    "feature": "projects_completed",
+    "VIF": 1.004
+  },
+  {
+    "feature": "satisfaction_score",
+    "VIF": 1.002
+  },
+  {
+    "feature": "commute_minutes",
+    "VIF": 1.013
+  },
+  {
+    "feature": "remote_pct",
+    "VIF": 1.007
+  }
+]

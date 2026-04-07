@@ -1,0 +1,22 @@
+{
+  "primary_frame": "Identify which employee attributes, if any, are predictive of performance rating",
+  "alternative_frames": [
+    "Segment employees by salary band and test whether bands differ on performance or satisfaction",
+    "Model satisfaction score as a function of work-environment features (remote_pct, commute_minutes, team_size)",
+    "Detect clusters of employee profiles and characterise each cluster"
+  ],
+  "required_checks": [
+    "Test pairwise correlations between all numeric features and performance_rating before modelling",
+    "Check distribution of performance_rating for normality and outliers",
+    "Verify salary_band is not a proxy for an ordinal variable by inspecting level frequencies and feature distributions per band",
+    "Run a baseline permutation or shuffle test to confirm any observed signal exceeds chance",
+    "Assess multicollinearity among predictor features before interpreting regression coefficients"
+  ],
+  "framing_risks": [
+    "No explicit target variable is declared in the profile; performance_rating is assumed as the target based on column semantics",
+    "With 800 rows and 9 candidate predictors, spurious correlations are plausible at conventional significance thresholds",
+    "Salary band level frequencies and sample rows show no obvious ordinal relationship with experience or performance, suggesting bands may be arbitrarily assigned",
+    "Zero nulls across all columns is unusual for real HR data and may indicate synthetic or pre-cleaned data, limiting generalisability conclusions",
+    "Commute_minutes distribution is right-skewed (median 16, max 120); outlier-sensitive methods may overfit the tail"
+  ]
+}

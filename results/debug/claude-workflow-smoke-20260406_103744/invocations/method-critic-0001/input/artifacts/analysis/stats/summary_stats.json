@@ -1,0 +1,26 @@
+{
+  "shapiro_wilk": {
+    "W": 0.99473,
+    "p": 0.00714
+  },
+  "anova": {
+    "F": 0.71847,
+    "p": 0.57942
+  },
+  "ols": {
+    "R2": 0.01359,
+    "adj_R2": -0.00018,
+    "F_stat": 0.98698,
+    "F_pvalue": 0.45641
+  },
+  "cv_rmse": {
+    "ols_full_model": 10.05622,
+    "baseline_mean": 10.0105,
+    "ratio": 1.00457,
+    "rf_full_model": 10.44705
+  },
+  "vif_max": 1.013,
+  "condition_number": 28.83,
+  "n_significant_bonferroni": 0,
+  "n_significant_bh": 0
+}

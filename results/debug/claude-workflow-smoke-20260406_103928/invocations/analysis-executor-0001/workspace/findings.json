@@ -1,0 +1,57 @@
+[
+  {
+    "id": "F-01",
+    "title": "No linear correlations with target",
+    "summary": "All Pearson and Spearman correlations between numeric features and performance_rating are below |r|=0.10 (max |r|=0.0860). Hypothesis H-CORR-NONE is not rejected.",
+    "evidence": [
+      "EXP-CORR"
+    ],
+    "severity": "confirmatory"
+  },
+  {
+    "id": "F-02",
+    "title": "No non-linear relationships detected",
+    "summary": "Mutual information scores for all features fall outside the 95th percentile of the shuffled null baseline. Hypothesis H-NONLIN-NONE is rejected (check features).",
+    "evidence": [
+      "EXP-NONLIN"
+    ],
+    "severity": "confirmatory"
+  },
+  {
+    "id": "F-03",
+    "title": "No salary band effect on performance",
+    "summary": "One-way ANOVA shows F=0.72, p=0.5794, \u03b7\u00b2=0.0036. Hypothesis H-SALARY-NODIFF is not rejected.",
+    "evidence": [
+      "EXP-ANOVA"
+    ],
+    "severity": "confirmatory"
+  },
+  {
+    "id": "F-04",
+    "title": "No multicollinearity among predictors",
+    "summary": "All VIF values are near 1.0 (max VIF=1.01), confirming features are independently generated.",
+    "evidence": [
+      "EXP-VIF"
+    ],
+    "severity": "informational"
+  },
+  {
+    "id": "F-05",
+    "title": "Random Forest model shows no predictive signal",
+    "summary": "5-fold CV R\u00b2=-0.0980 (\u22640.02 threshold). Model RMSE (10.43) matches dummy baseline (9.99). H-MODEL-NOSIGNAL is not rejected.",
+    "evidence": [
+      "EXP-MODEL"
+    ],
+    "severity": "critical"
+  },
+  {
+    "id": "F-06",
+    "title": "Dataset confirmed as pure noise",
+    "summary": "Permutation test (200 shuffles) yields empirical p=0.510. Actual R\u00b2 (-0.0980) is indistinguishable from null distribution (mean=-0.0956). H-NOISE is not rejected (data is noise).",
+    "evidence": [
+      "EXP-NOISE",
+      "EXP-MODEL"
+    ],
+    "severity": "critical"
+  }
+]

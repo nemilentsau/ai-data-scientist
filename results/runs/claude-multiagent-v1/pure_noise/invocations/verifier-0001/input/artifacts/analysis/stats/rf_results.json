@@ -1,0 +1,50 @@
+{
+  "cv_r2_mean": -0.085703,
+  "cv_r2_std": 0.056327,
+  "feature_importances": {
+    "years_experience": {
+      "importance_mean": 0.330155,
+      "importance_std": 0.009755
+    },
+    "training_hours": {
+      "importance_mean": 0.333615,
+      "importance_std": 0.010295
+    },
+    "team_size": {
+      "importance_mean": 0.384699,
+      "importance_std": 0.008817
+    },
+    "projects_completed": {
+      "importance_mean": 0.159864,
+      "importance_std": 0.004092
+    },
+    "satisfaction_score": {
+      "importance_mean": 0.27711,
+      "importance_std": 0.004817
+    },
+    "commute_minutes": {
+      "importance_mean": 0.255617,
+      "importance_std": 0.006635
+    },
+    "remote_pct": {
+      "importance_mean": 0.134875,
+      "importance_std": 0.005987
+    },
+    "salary_band_L2": {
+      "importance_mean": 0.03153,
+      "importance_std": 0.001654
+    },
+    "salary_band_L3": {
+      "importance_mean": 0.024259,
+      "importance_std": 0.001772
+    },
+    "salary_band_L4": {
+      "importance_mean": 0.033812,
+      "importance_std": 0.003049
+    },
+    "salary_band_L5": {
+      "importance_mean": 0.029479,
+      "importance_std": 0.001796
+    }
+  }
+}

@@ -1,0 +1,7 @@
+{
+  "invocation_id": "task-framer-0002",
+  "role": "task_framer",
+  "backend": "claude_cli",
+  "model": "claude-opus-4-6",
+  "status": "completed"
+}

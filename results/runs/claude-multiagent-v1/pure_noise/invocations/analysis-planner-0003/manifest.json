@@ -1,0 +1,7 @@
+{
+  "invocation_id": "analysis-planner-0003",
+  "role": "analysis_planner",
+  "backend": "claude_cli",
+  "model": "claude-opus-4-6",
+  "status": "completed"
+}

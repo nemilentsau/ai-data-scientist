@@ -1,0 +1,62 @@
+[
+  {
+    "id": "EXP-01",
+    "title": "Pairwise Correlation Analysis (Pearson & Spearman)",
+    "type": "statistical_test",
+    "description": "Compute Pearson and Spearman correlations between each numeric feature and performance_rating. Report raw and Bonferroni-corrected p-values across 14 tests (7 features x 2 methods). Flag any corrected p < 0.05.",
+    "inputs": ["dataset.csv"],
+    "features": ["years_experience", "training_hours", "team_size", "projects_completed", "satisfaction_score", "commute_minutes", "remote_pct"],
+    "target": "performance_rating",
+    "method": "scipy.stats.pearsonr + scipy.stats.spearmanr with Bonferroni correction (n=14)",
+    "alpha": 0.05,
+    "outputs": [
+      {"artifact": "correlation_table.csv", "description": "Feature, Pearson r, Pearson p, Spearman rho, Spearman p, corrected p-values"},
+      {"artifact": "scatter_matrix.png", "description": "Scatter plots of each feature vs performance_rating"}
+    ],
+    "linked_hypotheses": ["H-01"],
+    "linked_checks": [
+      "Test pairwise correlations between numeric features and performance_rating",
+      "Check for nonlinear or rank-based associations via Spearman correlation",
+      "Test statistical significance of any associations after multiple-comparison correction"
+    ]
+  },
+  {
+    "id": "EXP-02",
+    "title": "Salary Band Distribution Test",
+    "type": "statistical_test",
+    "description": "For each numeric feature, test whether distributions differ across the 5 salary_band levels using Kruskal-Wallis H-test. Apply Bonferroni correction across 7 tests.",
+    "inputs": ["dataset.csv"],
+    "features": ["years_experience", "training_hours", "team_size", "projects_completed", "satisfaction_score", "commute_minutes", "remote_pct"],
+    "grouping_variable": "salary_band",
+    "method": "scipy.stats.kruskal with Bonferroni correction (n=7)",
+    "alpha": 0.05,
+    "outputs": [
+      {"artifact": "salary_band_tests.csv", "description": "Feature, H-statistic, raw p-value, corrected p-value"},
+      {"artifact": "salary_band_boxplots.png", "description": "Box plot grid of each feature grouped by salary_band"}
+    ],
+    "linked_hypotheses": ["H-02"],
+    "linked_checks": [
+      "Verify whether salary_band levels show distinct feature distributions",
+      "Test statistical significance of any associations after multiple-comparison correction"
+    ]
+  },
+  {
+    "id": "EXP-03",
+    "title": "Predictive Signal vs Permutation Null",
+    "type": "model",
+    "description": "Fit Ridge regression predicting performance_rating from all features (numeric + one-hot salary_band). Evaluate with 5-fold CV R-squared. Compare observed mean CV R-squared against 100-iteration permutation-null distribution. Report permutation p-value.",
+    "inputs": ["dataset.csv"],
+    "features": ["years_experience", "training_hours", "team_size", "projects_completed", "satisfaction_score", "commute_minutes", "remote_pct", "salary_band"],
+    "target": "performance_rating",
+    "method": "sklearn.linear_model.Ridge with sklearn.model_selection.cross_val_score (cv=5) and sklearn.model_selection.permutation_test_score (n_permutations=100)",
+    "alpha": 0.05,
+    "outputs": [
+      {"artifact": "permutation_test.png", "description": "Histogram of null R-squared values with observed R-squared marked"},
+      {"artifact": "permutation_result.csv", "description": "Observed R-squared, permutation p-value, null mean, null std"}
+    ],
+    "linked_hypotheses": ["H-03"],
+    "linked_checks": [
+      "Assess whether predictive signal exceeds a permutation-null baseline"
+    ]
+  }
+]

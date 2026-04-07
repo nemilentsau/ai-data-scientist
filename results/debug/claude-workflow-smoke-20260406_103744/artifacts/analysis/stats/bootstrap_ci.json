@@ -1,0 +1,51 @@
+[
+  {
+    "feature": "years_experience",
+    "pearson_r": -0.01493,
+    "boot_ci_lo": -0.08741,
+    "boot_ci_hi": 0.05707,
+    "ci_includes_zero": true
+  },
+  {
+    "feature": "training_hours",
+    "pearson_r": 0.04553,
+    "boot_ci_lo": -0.02283,
+    "boot_ci_hi": 0.11912,
+    "ci_includes_zero": true
+  },
+  {
+    "feature": "team_size",
+    "pearson_r": -0.08598,
+    "boot_ci_lo": -0.15159,
+    "boot_ci_hi": -0.01814,
+    "ci_includes_zero": false
+  },
+  {
+    "feature": "projects_completed",
+    "pearson_r": 0.01636,
+    "boot_ci_lo": -0.0559,
+    "boot_ci_hi": 0.08621,
+    "ci_includes_zero": true
+  },
+  {
+    "feature": "satisfaction_score",
+    "pearson_r": 0.00136,
+    "boot_ci_lo": -0.07035,
+    "boot_ci_hi": 0.07226,
+    "ci_includes_zero": true
+  },
+  {
+    "feature": "commute_minutes",
+    "pearson_r": -0.00624,
+    "boot_ci_lo": -0.07879,
+    "boot_ci_hi": 0.06699,
+    "ci_includes_zero": true
+  },
+  {
+    "feature": "remote_pct",
+    "pearson_r": 0.02319,
+    "boot_ci_lo": -0.03836,
+    "boot_ci_hi": 0.09365,
+    "ci_includes_zero": true
+  }
+]

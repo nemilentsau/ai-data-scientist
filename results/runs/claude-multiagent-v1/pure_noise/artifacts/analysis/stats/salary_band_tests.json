@@ -1,0 +1,50 @@
+{
+  "years_experience": {
+    "h_stat": 1.894,
+    "pvalue": 0.755245,
+    "bonferroni_pvalue": 1.0,
+    "significant": false
+  },
+  "training_hours": {
+    "h_stat": 6.5475,
+    "pvalue": 0.161825,
+    "bonferroni_pvalue": 1.0,
+    "significant": false
+  },
+  "team_size": {
+    "h_stat": 0.7496,
+    "pvalue": 0.945074,
+    "bonferroni_pvalue": 1.0,
+    "significant": false
+  },
+  "projects_completed": {
+    "h_stat": 4.8876,
+    "pvalue": 0.29903,
+    "bonferroni_pvalue": 1.0,
+    "significant": false
+  },
+  "satisfaction_score": {
+    "h_stat": 1.385,
+    "pvalue": 0.846793,
+    "bonferroni_pvalue": 1.0,
+    "significant": false
+  },
+  "commute_minutes": {
+    "h_stat": 2.9574,
+    "pvalue": 0.564977,
+    "bonferroni_pvalue": 1.0,
+    "significant": false
+  },
+  "performance_rating": {
+    "h_stat": 3.9586,
+    "pvalue": 0.411642,
+    "bonferroni_pvalue": 1.0,
+    "significant": false
+  },
+  "remote_pct": {
+    "h_stat": 2.1999,
+    "pvalue": 0.699042,
+    "bonferroni_pvalue": 1.0,
+    "significant": false
+  }
+}

@@ -1,0 +1,66 @@
+[
+  {
+    "test": "years_experience",
+    "raw_p": 0.6733269662206512,
+    "bonferroni_p": 1.0,
+    "bh_p": 0.8977692882942017,
+    "reject_bonferroni": false,
+    "reject_bh": false
+  },
+  {
+    "test": "training_hours",
+    "raw_p": 0.19830927804277293,
+    "bonferroni_p": 1.0,
+    "bh_p": 0.7932371121710917,
+    "reject_bonferroni": false,
+    "reject_bh": false
+  },
+  {
+    "test": "team_size",
+    "raw_p": 0.014986134957303117,
+    "bonferroni_p": 0.11988907965842494,
+    "bh_p": 0.11988907965842494,
+    "reject_bonferroni": false,
+    "reject_bh": false
+  },
+  {
+    "test": "projects_completed",
+    "raw_p": 0.6440765376413901,
+    "bonferroni_p": 1.0,
+    "bh_p": 0.8977692882942017,
+    "reject_bonferroni": false,
+    "reject_bh": false
+  },
+  {
+    "test": "satisfaction_score",
+    "raw_p": 0.9693635192288693,
+    "bonferroni_p": 1.0,
+    "bh_p": 0.9693635192288693,
+    "reject_bonferroni": false,
+    "reject_bh": false
+  },
+  {
+    "test": "commute_minutes",
+    "raw_p": 0.8600291399145001,
+    "bonferroni_p": 1.0,
+    "bh_p": 0.9693635192288693,
+    "reject_bonferroni": false,
+    "reject_bh": false
+  },
+  {
+    "test": "remote_pct",
+    "raw_p": 0.5124799246867262,
+    "bonferroni_p": 1.0,
+    "bh_p": 0.8977692882942017,
+    "reject_bonferroni": false,
+    "reject_bh": false
+  },
+  {
+    "test": "ANOVA_salary_band",
+    "raw_p": 0.5794160027912159,
+    "bonferroni_p": 1.0,
+    "bh_p": 0.8977692882942017,
+    "reject_bonferroni": false,
+    "reject_bh": false
+  }
+]

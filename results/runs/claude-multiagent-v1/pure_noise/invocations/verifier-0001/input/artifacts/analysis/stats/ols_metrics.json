@@ -1,0 +1,56 @@
+{
+  "r_squared": 0.01359,
+  "adj_r_squared": -0.000179,
+  "f_stat": 0.986984,
+  "f_pvalue": 0.456412,
+  "coefficients": {
+    "const": {
+      "coef": 49.904436,
+      "pvalue": 0.0
+    },
+    "years_experience": {
+      "coef": -0.008649,
+      "pvalue": 0.830562
+    },
+    "training_hours": {
+      "coef": 0.02913,
+      "pvalue": 0.22553
+    },
+    "team_size": {
+      "coef": -0.128853,
+      "pvalue": 0.020104
+    },
+    "projects_completed": {
+      "coef": 0.047597,
+      "pvalue": 0.696473
+    },
+    "satisfaction_score": {
+      "coef": 0.001331,
+      "pvalue": 0.992295
+    },
+    "commute_minutes": {
+      "coef": -0.000944,
+      "pvalue": 0.950773
+    },
+    "remote_pct": {
+      "coef": 0.005787,
+      "pvalue": 0.566325
+    },
+    "salary_band_L2": {
+      "coef": 1.278288,
+      "pvalue": 0.268323
+    },
+    "salary_band_L3": {
+      "coef": -0.632521,
+      "pvalue": 0.570072
+    },
+    "salary_band_L4": {
+      "coef": 0.340096,
+      "pvalue": 0.761326
+    },
+    "salary_band_L5": {
+      "coef": -0.106996,
+      "pvalue": 0.922674
+    }
+  }
+}

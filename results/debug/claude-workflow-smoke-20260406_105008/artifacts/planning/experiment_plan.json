@@ -1,0 +1,108 @@
+[
+  {
+    "id": "EXP-01",
+    "title": "Distribution & Pairwise Correlations",
+    "objective": "Assess normality and outliers in performance_rating; compute pairwise correlations of every numeric feature against performance_rating.",
+    "hypotheses": ["H-01", "H-02"],
+    "required_checks": [
+      "Test pairwise correlations between all numeric features and performance_rating before modelling",
+      "Check distribution of performance_rating for normality and outliers"
+    ],
+    "method": "descriptive_statistics",
+    "steps": [
+      "Load dataset CSV.",
+      "Compute Shapiro-Wilk test on performance_rating and report W statistic and p-value.",
+      "Identify any performance_rating values beyond mean +/- 3 standard deviations.",
+      "Plot histogram and boxplot of performance_rating (save as plots/exp01_performance_dist.png).",
+      "Compute Pearson and Spearman correlation of each numeric feature (years_experience, training_hours, team_size, projects_completed, satisfaction_score, commute_minutes, remote_pct) vs performance_rating, with p-values.",
+      "Plot bar chart of Pearson correlation coefficients (save as plots/exp01_correlations.png).",
+      "Summarise: list any feature with |r| > 0.1 and p < 0.05; otherwise state no significant correlations found."
+    ],
+    "inputs": ["../input/artifacts/profile/sample_rows.csv"],
+    "outputs": [
+      "plots/exp01_performance_dist.png",
+      "plots/exp01_correlations.png"
+    ],
+    "expected_result": "No feature shows a significant correlation with performance_rating; distribution is approximately normal.",
+    "libraries": ["pandas", "scipy.stats", "matplotlib", "seaborn"],
+    "estimated_complexity": "low"
+  },
+  {
+    "id": "EXP-02",
+    "title": "Salary Band Investigation",
+    "objective": "Determine whether salary_band acts as an ordinal proxy by examining level frequencies and cross-band feature distributions.",
+    "hypotheses": ["H-03"],
+    "required_checks": [
+      "Verify salary_band is not a proxy for an ordinal variable by inspecting level frequencies and feature distributions per band"
+    ],
+    "method": "group_comparison",
+    "steps": [
+      "Load dataset CSV.",
+      "Compute frequency counts for each salary_band level.",
+      "Compute group-wise mean and std of years_experience, training_hours, performance_rating, satisfaction_score per salary_band.",
+      "Run Kruskal-Wallis test for performance_rating across salary_band levels; report H statistic and p-value.",
+      "Plot boxplot of performance_rating by salary_band, ordered L1-L5 (save as plots/exp02_salary_band.png).",
+      "Check for monotonic trend: compute Spearman rank correlation between numeric band rank (1-5) and group mean of each feature.",
+      "Summarise: state whether any feature shows a monotonic trend across bands."
+    ],
+    "inputs": ["../input/artifacts/profile/sample_rows.csv"],
+    "outputs": [
+      "plots/exp02_salary_band.png"
+    ],
+    "expected_result": "salary_band levels are roughly balanced and show no monotonic trend in any feature; Kruskal-Wallis p > 0.05.",
+    "libraries": ["pandas", "scipy.stats", "matplotlib", "seaborn"],
+    "estimated_complexity": "low"
+  },
+  {
+    "id": "EXP-03",
+    "title": "Multicollinearity Assessment",
+    "objective": "Compute VIF and pairwise correlations among numeric predictors to detect multicollinearity.",
+    "hypotheses": ["H-05"],
+    "required_checks": [
+      "Assess multicollinearity among predictor features before interpreting regression coefficients"
+    ],
+    "method": "variance_inflation_factor",
+    "steps": [
+      "Load dataset CSV.",
+      "Select numeric predictor columns (exclude employee_id and performance_rating).",
+      "Compute VIF for each predictor using statsmodels variance_inflation_factor.",
+      "Compute pairwise Pearson correlation matrix among predictors.",
+      "Plot correlation heatmap (save as plots/exp03_vif_heatmap.png).",
+      "Flag any VIF > 5 or pairwise |r| > 0.7.",
+      "Summarise findings."
+    ],
+    "inputs": ["../input/artifacts/profile/sample_rows.csv"],
+    "outputs": [
+      "plots/exp03_vif_heatmap.png"
+    ],
+    "expected_result": "All VIFs below 5 and no pairwise |r| exceeds 0.7; predictors are independent.",
+    "libraries": ["pandas", "statsmodels", "matplotlib", "seaborn"],
+    "estimated_complexity": "low"
+  },
+  {
+    "id": "EXP-04",
+    "title": "Permutation Baseline Test",
+    "objective": "Compare OLS R-squared on real data against a null distribution from 200 target-shuffled permutations to determine if observed signal exceeds chance.",
+    "hypotheses": ["H-04"],
+    "required_checks": [
+      "Run a baseline permutation or shuffle test to confirm any observed signal exceeds chance"
+    ],
+    "method": "permutation_test",
+    "steps": [
+      "Load dataset CSV.",
+      "Select numeric predictors (exclude employee_id). Target = performance_rating.",
+      "Fit OLS regression, record observed R-squared.",
+      "Repeat 200 times: shuffle performance_rating, refit OLS, record R-squared.",
+      "Compute empirical p-value = (number of permuted R-squared >= observed R-squared) / 200.",
+      "Plot histogram of permuted R-squared values with observed R-squared as a vertical line (save as plots/exp04_permutation.png).",
+      "Summarise: if p > 0.05, conclude no evidence that the model captures real signal."
+    ],
+    "inputs": ["../input/artifacts/profile/sample_rows.csv"],
+    "outputs": [
+      "plots/exp04_permutation.png"
+    ],
+    "expected_result": "Observed R-squared falls within the permuted null distribution; empirical p > 0.05.",
+    "libraries": ["pandas", "numpy", "statsmodels", "matplotlib"],
+    "estimated_complexity": "low"
+  }
+]

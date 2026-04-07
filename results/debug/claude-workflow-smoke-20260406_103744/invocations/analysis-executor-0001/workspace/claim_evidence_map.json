@@ -1,0 +1,51 @@
+[
+  {
+    "claim_id": "C-01",
+    "claim": "performance_rating follows an approximately normal distribution (mean ~50, std ~10).",
+    "evidence_ids": [
+      "F-01"
+    ]
+  },
+  {
+    "claim_id": "C-02",
+    "claim": "No individual numeric feature has a statistically significant linear or monotonic correlation with performance_rating after multiple-testing correction.",
+    "evidence_ids": [
+      "F-02"
+    ]
+  },
+  {
+    "claim_id": "C-03",
+    "claim": "The categorical variable salary_band has no significant association with performance_rating.",
+    "evidence_ids": [
+      "F-03"
+    ]
+  },
+  {
+    "claim_id": "C-04",
+    "claim": "Neither linear (OLS) nor nonlinear (random forest) models can predict performance_rating better than simply using the mean.",
+    "evidence_ids": [
+      "F-04",
+      "F-05"
+    ]
+  },
+  {
+    "claim_id": "C-05",
+    "claim": "Predictor features are mutually independent with no multicollinearity.",
+    "evidence_ids": [
+      "F-06"
+    ]
+  },
+  {
+    "claim_id": "C-06",
+    "claim": "The dataset contains no exploitable signal; all features are pure noise.",
+    "evidence_ids": [
+      "F-01",
+      "F-02",
+      "F-03",
+      "F-04",
+      "F-05",
+      "F-06",
+      "F-07"
+    ]
+  }
+]

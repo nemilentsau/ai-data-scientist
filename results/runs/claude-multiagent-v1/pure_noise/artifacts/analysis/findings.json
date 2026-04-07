@@ -1,0 +1,74 @@
+[
+  {
+    "id": "F-NOISE-01",
+    "title": "Dataset is pure synthetic noise — no predictive signal detected",
+    "summary": "The permutation test (1000 shuffles) shows the observed OLS R² of 0.0136 falls well within the null distribution (null mean 0.0136, 95th percentile 0.0234, empirical p = 0.46). No pairwise correlation with performance_rating survives Bonferroni correction. The data is statistically indistinguishable from independently generated random columns.",
+    "evidence": ["EXP-PERM-01", "EXP-CORR-02", "EXP-REG-01"],
+    "hypothesis": "H-NOISE-01",
+    "verdict": "SUPPORTED"
+  },
+  {
+    "id": "F-CORR-01",
+    "title": "No predictor has a meaningful correlation with performance_rating",
+    "summary": "All Pearson correlations with performance_rating are in the range [-0.086, +0.046]. The largest magnitude is team_size at r = -0.086 (Bonferroni-corrected p > 0.05). No Spearman correlation survives correction either. All observed |r| < 0.1, consistent with pure chance.",
+    "evidence": ["EXP-CORR-01", "EXP-CORR-02"],
+    "hypothesis": "H-CORR-01",
+    "verdict": "NOT SUPPORTED"
+  },
+  {
+    "id": "F-REG-01",
+    "title": "OLS regression explains zero variance beyond chance",
+    "summary": "The full OLS model (performance_rating ~ all 8 predictors including salary_band dummies) yields R² = 0.0136, adjusted R² = -0.0002, F-stat = 0.987, F p-value = 0.456. The adjusted R² being negative and the non-significant F-test confirm the model has no explanatory power.",
+    "evidence": ["EXP-REG-01", "EXP-PERM-01"],
+    "hypothesis": "H-REG-01",
+    "verdict": "NOT SUPPORTED"
+  },
+  {
+    "id": "F-RF-01",
+    "title": "Random Forest confirms no predictive signal",
+    "summary": "A 200-tree Random Forest with 5-fold cross-validation produces mean CV R² = -0.086 (± 0.056), worse than a constant-mean predictor. Permutation importances are all positive (as expected with noise — the model memorises training noise that hurts test performance), but this reflects overfitting, not real signal.",
+    "evidence": ["EXP-FEATIMP-01"],
+    "hypothesis": "H-REG-01",
+    "verdict": "NOT SUPPORTED"
+  },
+  {
+    "id": "F-COMM-01",
+    "title": "commute_minutes is right-skewed with outliers",
+    "summary": "commute_minutes has skewness = 1.77 and excess kurtosis = 3.26. Using the 1.5×IQR rule (upper fence = 72), 49 observations (6.1%) are classified as outliers. This is the only column with notable distributional asymmetry, consistent with an exponential or log-normal generator.",
+    "evidence": ["EXP-COMM-01", "EXP-DIST-01"],
+    "hypothesis": "H-COMM-01",
+    "verdict": "SUPPORTED"
+  },
+  {
+    "id": "F-SAL-01",
+    "title": "salary_band has no distinct feature profiles",
+    "summary": "Kruskal-Wallis tests across all 8 numeric features grouped by salary_band yield no significant results after Bonferroni correction. salary_band is statistically independent of all other columns, confirming it was likely assigned randomly.",
+    "evidence": ["EXP-SAL-01"],
+    "hypothesis": "H-SAL-01",
+    "verdict": "NOT SUPPORTED"
+  },
+  {
+    "id": "F-MULTI-01",
+    "title": "No multicollinearity among predictors",
+    "summary": "All Variance Inflation Factors are between 1.002 and 1.013, far below the concern threshold of 5. Predictors are essentially orthogonal, consistent with independently generated columns.",
+    "evidence": ["EXP-MULTI-01"],
+    "hypothesis": "H-MULTI-01",
+    "verdict": "NOT SUPPORTED"
+  },
+  {
+    "id": "F-PCA-01",
+    "title": "No latent structure in the feature space",
+    "summary": "PCA explained-variance ratios range from 0.110 to 0.150, close to the uniform baseline of 0.125 (1/8). The first two components explain 28.3% of variance, compared to 25.0% expected under independence. No component stands out. The feature space has no latent structure.",
+    "evidence": ["EXP-PCA-01"],
+    "hypothesis": "H-STRUCT-01",
+    "verdict": "NOT SUPPORTED"
+  },
+  {
+    "id": "F-INDEP-01",
+    "title": "salary_band and remote_pct are statistically independent",
+    "summary": "A chi-squared test of independence between salary_band (5 levels) and binned remote_pct (4 quartiles) yields χ² = 4.25, p = 0.978, df = 12. There is no association whatsoever, reinforcing the pure-noise conclusion.",
+    "evidence": ["EXP-INDEP-01"],
+    "hypothesis": "H-NOISE-01",
+    "verdict": "SUPPORTED"
+  }
+]

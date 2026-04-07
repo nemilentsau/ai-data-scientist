@@ -1,0 +1,49 @@
+[
+  {
+    "claim_id": "C-01",
+    "claim": "No numeric feature is linearly correlated with performance_rating",
+    "evidence_ids": [
+      "F-01"
+    ]
+  },
+  {
+    "claim_id": "C-02",
+    "claim": "No numeric feature has a non-linear association with performance_rating beyond chance",
+    "evidence_ids": [
+      "F-02"
+    ]
+  },
+  {
+    "claim_id": "C-03",
+    "claim": "Salary band group membership does not predict performance_rating",
+    "evidence_ids": [
+      "F-03"
+    ]
+  },
+  {
+    "claim_id": "C-04",
+    "claim": "Predictor features are independently generated with no multicollinearity",
+    "evidence_ids": [
+      "F-04"
+    ]
+  },
+  {
+    "claim_id": "C-05",
+    "claim": "No feature or combination of features can predict performance_rating above chance",
+    "evidence_ids": [
+      "F-05",
+      "F-06"
+    ]
+  },
+  {
+    "claim_id": "C-06",
+    "claim": "This dataset is indistinguishable from pure noise \u2014 all features are independent of the target",
+    "evidence_ids": [
+      "F-01",
+      "F-02",
+      "F-03",
+      "F-05",
+      "F-06"
+    ]
+  }
+]

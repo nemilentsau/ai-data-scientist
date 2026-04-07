@@ -1,0 +1,50 @@
+[
+  {
+    "id": "H-01",
+    "hypothesis": "No individual numeric feature has a statistically significant linear correlation with performance_rating after multiple-testing correction.",
+    "rationale": "The dataset is labeled pure_noise, suggesting features are independently generated. Any raw p < 0.05 correlations are likely false positives.",
+    "test_method": "Pearson and Spearman correlation with Bonferroni and BH correction (CHK-05, CHK-15).",
+    "success_criteria": "All adjusted p-values > 0.05.",
+    "related_checks": ["CHK-05", "CHK-15", "CHK-16"]
+  },
+  {
+    "id": "H-02",
+    "hypothesis": "salary_band categories show no significant difference in mean performance_rating.",
+    "rationale": "If features are noise, the categorical variable should also be unrelated to the target.",
+    "test_method": "One-way ANOVA F-test (CHK-08) with Bonferroni adjustment.",
+    "success_criteria": "ANOVA p-value > 0.05.",
+    "related_checks": ["CHK-08", "CHK-09", "CHK-15"]
+  },
+  {
+    "id": "H-03",
+    "hypothesis": "A full OLS regression model has no predictive power beyond the intercept-only baseline.",
+    "rationale": "Under the pure-noise assumption, the global F-test should fail to reject H0 and R² should be near zero.",
+    "test_method": "OLS regression global F-test and R² (CHK-12); cross-validated RMSE comparison (CHK-14).",
+    "success_criteria": "F-test p > 0.05 and cross-validated RMSE within 1% of baseline RMSE.",
+    "related_checks": ["CHK-12", "CHK-14"]
+  },
+  {
+    "id": "H-04",
+    "hypothesis": "No feature achieves permutation importance significantly above zero in a random-forest model.",
+    "rationale": "A non-linear model should also fail to find signal in pure noise data.",
+    "test_method": "Random-forest with 5-fold CV permutation importance (CHK-13).",
+    "success_criteria": "All feature importances have 95% CI overlapping zero.",
+    "related_checks": ["CHK-13"]
+  },
+  {
+    "id": "H-05",
+    "hypothesis": "performance_rating is approximately normally distributed.",
+    "rationale": "Mean ≈ 50, std ≈ 10, and the 25th/75th percentiles are roughly symmetric around the median, consistent with normal generation.",
+    "test_method": "Shapiro-Wilk test and histogram visual inspection (CHK-01).",
+    "success_criteria": "Shapiro-Wilk p > 0.05 or visual confirmation of bell shape.",
+    "related_checks": ["CHK-01"]
+  },
+  {
+    "id": "H-06",
+    "hypothesis": "Predictor variables are mutually uncorrelated (no multicollinearity).",
+    "rationale": "Independently generated features should have VIF values near 1 and low pairwise correlations.",
+    "test_method": "VIF computation (CHK-10) and correlation heatmap (CHK-06).",
+    "success_criteria": "All VIF values < 2 and all pairwise |r| < 0.15.",
+    "related_checks": ["CHK-06", "CHK-10", "CHK-11"]
+  }
+]

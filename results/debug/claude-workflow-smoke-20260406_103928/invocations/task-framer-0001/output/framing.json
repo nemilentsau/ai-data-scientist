@@ -1,0 +1,21 @@
+{
+  "primary_frame": "Assess whether employee features reliably predict performance rating",
+  "alternative_frames": [
+    "Identify which employee attributes most influence performance rating",
+    "Segment employees by performance drivers such as experience and training",
+    "Evaluate whether satisfaction score is associated with performance rating"
+  ],
+  "required_checks": [
+    "Test pairwise correlations between numeric features and performance_rating",
+    "Check for non-linear relationships between features and performance_rating",
+    "Verify that salary_band groups differ meaningfully in performance_rating",
+    "Assess overall model fit and warn if no feature is predictive",
+    "Check for multicollinearity among predictor features"
+  ],
+  "framing_risks": [
+    "No target variable is explicitly specified; performance_rating is assumed based on column semantics",
+    "Data may contain no genuine signal if features are independently generated noise",
+    "satisfaction_score could alternatively serve as the target variable",
+    "Uniform-looking feature distributions may indicate synthetic or randomly generated data"
+  ]
+}

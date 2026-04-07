@@ -1,0 +1,60 @@
+[
+  {
+    "id": "F-01",
+    "title": "No significant pairwise correlations with performance_rating",
+    "summary": "Pearson and Spearman correlations between all numeric features and performance_rating are weak. No feature exceeds |r| > 0.1 at p < 0.05.",
+    "evidence": [
+      "Pearson r range: [-0.0860, 0.0455]",
+      "Shapiro-Wilk p=0.0071 (distribution departs from normality)",
+      "Outliers beyond 3 SD: 2"
+    ],
+    "hypothesis": "H-01",
+    "experiment": "EXP-01"
+  },
+  {
+    "id": "F-02",
+    "title": "performance_rating distribution assessment",
+    "summary": "performance_rating has mean=50.0, std=10.0. Distribution shows some departure from normality (Shapiro-Wilk rejects at p<0.05). 2 outliers beyond 3 SD.",
+    "evidence": [
+      "Shapiro-Wilk W=0.9947, p=0.0071",
+      "Mean=50.00, Std=10.02, Range=[9.5, 75.3]"
+    ],
+    "hypothesis": "H-02",
+    "experiment": "EXP-01"
+  },
+  {
+    "id": "F-03",
+    "title": "salary_band shows no ordinal proxy behaviour",
+    "summary": "Kruskal-Wallis test: performance_rating does not differ across salary bands (H=3.96, p=0.412). No feature shows a significant monotonic trend across bands.",
+    "evidence": [
+      "Band frequencies: {'L1': 163, 'L2': 144, 'L3': 163, 'L4': 160, 'L5': 170}",
+      "Kruskal-Wallis H=3.9586, p=0.4116",
+      "Monotonic trend tests: {'years_experience': {'spearman_rho': np.float64(-0.6), 'p': np.float64(0.2848)}, 'training_hours': {'spearman_rho': np.float64(0.0), 'p': np.float64(1.0)}, 'performance_rating': {'spearman_rho': np.float64(-0.3), 'p': np.float64(0.6238)}, 'satisfaction_score': {'spearman_rho': np.float64(-0.8), 'p': np.float64(0.1041)}}"
+    ],
+    "hypothesis": "H-03",
+    "experiment": "EXP-02"
+  },
+  {
+    "id": "F-04",
+    "title": "Predictors are not multicollinear",
+    "summary": "All VIFs are below 5 (years_experience=1.01, training_hours=1.01, team_size=1.01, projects_completed=1.0, satisfaction_score=1.0, commute_minutes=1.01, remote_pct=1.01). No pairwise correlation(s) exceed |r| > 0.7.",
+    "evidence": [
+      "VIF values: [{'feature': 'years_experience', 'VIF': np.float64(1.01)}, {'feature': 'training_hours', 'VIF': np.float64(1.01)}, {'feature': 'team_size', 'VIF': np.float64(1.01)}, {'feature': 'projects_completed', 'VIF': np.float64(1.0)}, {'feature': 'satisfaction_score', 'VIF': np.float64(1.0)}, {'feature': 'commute_minutes', 'VIF': np.float64(1.01)}, {'feature': 'remote_pct', 'VIF': np.float64(1.01)}]",
+      "High pairwise correlations (|r|>0.7): none"
+    ],
+    "hypothesis": "H-05",
+    "experiment": "EXP-03"
+  },
+  {
+    "id": "F-05",
+    "title": "OLS model does not exceed chance performance",
+    "summary": "Observed R\u00b2=0.0098 vs permuted null mean=0.0091. Empirical p=0.380. The model does not exceed chance at the 0.05 level.",
+    "evidence": [
+      "Observed R\u00b2=0.009833",
+      "Permuted R\u00b2 mean=0.009093, max=0.024307",
+      "Empirical p-value=0.3800 (200 permutations)"
+    ],
+    "hypothesis": "H-04",
+    "experiment": "EXP-04"
+  }
+]

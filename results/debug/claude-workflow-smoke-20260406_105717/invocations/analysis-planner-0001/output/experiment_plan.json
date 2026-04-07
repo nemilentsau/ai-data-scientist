@@ -1,0 +1,71 @@
+[
+  {
+    "id": "EXP-01",
+    "title": "Pairwise correlation matrix with Bonferroni-corrected significance",
+    "hypothesis_ids": ["H-01"],
+    "required_checks": [
+      "Compute pairwise correlations among all numeric features and test significance with Bonferroni correction"
+    ],
+    "method": "Compute Pearson r and p-value for all 28 numeric-feature pairs using scipy.stats.pearsonr. Apply Bonferroni correction (alpha_adj = 0.05/28). Flag any pair surviving correction.",
+    "inputs": ["dataset CSV"],
+    "outputs": {
+      "plots": ["corr_heatmap.png"],
+      "tables": ["correlation_matrix", "significance_table"]
+    },
+    "libraries": ["pandas", "scipy.stats", "matplotlib", "seaborn"],
+    "model_based": false,
+    "estimated_seconds": 5
+  },
+  {
+    "id": "EXP-02",
+    "title": "Commute-minutes distribution and outlier inspection",
+    "hypothesis_ids": ["H-05"],
+    "required_checks": [
+      "Inspect commute_minutes for right-skew outliers before modeling"
+    ],
+    "method": "Compute skewness (scipy.stats.skew), IQR, and Tukey fence (Q3 + 1.5*IQR). Count and list outlier values. Plot histogram with KDE and overlaid boxplot.",
+    "inputs": ["dataset CSV"],
+    "outputs": {
+      "plots": ["commute_dist.png"],
+      "tables": ["commute_stats"]
+    },
+    "libraries": ["pandas", "scipy.stats", "matplotlib"],
+    "model_based": false,
+    "estimated_seconds": 3
+  },
+  {
+    "id": "EXP-03",
+    "title": "Permutation feature importance and baseline model comparison",
+    "hypothesis_ids": ["H-02", "H-03"],
+    "required_checks": [
+      "Run a permutation-based feature importance test against performance_rating to guard against spurious fits",
+      "Check whether a baseline model (mean predictor) is statistically indistinguishable from any fitted model"
+    ],
+    "method": "80/20 train-test split (random_state=42). Fit RandomForestRegressor(n_estimators=100, random_state=42) on 8 numeric features predicting performance_rating. Compute test-set R-squared. Run sklearn.inspection.permutation_importance (n_repeats=30, random_state=42) on test set. Baseline R-squared is 0 by definition of mean predictor. Report whether any feature importance mean exceeds 2 standard deviations above zero and whether model R-squared is materially > 0.",
+    "inputs": ["dataset CSV"],
+    "outputs": {
+      "plots": ["feat_importance.png"],
+      "tables": ["feature_importance_table", "model_vs_baseline"]
+    },
+    "libraries": ["pandas", "scikit-learn", "matplotlib"],
+    "model_based": true,
+    "estimated_seconds": 30
+  },
+  {
+    "id": "EXP-04",
+    "title": "Salary-band group separation via Kruskal-Wallis",
+    "hypothesis_ids": ["H-04"],
+    "required_checks": [
+      "Verify that salary_band levels show meaningful separation on numeric features via ANOVA or Kruskal-Wallis"
+    ],
+    "method": "For each of the 8 numeric features, group values by salary_band and run scipy.stats.kruskal. Apply Bonferroni correction (alpha_adj = 0.05/8). Report H-statistic, raw p-value, and adjusted p-value. Generate grouped box plots.",
+    "inputs": ["dataset CSV"],
+    "outputs": {
+      "plots": ["salary_band_boxplots.png"],
+      "tables": ["kruskal_wallis_results"]
+    },
+    "libraries": ["pandas", "scipy.stats", "matplotlib"],
+    "model_based": false,
+    "estimated_seconds": 5
+  }
+]

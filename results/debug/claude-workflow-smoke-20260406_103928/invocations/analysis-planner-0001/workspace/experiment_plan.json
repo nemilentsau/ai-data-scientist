@@ -1,0 +1,72 @@
+[
+  {
+    "id": "EXP-DIST",
+    "title": "Distribution and sanity checks",
+    "description": "Plot histograms for all numeric columns and a value-count bar chart for salary_band. Verify no unexpected gaps, spikes, or anomalies.",
+    "inputs": ["dataset.csv"],
+    "outputs": ["plots/distributions.png"],
+    "method": "matplotlib histograms (bins=30) for numeric columns; bar chart for salary_band",
+    "hypothesis_ids": [],
+    "validation": "Visual inspection; confirm performance_rating is roughly normal/uniform with mean ~50 and std ~10"
+  },
+  {
+    "id": "EXP-CORR",
+    "title": "Pairwise correlation analysis",
+    "description": "Compute Pearson and Spearman correlation matrices for all numeric columns. Generate heatmap. Report max |r| with performance_rating.",
+    "inputs": ["dataset.csv"],
+    "outputs": ["plots/correlation_heatmap.png", "tables/correlation_matrix.csv"],
+    "method": "pandas .corr(method='pearson') and .corr(method='spearman'); seaborn heatmap; Bonferroni-corrected p-values via scipy.stats.pearsonr/spearmanr",
+    "hypothesis_ids": ["H-CORR-NONE"],
+    "validation": "Flag any |r| > 0.10 with corrected p < 0.05. For pure noise expect all |r| < 0.10."
+  },
+  {
+    "id": "EXP-NONLIN",
+    "title": "Non-linear relationship scan",
+    "description": "Compute mutual information scores for each numeric predictor against performance_rating. Produce scatter plots with LOWESS for top-3 features.",
+    "inputs": ["dataset.csv"],
+    "outputs": ["plots/mi_scores.png", "plots/scatter_lowess_top3.png", "tables/mi_scores.csv"],
+    "method": "sklearn.feature_selection.mutual_info_regression; statsmodels lowess smoother; compare MI scores against shuffled-target baseline (100 shuffles)",
+    "hypothesis_ids": ["H-NONLIN-NONE"],
+    "validation": "If all MI scores fall within the 95% CI of shuffled baseline, accept H-NONLIN-NONE."
+  },
+  {
+    "id": "EXP-ANOVA",
+    "title": "Salary band group comparison",
+    "description": "Test whether mean performance_rating differs across salary_band levels using one-way ANOVA. Produce box plot.",
+    "inputs": ["dataset.csv"],
+    "outputs": ["plots/boxplot_salary_band.png", "tables/anova_results.csv"],
+    "method": "scipy.stats.f_oneway; eta-squared = SS_between / SS_total; seaborn boxplot",
+    "hypothesis_ids": ["H-SALARY-NODIFF"],
+    "validation": "Report F-statistic, p-value, eta-squared. Accept H-SALARY-NODIFF if p >= 0.05 or eta-squared < 0.01."
+  },
+  {
+    "id": "EXP-VIF",
+    "title": "Multicollinearity check",
+    "description": "Compute VIF for all numeric predictors to assess collinearity.",
+    "inputs": ["dataset.csv"],
+    "outputs": ["tables/vif_scores.csv"],
+    "method": "statsmodels.stats.outliers_influence.variance_inflation_factor on standardised numeric predictor matrix",
+    "hypothesis_ids": [],
+    "validation": "Flag any VIF > 5. For independently generated noise expect all VIF near 1.0."
+  },
+  {
+    "id": "EXP-MODEL",
+    "title": "Predictive model fit",
+    "description": "Fit Random Forest regressor with 5-fold CV. Compare against dummy baseline. Compute permutation feature importances.",
+    "inputs": ["dataset.csv"],
+    "outputs": ["plots/feature_importances.png", "tables/cv_scores.csv"],
+    "method": "sklearn RandomForestRegressor(n_estimators=100, random_state=42); cross_val_score(cv=5, scoring='r2'); DummyRegressor(strategy='mean'); permutation_importance",
+    "hypothesis_ids": ["H-MODEL-NOSIGNAL"],
+    "validation": "Accept H-MODEL-NOSIGNAL if mean CV R-squared <= 0.02. Report RMSE and compare to baseline RMSE."
+  },
+  {
+    "id": "EXP-NOISE",
+    "title": "Permutation noise confirmation test",
+    "description": "Build null distribution of R-squared by shuffling performance_rating 200 times and refitting the model. Compare actual R-squared to this distribution.",
+    "inputs": ["dataset.csv"],
+    "outputs": ["plots/null_distribution.png", "tables/permutation_test.csv"],
+    "method": "For each of 200 iterations: shuffle performance_rating, fit RandomForestRegressor with 5-fold CV, record mean R-squared. Compute empirical p-value = (count of null R-squared >= actual R-squared) / 200.",
+    "hypothesis_ids": ["H-NOISE"],
+    "validation": "Accept H-NOISE if empirical p-value >= 0.05, confirming data is indistinguishable from pure noise."
+  }
+]

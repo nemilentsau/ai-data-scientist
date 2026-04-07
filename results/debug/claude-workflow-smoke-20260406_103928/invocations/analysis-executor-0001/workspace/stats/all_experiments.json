@@ -1,0 +1,52 @@
+{
+  "EXP-DIST": {
+    "status": "completed",
+    "notes": "All distributions look consistent with independent random generation.",
+    "plot": "plots/distributions.png"
+  },
+  "EXP-CORR": {
+    "status": "completed",
+    "max_abs_r": 0.086,
+    "flagged_features": [],
+    "H-CORR-NONE": "not rejected",
+    "plot": "plots/correlation_heatmap.png"
+  },
+  "EXP-NONLIN": {
+    "status": "completed",
+    "max_mi": 0.0559,
+    "any_exceeds_null_95": true,
+    "H-NONLIN-NONE": "rejected (check features)",
+    "plot": "plots/mi_scores.png"
+  },
+  "EXP-ANOVA": {
+    "status": "completed",
+    "F_statistic": 0.7185,
+    "p_value": 0.5794,
+    "eta_squared": 0.0036,
+    "H-SALARY-NODIFF": "not rejected",
+    "plot": "plots/boxplot_salary_band.png"
+  },
+  "EXP-VIF": {
+    "status": "completed",
+    "max_vif": 1.013,
+    "any_above_5": false
+  },
+  "EXP-MODEL": {
+    "status": "completed",
+    "mean_cv_r2": -0.098,
+    "std_cv_r2": 0.0584,
+    "mean_cv_rmse": 10.4272,
+    "dummy_mean_rmse": 9.989,
+    "H-MODEL-NOSIGNAL": "not rejected",
+    "plot": "plots/feature_importances.png"
+  },
+  "EXP-NOISE": {
+    "status": "completed",
+    "actual_r2": -0.098,
+    "null_r2_mean": -0.0956,
+    "null_r2_95pct": -0.0465,
+    "empirical_p_value": 0.51,
+    "H-NOISE": "not rejected (data is noise)",
+    "plot": "plots/null_distribution.png"
+  }
+}

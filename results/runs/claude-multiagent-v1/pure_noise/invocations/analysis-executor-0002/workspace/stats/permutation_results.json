@@ -1,0 +1,7 @@
+{
+  "observed_r2": 0.01359,
+  "null_mean_r2": 0.013628,
+  "null_95th_pct": 0.023385,
+  "empirical_pvalue": 0.45954,
+  "signal_detected": false
+}

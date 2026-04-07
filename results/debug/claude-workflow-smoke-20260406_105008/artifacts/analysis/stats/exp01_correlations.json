@@ -1,0 +1,61 @@
+{
+  "shapiro_wilk": {
+    "W": 0.9947,
+    "p": 0.0071
+  },
+  "mean": 49.9971,
+  "std": 10.0168,
+  "outliers_3sd_count": 2,
+  "correlations": [
+    {
+      "feature": "years_experience",
+      "pearson_r": -0.0149,
+      "pearson_p": 0.6733,
+      "spearman_rho": -0.0041,
+      "spearman_p": 0.9077
+    },
+    {
+      "feature": "training_hours",
+      "pearson_r": 0.0455,
+      "pearson_p": 0.1983,
+      "spearman_rho": 0.0391,
+      "spearman_p": 0.2688
+    },
+    {
+      "feature": "team_size",
+      "pearson_r": -0.086,
+      "pearson_p": 0.015,
+      "spearman_rho": -0.0832,
+      "spearman_p": 0.0186
+    },
+    {
+      "feature": "projects_completed",
+      "pearson_r": 0.0164,
+      "pearson_p": 0.6441,
+      "spearman_rho": 0.0153,
+      "spearman_p": 0.6659
+    },
+    {
+      "feature": "satisfaction_score",
+      "pearson_r": 0.0014,
+      "pearson_p": 0.9694,
+      "spearman_rho": 0.0147,
+      "spearman_p": 0.6788
+    },
+    {
+      "feature": "commute_minutes",
+      "pearson_r": -0.0062,
+      "pearson_p": 0.86,
+      "spearman_rho": 0.0084,
+      "spearman_p": 0.8119
+    },
+    {
+      "feature": "remote_pct",
+      "pearson_r": 0.0232,
+      "pearson_p": 0.5125,
+      "spearman_rho": 0.0291,
+      "spearman_p": 0.4105
+    }
+  ],
+  "significant_features": []
+}

@@ -1,0 +1,10 @@
+{
+  "q1": 7.0,
+  "q3": 33.0,
+  "iqr": 26.0,
+  "lower_fence": -32.0,
+  "upper_fence": 72.0,
+  "n_outliers": 49,
+  "pct_outliers": 6.12,
+  "skewness": 1.7688
+}

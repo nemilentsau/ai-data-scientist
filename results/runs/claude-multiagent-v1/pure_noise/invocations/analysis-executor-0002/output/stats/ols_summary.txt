@@ -1,0 +1,35 @@
+                            OLS Regression Results                            
+==============================================================================
+Dep. Variable:     performance_rating   R-squared:                       0.014
+Model:                            OLS   Adj. R-squared:                 -0.000
+Method:                 Least Squares   F-statistic:                    0.9870
+Date:                Mon, 06 Apr 2026   Prob (F-statistic):              0.456
+Time:                        10:43:39   Log-Likelihood:                -2972.6
+No. Observations:                 800   AIC:                             5969.
+Df Residuals:                     788   BIC:                             6025.
+Df Model:                          11                                         
+Covariance Type:            nonrobust                                         
+======================================================================================
+                         coef    std err          t      P>|t|      [0.025      0.975]
+--------------------------------------------------------------------------------------
+const                 49.9044      2.138     23.342      0.000      45.708      54.101
+years_experience      -0.0086      0.040     -0.214      0.831      -0.088       0.071
+training_hours         0.0291      0.024      1.213      0.226      -0.018       0.076
+team_size             -0.1289      0.055     -2.329      0.020      -0.237      -0.020
+projects_completed     0.0476      0.122      0.390      0.696      -0.192       0.287
+satisfaction_score     0.0013      0.138      0.010      0.992      -0.269       0.272
+commute_minutes       -0.0009      0.015     -0.062      0.951      -0.031       0.029
+remote_pct             0.0058      0.010      0.574      0.566      -0.014       0.026
+salary_band_L2         1.2783      1.154      1.108      0.268      -0.987       3.544
+salary_band_L3        -0.6325      1.113     -0.568      0.570      -2.818       1.553
+salary_band_L4         0.3401      1.119      0.304      0.761      -1.857       2.537
+salary_band_L5        -0.1070      1.102     -0.097      0.923      -2.270       2.056
+==============================================================================
+Omnibus:                        6.817   Durbin-Watson:                   2.089
+Prob(Omnibus):                  0.033   Jarque-Bera (JB):                6.805
+Skew:                          -0.226   Prob(JB):                       0.0333
+Kurtosis:                       3.024   Cond. No.                         503.
+==============================================================================
+
+Notes:
+[1] Standard Errors assume that the covariance matrix of the errors is correctly specified.

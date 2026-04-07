@@ -1,0 +1,5 @@
+{
+  "status": "completed",
+  "notes": "All distributions look consistent with independent random generation.",
+  "plot": "plots/distributions.png"
+}

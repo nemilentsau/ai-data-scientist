@@ -1,0 +1,9 @@
+{
+  "status": "completed",
+  "mean_cv_r2": -0.098,
+  "std_cv_r2": 0.0584,
+  "mean_cv_rmse": 10.4272,
+  "dummy_mean_rmse": 9.989,
+  "H-MODEL-NOSIGNAL": "not rejected",
+  "plot": "plots/feature_importances.png"
+}

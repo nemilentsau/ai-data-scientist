@@ -1,0 +1,7 @@
+{
+  "invocation_id": "memory-curator-0001",
+  "role": "memory_curator",
+  "backend": "claude_cli",
+  "model": "claude-opus-4-6",
+  "status": "completed"
+}

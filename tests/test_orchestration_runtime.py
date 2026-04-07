@@ -59,6 +59,37 @@ def test_create_invocation_context_uses_unique_ids_for_repeated_roles(tmp_path: 
     assert second.invocation_id == "analysis-planner-0002"
 
 
+def test_resolve_role_inputs_excludes_full_dataset_for_task_framer(tmp_path: Path):
+    run_dir = tmp_path / "results" / "runs" / "codex-multiagent-v1" / "pure_noise"
+    dataset = run_dir / "artifacts" / "dataset" / "dataset.csv"
+    profile = run_dir / "artifacts" / "profile" / "schema.json"
+    dataset.parent.mkdir(parents=True, exist_ok=True)
+    profile.parent.mkdir(parents=True, exist_ok=True)
+    dataset.write_text("x,y\n1,2\n")
+    profile.write_text("{}")
+
+    inputs = orchestration_runner.resolve_role_inputs(run_dir, "task_framer")
+
+    assert inputs == [profile]
+
+
+def test_resolve_role_inputs_excludes_full_dataset_for_analysis_planner(tmp_path: Path):
+    run_dir = tmp_path / "results" / "runs" / "codex-multiagent-v1" / "pure_noise"
+    dataset = run_dir / "artifacts" / "dataset" / "dataset.csv"
+    profile = run_dir / "artifacts" / "profile" / "schema.json"
+    framing = run_dir / "artifacts" / "framing" / "framing.json"
+    dataset.parent.mkdir(parents=True, exist_ok=True)
+    profile.parent.mkdir(parents=True, exist_ok=True)
+    framing.parent.mkdir(parents=True, exist_ok=True)
+    dataset.write_text("x,y\n1,2\n")
+    profile.write_text("{}")
+    framing.write_text("{}")
+
+    inputs = orchestration_runner.resolve_role_inputs(run_dir, "analysis_planner")
+
+    assert inputs == [profile, framing]
+
+
 def test_publish_declared_outputs_copies_only_declared_outputs_from_output_dir(tmp_path: Path):
     run_dir = tmp_path / "results" / "runs" / "codex-multiagent-v1" / "multimodal"
     invocation = create_invocation_context(
@@ -472,15 +503,18 @@ def test_runner_executes_task_framer_planner_executor_in_order(
         def invoke(self, role, context, invocation, prompt):
             del context, prompt
             calls.append(role.role)
-            dataset_path = invocation.input_dir / "artifacts" / "dataset" / "dataset.csv"
-            assert dataset_path.exists()
             if role.role == "task_framer":
+                assert not (
+                    invocation.input_dir / "artifacts" / "dataset" / "dataset.csv"
+                ).exists()
                 assert (invocation.input_dir / "artifacts" / "profile" / "schema.json").exists()
                 (invocation.work_dir / "framing.json").write_text(
                     '{"primary_frame":"regression"}'
                 )
             elif role.role == "analysis_planner":
-                assert (invocation.input_dir / "artifacts" / "dataset" / "dataset.csv").exists()
+                assert not (
+                    invocation.input_dir / "artifacts" / "dataset" / "dataset.csv"
+                ).exists()
                 assert (invocation.input_dir / "artifacts" / "profile" / "schema.json").exists()
                 assert (invocation.input_dir / "artifacts" / "framing" / "framing.json").exists()
                 (invocation.work_dir / "analysis_plan.md").write_text("# Plan\n")
@@ -489,6 +523,8 @@ def test_runner_executes_task_framer_planner_executor_in_order(
                     '{"items":[{"id":"exp_1"}]}'
                 )
             elif role.role == "analysis_executor":
+                dataset_path = invocation.input_dir / "artifacts" / "dataset" / "dataset.csv"
+                assert dataset_path.exists()
                 assert (invocation.input_dir / "artifacts" / "dataset" / "dataset.csv").exists()
                 assert (invocation.input_dir / "artifacts" / "profile" / "schema.json").exists()
                 assert (invocation.input_dir / "artifacts" / "framing" / "framing.json").exists()
