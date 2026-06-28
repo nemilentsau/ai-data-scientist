@@ -11,9 +11,28 @@ from eda_artifacts.graph import run_multimodal_trial
 
 def _framer_output():
     return EdaFramerOutput(
-        primary_question="What does the monthly rent target distribution look like?",
-        required_checks=["Inspect monthly_rent_usd distribution"],
-        chart_requests=["Create a rent distribution chart"],
+        user_question="Assess whether monthly_rent_usd has a simple distribution.",
+        analysis_plan=(
+            "Evaluate the target distribution before making downstream modeling claims."
+        ),
+        hypotheses=[
+            {
+                "id": "h1",
+                "statement": "monthly_rent_usd may be multi-peaked rather than unimodal.",
+                "rationale": "The profile shows a wide numeric range and mean above median.",
+                "variables": ["monthly_rent_usd"],
+            }
+        ],
+        artifact_requests=[
+            {
+                "id": "a1",
+                "hypothesis_id": "h1",
+                "artifact_type": "chart",
+                "description": "Render a distribution view of monthly_rent_usd.",
+                "statistical_purpose": "Check visible modality and skew.",
+                "expected_fields": ["monthly_rent_usd", "listing_count"],
+            }
+        ],
         stop_conditions=["Do not make regression claims before visual review"],
     )
 
@@ -63,15 +82,26 @@ def test_pass_review_run_produces_artifacts_and_lineage(tmp_path):
         }
     )
 
-    state = run_multimodal_trial(run_root=tmp_path, run_id="pass-run", adapter=adapter)
+    state = run_multimodal_trial(
+        run_root=tmp_path,
+        run_id="pass-run",
+        adapter=adapter,
+        user_question="Assess whether monthly_rent_usd has a simple distribution.",
+    )
 
     run_dir = tmp_path / "multimodal" / "pass-run"
     assert state["status"] == "passed_visual_gate"
     assert (run_dir / "00-dataset" / "dataset.csv").exists()
     assert (run_dir / "00-dataset" / "profile.json").exists()
     assert (run_dir / "01-eda-framer" / "prompt.md").exists()
+    assert (run_dir / "01-eda-framer" / "user-question.txt").read_text() == (
+        "Assess whether monthly_rent_usd has a simple distribution.\n"
+    )
     assert (run_dir / "01-eda-framer" / "output.schema.json").exists()
     assert (run_dir / "01-eda-framer" / "output.json").exists()
+    framing = json.loads((run_dir / "01-eda-framer" / "output.json").read_text())
+    assert framing["hypotheses"][0]["id"] == "h1"
+    assert framing["artifact_requests"][0]["id"] == "a1"
     assert (run_dir / "02-artifact-builder" / "attempt-1" / "prompt.md").exists()
     assert (run_dir / "02-artifact-builder" / "attempt-1" / "output.schema.json").exists()
     assert (run_dir / "02-artifact-builder" / "attempt-1" / "output.json").exists()
@@ -103,6 +133,12 @@ def test_pass_review_run_produces_artifacts_and_lineage(tmp_path):
         assert not (run_dir / old_name).exists()
     lineage = json.loads((run_dir / "lineage.json").read_text())
     assert lineage["status"] == "passed_visual_gate"
+    assert lineage["dependencies"]["01-eda-framer/output.json"] == [
+        "01-eda-framer/prompt.md",
+        "01-eda-framer/user-question.txt",
+        "01-eda-framer/output.schema.json",
+        "00-dataset/profile.json",
+    ]
     assert "04-render/attempt-1/chart.png" in lineage["artifacts"]
     assert lineage["dependencies"]["04-render/attempt-1/chart.png"] == [
         "02-artifact-builder/attempt-1/chart.vegalite.json",
@@ -157,7 +193,12 @@ def test_revise_review_runs_one_builder_revision_and_second_review(tmp_path):
         }
     )
 
-    state = run_multimodal_trial(run_root=tmp_path, run_id="revise-run", adapter=adapter)
+    state = run_multimodal_trial(
+        run_root=tmp_path,
+        run_id="revise-run",
+        adapter=adapter,
+        user_question="Assess whether monthly_rent_usd has a simple distribution.",
+    )
 
     run_dir = tmp_path / "multimodal" / "revise-run"
     assert state["status"] == "passed_visual_gate"
@@ -194,7 +235,12 @@ def test_artifact_builder_chart_spec_json_string_is_written_as_chart_object(tmp_
         }
     )
 
-    run_multimodal_trial(run_root=tmp_path, run_id="string-chart-run", adapter=adapter)
+    run_multimodal_trial(
+        run_root=tmp_path,
+        run_id="string-chart-run",
+        adapter=adapter,
+        user_question="Assess whether monthly_rent_usd has a simple distribution.",
+    )
 
     chart_spec = json.loads(
         (
@@ -234,7 +280,12 @@ def test_second_revise_review_exhausts_revision_budget(tmp_path):
         }
     )
 
-    state = run_multimodal_trial(run_root=tmp_path, run_id="fail-run", adapter=adapter)
+    state = run_multimodal_trial(
+        run_root=tmp_path,
+        run_id="fail-run",
+        adapter=adapter,
+        user_question="Assess whether monthly_rent_usd has a simple distribution.",
+    )
 
     assert state["status"] == "revision_budget_exhausted"
     assert state["revision_count"] == 1

@@ -5,18 +5,18 @@
 The current `eda-artifacts` trial is not testing whether an agent can independently
 discover the right data-analysis question.
 
-The prompts already tell Codex that the `multimodal` dataset has a target
-distribution issue and that `monthly_rent_usd` must be inspected before any
-regression-style analysis. That is a deliberate clue. Because of that, this run is
-not evidence that the agent can perform practical exploratory data analysis from
-an open-ended dataset.
+The user supplies the analysis question. The EDA framer receives that question
+and the deterministic dataset profile, but not the raw CSV, and turns them into
+statistical hypotheses plus artifact requests. Because the user still supplies
+the analysis direction, this run is not evidence that the agent can perform
+practical exploratory data analysis from an open-ended dataset.
 
 The current trial tests a smaller and more mechanical claim:
 
-> If we give Codex a constrained EDA target, can it turn that target into durable,
-> reproducible artifacts: a valid SQL query, a materialized result table, a
-> Vega-Lite chart spec, a rendered review image, a visual-review decision, a
-> report, and lineage?
+> If we give Codex a user question and a dataset profile, can it frame statistical
+> checks and turn one requested check into durable, reproducible artifacts: a
+> valid SQL query, a materialized result table, a Vega-Lite chart spec, a rendered
+> review image, a visual-review decision, a report, and lineage?
 
 In other words, this is an artifact-generation and artifact-validation test, not
 an analyst-discovery test.
@@ -30,6 +30,8 @@ scoring, and UI browsing.
 This trial intentionally removes analyst discovery so we can test the artifact
 loop itself:
 
+- Can the EDA framer turn the user question and profile into concrete hypotheses
+  and artifact requests?
 - Can Codex obey the harness contract?
 - Can it write SQL against the registered `dataset` table instead of reading files
   directly?
@@ -45,24 +47,27 @@ not be debuggable.
 
 ## Current Prompt Limitation
 
-The current prompts are not suitable for practical EDA.
+The current prompts are still not suitable for practical EDA.
 
-They leak the key analysis direction:
+They rely on a user-supplied analysis direction:
 
 - the dataset is identified as the known `multimodal` case
-- `monthly_rent_usd` is identified as the target
-- the agent is instructed to inspect the target distribution first
-- the builder is constrained to produce a histogram-like result
+- the user question can identify the target variable and the kind of check wanted
+- the framer is only asked to operationalize that question from the profile
+- the builder is asked to implement one framed artifact request, not discover the
+  right first analysis independently
 
 That means a passing run only proves that Codex can operationalize a known
-analysis target into artifacts. It does not prove that Codex would choose that
-analysis target on its own.
+analysis question into artifacts. It does not prove that Codex would choose that
+question on its own.
 
 ## Success Criteria For This Trial
 
 The current trial succeeds if a fresh live Codex run can repeatedly produce:
 
-- `01-eda-framer/output.json` that states the target-distribution task
+- `01-eda-framer/user-question.txt` preserving the question supplied to the run
+- `01-eda-framer/output.json` with `user_question`, `analysis_plan`,
+  `hypotheses`, `artifact_requests`, and `stop_conditions`
 - `02-artifact-builder/attempt-1/query.sql` that queries the registered DuckDB table
   `dataset`
 - no SQL file-reader calls such as `read_csv_auto`, `read_csv`, or `read_parquet`
@@ -102,10 +107,12 @@ one clue.
 
 A reasonable sequence is:
 
-1. Keep `monthly_rent_usd` known, but stop saying the distribution is the issue.
-2. Ask Codex to choose the first EDA check from the profile.
-3. Require it to justify why the chosen chart should be rendered first.
+1. Keep a user question, but make it less prescriptive about the chart family.
+2. Ask the framer to choose the first EDA check from the profile and question.
+3. Require it to justify why the chosen artifact should be rendered first.
 4. Keep the same artifact contract and visual-review gate.
+5. Later, remove the user-provided target and ask Codex to choose the first EDA
+   question from the profile alone.
 
 Only after that should we test broader analyst behavior, such as whether Codex can
 discover Simpson's paradox or other statistical traps without being told where to

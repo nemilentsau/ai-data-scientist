@@ -29,6 +29,8 @@ class TrialState(TypedDict):
     run_dir: Path
     dataset_path: Path
     profile_path: Path
+    user_question: str
+    user_question_path: Path
     framing_path: Path
     query_path: Path
     result_path: Path
@@ -47,9 +49,10 @@ def run_multimodal_trial(
     run_root: Path | str,
     run_id: str,
     adapter: CodexAdapter,
+    user_question: str,
 ) -> TrialState:
     run_dir = Path(run_root) / "multimodal" / run_id
-    state = _initial_state(run_dir)
+    state = _initial_state(run_dir, user_question)
     return cast(TrialState, _build_graph(adapter).invoke(state))
 
 
@@ -90,12 +93,14 @@ def _build_graph(adapter: CodexAdapter):
     return graph.compile()
 
 
-def _initial_state(run_dir: Path) -> TrialState:
+def _initial_state(run_dir: Path, user_question: str) -> TrialState:
     attempt = 1
     return {
         "run_dir": run_dir,
         "dataset_path": run_dir / "00-dataset" / "dataset.csv",
         "profile_path": run_dir / "00-dataset" / "profile.json",
+        "user_question": user_question,
+        "user_question_path": run_dir / "01-eda-framer" / "user-question.txt",
         "framing_path": run_dir / "01-eda-framer" / "output.json",
         "query_path": run_dir / "02-artifact-builder" / f"attempt-{attempt}" / "query.sql",
         "chart_spec_path": (
@@ -122,10 +127,11 @@ def _prepare_dataset(state: TrialState) -> TrialState:
 
 def _run_eda_framer(state: TrialState, adapter: CodexAdapter) -> TrialState:
     prompt = build_framer_prompt(
-        dataset_path=_artifact_ref(state, state["dataset_path"]),
+        user_question=state["user_question"],
         profile_path=_artifact_ref(state, state["profile_path"]),
     )
     role_dir = state["run_dir"] / "01-eda-framer"
+    _write_text(state["user_question_path"], state["user_question"].strip() + "\n")
     _write_text(role_dir / "prompt.md", prompt)
     output = _coerce_framer(
         adapter.invoke(

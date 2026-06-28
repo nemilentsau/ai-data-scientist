@@ -26,6 +26,7 @@ def _dependencies_for_attempts(run_dir: Path, attempt_count: int) -> dict[str, l
         "00-dataset/profile.json": ["00-dataset/dataset.csv"],
         "01-eda-framer/output.json": [
             "01-eda-framer/prompt.md",
+            "01-eda-framer/user-question.txt",
             "01-eda-framer/output.schema.json",
             "00-dataset/profile.json",
         ],

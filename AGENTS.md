@@ -3,8 +3,8 @@
 ## Tooling & Commands
 - **Python**: `uv` only (never bare `pip`). Single venv at `.venv`, Python 3.14.
 - **Install deps**: `uv sync`
-- **Run fake MVP smoke**: `uv run python -m eda_artifacts.cli run --adapter fake --run-id smoke`
-- **Run Codex MVP**: `uv run python -m eda_artifacts.cli run --adapter codex-exec --run-id codex-smoke`
+- **Run fake MVP smoke**: `uv run python -m eda_artifacts.cli run --adapter fake --run-id smoke --question "Assess whether monthly_rent_usd has a simple distribution."`
+- **Run Codex MVP**: `uv run python -m eda_artifacts.cli run --adapter codex-exec --run-id codex-smoke --question "Assess whether monthly_rent_usd has a simple distribution."`
 - **Frontend install**: `cd frontend && npm install`
 - **Frontend dev**: `cd frontend && npm run dev`
 - **Frontend checks**: `cd frontend && npm run check`

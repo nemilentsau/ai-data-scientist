@@ -13,6 +13,8 @@ def test_fake_cli_run_creates_multimodal_artifact_tree(tmp_path):
             "cli-smoke",
             "--run-root",
             str(tmp_path),
+            "--question",
+            "Assess whether monthly_rent_usd has a simple distribution.",
         ]
     )
 
@@ -26,6 +28,40 @@ def test_fake_cli_run_creates_multimodal_artifact_tree(tmp_path):
     assert (run_dir / "05-visual-reviewer" / "attempt-1" / "report.md").exists()
     assert not (run_dir / "02-artifact-builder" / "attempt-1" / "report.md").exists()
     assert json.loads((run_dir / "lineage.json").read_text())["status"] == "passed_visual_gate"
+
+
+def test_cli_requires_user_question(tmp_path):
+    exit_code = main(
+        [
+            "run",
+            "--adapter",
+            "fake",
+            "--run-id",
+            "missing-question",
+            "--run-root",
+            str(tmp_path),
+        ]
+    )
+
+    assert exit_code == 2
+
+
+def test_cli_rejects_blank_user_question(tmp_path):
+    exit_code = main(
+        [
+            "run",
+            "--adapter",
+            "fake",
+            "--run-id",
+            "blank-question",
+            "--run-root",
+            str(tmp_path),
+            "--question",
+            "   ",
+        ]
+    )
+
+    assert exit_code == 2
 
 
 def test_cli_rejects_non_multimodal_dataset(tmp_path):

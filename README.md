@@ -19,9 +19,10 @@ Parquet result, Vega-Lite chart spec, report, visual review, and lineage. PNGs
 are generated from those artifacts for visual inspection; they are not the
 canonical chart representation.
 
-The current trial is not an open-ended data-analysis benchmark. The prompts tell
-Codex to inspect the `monthly_rent_usd` target distribution, so the run tests the
-artifact loop rather than autonomous analyst discovery. See
+The current trial is not an open-ended data-analysis benchmark. The user supplies
+the analysis question, and the EDA framer turns that question plus the dataset
+profile into statistical hypotheses and artifact requests. The run tests whether
+Codex can turn that framed plan into executable artifacts. See
 [`docs/goals.md`](docs/goals.md) for the exact goal and success criteria.
 
 ## Setup
@@ -35,7 +36,10 @@ uv sync
 Use the deterministic fake Codex adapter for local verification:
 
 ```bash
-uv run python -m eda_artifacts.cli run --adapter fake --run-id smoke
+uv run python -m eda_artifacts.cli run \
+  --adapter fake \
+  --run-id smoke \
+  --question "Assess whether monthly_rent_usd has a simple distribution."
 ```
 
 This writes a run under:
@@ -49,6 +53,7 @@ Expected artifacts:
 ```text
 00-dataset/dataset.csv
 00-dataset/profile.json
+01-eda-framer/user-question.txt
 01-eda-framer/prompt.md
 01-eda-framer/output.schema.json
 01-eda-framer/output.json
@@ -77,7 +82,10 @@ the affected stages.
 After authenticating the Codex CLI, run the same harness with headless Codex:
 
 ```bash
-uv run python -m eda_artifacts.cli run --adapter codex-exec --run-id codex-smoke
+uv run python -m eda_artifacts.cli run \
+  --adapter codex-exec \
+  --run-id codex-smoke \
+  --question "Assess whether monthly_rent_usd has a simple distribution."
 ```
 
 The real adapter uses `codex exec` with `gpt-5.5`, JSON output, structured
@@ -128,6 +136,7 @@ npm run check
 ```bash
 uv run pytest tests/ -v
 uv run ruff check
+uv run pyright
 ```
 
 Core modules:

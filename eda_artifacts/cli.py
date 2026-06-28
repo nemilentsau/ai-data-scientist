@@ -14,11 +14,17 @@ from eda_artifacts.graph import run_multimodal_trial
 
 def main(argv: Sequence[str] | None = None) -> int:
     parser = _build_parser()
-    args = parser.parse_args(argv)
+    try:
+        args = parser.parse_args(argv)
+    except SystemExit as error:
+        return error.code if isinstance(error.code, int) else 2
     if args.command != "run":
         parser.print_help()
         return 2
     if args.dataset != "multimodal":
+        return 2
+    question = args.question.strip()
+    if not question:
         return 2
 
     adapter = _build_adapter(args.adapter)
@@ -26,6 +32,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         run_root=Path(args.run_root),
         run_id=args.run_id,
         adapter=adapter,
+        user_question=question,
     )
     print(f"status={state['status']}")
     print(f"run_dir={state['run_dir']}")
@@ -40,6 +47,7 @@ def _build_parser() -> argparse.ArgumentParser:
     run_parser.add_argument("--adapter", choices=["fake", "codex-exec"], default="codex-exec")
     run_parser.add_argument("--run-id", default="smoke")
     run_parser.add_argument("--run-root", default="runs/eda-artifacts")
+    run_parser.add_argument("--question", required=True)
     return parser
 
 
@@ -49,11 +57,34 @@ def _build_adapter(name: str):
             {
                 "eda_framer": [
                     EdaFramerOutput(
-                        primary_question=(
-                            "What does the monthly rent target distribution look like?"
+                        user_question=(
+                            "Assess whether monthly_rent_usd has a simple distribution."
                         ),
-                        required_checks=["Inspect monthly_rent_usd distribution"],
-                        chart_requests=["Create a rent distribution chart"],
+                        analysis_plan=(
+                            "Evaluate the target distribution before modeling claims."
+                        ),
+                        hypotheses=[
+                            {
+                                "id": "h1",
+                                "statement": (
+                                    "monthly_rent_usd may be multi-peaked rather than unimodal."
+                                ),
+                                "rationale": (
+                                    "The profile shows a wide numeric range and mean above median."
+                                ),
+                                "variables": ["monthly_rent_usd"],
+                            }
+                        ],
+                        artifact_requests=[
+                            {
+                                "id": "a1",
+                                "hypothesis_id": "h1",
+                                "artifact_type": "chart",
+                                "description": "Render a distribution view of monthly_rent_usd.",
+                                "statistical_purpose": "Check visible modality and skew.",
+                                "expected_fields": ["rent_bin", "listing_count"],
+                            }
+                        ],
                         stop_conditions=[
                             "Do not make regression claims before visual target review"
                         ],

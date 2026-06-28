@@ -20,9 +20,26 @@ def test_fake_codex_adapter_returns_queued_outputs_and_records_images(tmp_path):
         {
             "eda_framer": [
                 EdaFramerOutput(
-                    primary_question="What does the rent target distribution look like?",
-                    required_checks=["Inspect monthly_rent_usd distribution"],
-                    chart_requests=["Create target distribution chart"],
+                    user_question="Assess whether the rent target is simple.",
+                    analysis_plan="Check distribution shape before modeling.",
+                    hypotheses=[
+                        {
+                            "id": "h1",
+                            "statement": "The target may not be unimodal.",
+                            "rationale": "The profile shows a wide numeric range.",
+                            "variables": ["monthly_rent_usd"],
+                        }
+                    ],
+                    artifact_requests=[
+                        {
+                            "id": "a1",
+                            "hypothesis_id": "h1",
+                            "artifact_type": "chart",
+                            "description": "Create a target distribution chart.",
+                            "statistical_purpose": "Inspect modality.",
+                            "expected_fields": ["monthly_rent_usd", "listing_count"],
+                        }
+                    ],
                     stop_conditions=[
                         "Do not make regression claims before target distribution review"
                     ],
@@ -53,7 +70,7 @@ def test_fake_codex_adapter_returns_queued_outputs_and_records_images(tmp_path):
 
     assert isinstance(framer_output, EdaFramerOutput)
     assert isinstance(review_output, VisualReviewerOutput)
-    assert framer_output.primary_question.startswith("What does")
+    assert framer_output.hypotheses[0]["id"] == "h1"
     assert review_output.verdict == "pass"
     assert adapter.requests[1].images == [render_path]
 
@@ -105,6 +122,21 @@ def test_artifact_builder_schema_is_strict_structured_output_compatible():
     assert ROLE_OUTPUT_SCHEMAS["artifact_builder"]["required"] == ["sql", "chart_spec"]
 
 
+def test_eda_framer_schema_requires_question_hypotheses_and_artifact_requests():
+    schema = ROLE_OUTPUT_SCHEMAS["eda_framer"]
+    object_schemas = _collect_object_schemas(schema)
+
+    assert schema["required"] == [
+        "user_question",
+        "analysis_plan",
+        "hypotheses",
+        "artifact_requests",
+        "stop_conditions",
+    ]
+    for object_schema in object_schemas:
+        assert object_schema["additionalProperties"] is False
+
+
 def test_visual_reviewer_schema_requires_chart_grounded_report():
     schema = ROLE_OUTPUT_SCHEMAS["visual_reviewer"]
 
@@ -148,13 +180,13 @@ def test_codex_exec_invoke_creates_output_parent_before_running(tmp_path, monkey
 
     def fake_run(*args, **kwargs):
         assert output_path.parent.exists()
-        output_path.write_text('{"primary_question": "q"}')
+        output_path.write_text('{"user_question": "q"}')
 
     monkeypatch.setattr("eda_artifacts.codex.subprocess.run", fake_run)
 
     output = adapter.invoke(request)
 
-    assert output == {"primary_question": "q"}
+    assert output == {"user_question": "q"}
 
 
 def test_codex_exec_invoke_applies_timeout(tmp_path, monkeypatch):
@@ -169,7 +201,7 @@ def test_codex_exec_invoke_applies_timeout(tmp_path, monkeypatch):
 
     def fake_run(*args, **kwargs):
         assert kwargs["timeout"] == 12
-        output_path.write_text('{"primary_question": "q"}')
+        output_path.write_text('{"user_question": "q"}')
 
     monkeypatch.setattr("eda_artifacts.codex.subprocess.run", fake_run)
 
@@ -215,4 +247,7 @@ def _collect_object_schemas(schema):
         found.append(schema)
     for child in schema.get("properties", {}).values():
         found.extend(_collect_object_schemas(child))
+    items = schema.get("items")
+    if isinstance(items, dict):
+        found.extend(_collect_object_schemas(items))
     return found

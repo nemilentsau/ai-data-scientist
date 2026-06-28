@@ -12,10 +12,10 @@ single-harness experiment for this constrained claim:
 > while rendered chart images are generated only as review views.
 
 This trial is not testing whether Codex can independently discover the right
-analysis question. The current prompts intentionally tell Codex to inspect the
-`monthly_rent_usd` target distribution first. The trial tests whether Codex can
-turn that known analysis target into valid SQL, chart, render, review, report,
-and lineage artifacts.
+analysis question. The user supplies the analysis question, and the EDA framer
+uses that question plus the dataset profile to propose statistical hypotheses
+and artifact requests. The trial tests whether Codex can turn that framed plan
+into valid SQL, chart, render, review, report, and lineage artifacts.
 
 See `docs/goals.md` for the current trial goal, success criteria, and how these
 findings should drive the next run.
@@ -100,11 +100,11 @@ Use Option B: a minimal LangGraph harness with three Codex role invocations and
 deterministic execution/rendering nodes between them.
 
 ```text
-dataset profile
+dataset profile + user question
   -> eda_framer
-  -> execute/render required first chart
   -> artifact_builder
-  -> validate/render artifact bundle
+  -> execute query
+  -> validate/render chart artifact
   -> visual_reviewer
   -> optional one revision
   -> final report artifact
@@ -119,22 +119,22 @@ judgment, while removing the pieces that slowed iteration.
 
 Purpose:
 
-- Choose the initial EDA frame.
-- Declare required checks before any modeling work.
-- For `multimodal`, require direct target-distribution inspection before any
-  regression or feature-importance story.
+- Turn the user question and dataset profile into an initial EDA frame.
+- Declare statistical hypotheses/checks before any modeling work.
+- Request durable table or chart artifacts that the builder can implement.
 
 Outputs:
 
-- `framing.json`
+- `output.json`
 
 Minimum fields:
 
 ```json
 {
-  "primary_question": "",
-  "required_checks": [],
-  "chart_requests": [],
+  "user_question": "",
+  "analysis_plan": "",
+  "hypotheses": [],
+  "artifact_requests": [],
   "stop_conditions": []
 }
 ```
@@ -202,6 +202,7 @@ runs/eda-artifacts/multimodal/<run_id>/
     dataset.csv
     profile.json
   01-eda-framer/
+    user-question.txt
     prompt.md
     output.schema.json
     output.json
@@ -257,23 +258,10 @@ Use DuckDB as the deterministic query engine.
 
 The LLM writes SQL. The harness executes SQL and materializes the result.
 
-Initial required query family for `multimodal`:
-
-- distribution of `monthly_rent_usd`
-- appropriate bins or density proxy
-- optional grouped breakdown only after the target distribution is inspected
-
-The first pass must answer:
-
-```text
-What does the target distribution look like?
-```
-
-before:
-
-```text
-What predicts the target?
-```
+The builder must implement one artifact request from the EDA framer. For the
+current smoke question, this usually means a compact distribution artifact for
+`monthly_rent_usd`, but that is a user-question consequence rather than a
+hardcoded builder contract.
 
 ## LangGraph Nodes
 
@@ -373,23 +361,25 @@ No tests should assert exact Codex wording.
 The MVP is successful if one local command can run the constrained `multimodal`
 artifact-generation trial and produce:
 
-- a SQL query artifact for target distribution
+- a preserved user-question artifact
+- an EDA framer output with hypotheses and artifact requests
+- a SQL query artifact for one requested check
 - a materialized result artifact
 - a Vega-Lite chart spec
 - a rendered chart image
 - a visual-review artifact proving the image was reviewed
-- a report that identifies the target as multimodal or mixture-like before
-  making any regression-style claim
+- a report whose claims are grounded in the rendered chart before any
+  regression-style claim
 - a lineage file that connects all produced artifacts
 - an inspectable run directory where numbered folders show execution order and
   role folders contain their own prompt, schema, output, and derived artifacts
 
-The MVP is unsuccessful if it produces a polished report but skips visual target
-distribution inspection.
+The MVP is unsuccessful if it produces a polished report but skips the visual
+review gate for the selected chart artifact.
 
 This success does not mean the prompts are useful for practical open-ended EDA.
-The prompts currently leak the target-analysis direction. A passing run only
-proves that Codex can operationalize a known EDA target into durable artifacts.
+The user question currently supplies the analysis direction. A passing run only
+proves that Codex can operationalize a known question into durable artifacts.
 
 ## Deferred Decisions
 

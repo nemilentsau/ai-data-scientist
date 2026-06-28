@@ -7,9 +7,10 @@ from typing import Any, Protocol
 
 @dataclass(frozen=True)
 class EdaFramerOutput:
-    primary_question: str
-    required_checks: list[str]
-    chart_requests: list[str]
+    user_question: str
+    analysis_plan: str
+    hypotheses: list[dict[str, Any]]
+    artifact_requests: list[dict[str, Any]]
     stop_conditions: list[str]
 
 
@@ -137,15 +138,55 @@ ROLE_OUTPUT_SCHEMAS: dict[str, dict[str, Any]] = {
         "type": "object",
         "additionalProperties": False,
         "required": [
-            "primary_question",
-            "required_checks",
-            "chart_requests",
+            "user_question",
+            "analysis_plan",
+            "hypotheses",
+            "artifact_requests",
             "stop_conditions",
         ],
         "properties": {
-            "primary_question": {"type": "string"},
-            "required_checks": {"type": "array", "items": {"type": "string"}},
-            "chart_requests": {"type": "array", "items": {"type": "string"}},
+            "user_question": {"type": "string"},
+            "analysis_plan": {"type": "string"},
+            "hypotheses": {
+                "type": "array",
+                "items": {
+                    "type": "object",
+                    "additionalProperties": False,
+                    "required": ["id", "statement", "rationale", "variables"],
+                    "properties": {
+                        "id": {"type": "string"},
+                        "statement": {"type": "string"},
+                        "rationale": {"type": "string"},
+                        "variables": {"type": "array", "items": {"type": "string"}},
+                    },
+                },
+            },
+            "artifact_requests": {
+                "type": "array",
+                "items": {
+                    "type": "object",
+                    "additionalProperties": False,
+                    "required": [
+                        "id",
+                        "hypothesis_id",
+                        "artifact_type",
+                        "description",
+                        "statistical_purpose",
+                        "expected_fields",
+                    ],
+                    "properties": {
+                        "id": {"type": "string"},
+                        "hypothesis_id": {"type": "string"},
+                        "artifact_type": {"type": "string", "enum": ["chart", "table"]},
+                        "description": {"type": "string"},
+                        "statistical_purpose": {"type": "string"},
+                        "expected_fields": {
+                            "type": "array",
+                            "items": {"type": "string"},
+                        },
+                    },
+                },
+            },
             "stop_conditions": {"type": "array", "items": {"type": "string"}},
         },
     },
