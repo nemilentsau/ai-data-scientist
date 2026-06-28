@@ -83,6 +83,37 @@ uv run python -m eda_artifacts.cli run --adapter codex-exec --run-id codex-smoke
 The real adapter uses `codex exec` with `gpt-5.5`, JSON output, structured
 schemas, and image input for the visual reviewer role.
 
+## Run Inspector
+
+Start the browser UI:
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+Open a run folder that contains `lineage.json`, for example:
+
+```text
+runs/eda-artifacts/multimodal/smoke/
+```
+
+The inspector reads local files in the browser and shows the run as execution
+stages, selected artifact content, rendered chart image, and lineage links.
+
+The frontend is intentionally scoped to `frontend/` and uses Vite, React,
+Tailwind CSS, and strict TypeScript. Repo-owned frontend source and config are
+TypeScript or declarative assets only; JavaScript and JSX files are not part of
+the frontend codebase.
+
+Validate it with:
+
+```bash
+cd frontend
+npm run check
+```
+
 ## Development
 
 ```bash
