@@ -43,11 +43,6 @@ def _dependencies_for_attempts(run_dir: Path, attempt_count: int) -> dict[str, l
         ]
         dependencies[f"{builder}/query.sql"] = [f"{builder}/output.json"]
         dependencies[f"{builder}/chart.vegalite.json"] = [f"{builder}/output.json"]
-        dependencies[f"{builder}/report.md"] = [
-            f"{builder}/output.json",
-            f"{builder}/query.sql",
-            f"{builder}/chart.vegalite.json",
-        ]
         dependencies[f"{execution}/result.parquet"] = [
             "00-dataset/dataset.csv",
             f"{builder}/query.sql",
@@ -62,7 +57,13 @@ def _dependencies_for_attempts(run_dir: Path, attempt_count: int) -> dict[str, l
             f"{reviewer}/image-inputs.json",
             f"{reviewer}/output.schema.json",
             f"{render}/chart.png",
-            f"{builder}/report.md",
+            f"{builder}/chart.vegalite.json",
+            f"{execution}/result.summary.json",
+        ]
+        dependencies[f"{reviewer}/report.md"] = [
+            f"{reviewer}/output.json",
+            f"{render}/chart.png",
+            f"{execution}/result.summary.json",
         ]
 
     return {

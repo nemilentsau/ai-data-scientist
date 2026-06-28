@@ -142,7 +142,6 @@ def _build_artifacts(state: TrialState, adapter: CodexAdapter) -> TrialState:
     write_output_json(role_dir / "output.json", output)
     _write_text(state["query_path"], output.sql.strip() + "\n")
     _write_json(state["chart_spec_path"], output.chart_spec)
-    _write_text(state["report_path"], output.report_markdown)
     return state
 
 
@@ -173,7 +172,6 @@ def _run_visual_reviewer(state: TrialState, adapter: CodexAdapter) -> TrialState
     prompt = build_visual_reviewer_prompt(
         chart_spec_path=state["chart_spec_path"],
         result_summary_path=state["result_summary_path"],
-        report_path=state["report_path"],
     )
     _write_text(role_dir / "prompt.md", prompt)
     _write_json(
@@ -195,6 +193,7 @@ def _run_visual_reviewer(state: TrialState, adapter: CodexAdapter) -> TrialState
         )
     )
     write_output_json(state["review_path"], output)
+    _write_text(state["report_path"], output.report_markdown)
     if output.verdict == "pass":
         state["status"] = "passed_visual_gate"
         state["latest_revision_request"] = ""
@@ -254,10 +253,10 @@ def _current_attempt(state: TrialState) -> int:
 def _set_attempt_paths(state: TrialState, attempt: int) -> None:
     state["query_path"] = _builder_dir(state, attempt) / "query.sql"
     state["chart_spec_path"] = _builder_dir(state, attempt) / "chart.vegalite.json"
-    state["report_path"] = _builder_dir(state, attempt) / "report.md"
     state["result_path"] = _execution_dir(state, attempt) / "result.parquet"
     state["result_summary_path"] = _execution_dir(state, attempt) / "result.summary.json"
     state["render_path"] = _render_dir(state, attempt) / "chart.png"
+    state["report_path"] = _reviewer_dir(state, attempt) / "report.md"
     state["review_path"] = _reviewer_dir(state, attempt) / "output.json"
 
 
@@ -300,7 +299,6 @@ def _coerce_builder(output: Any) -> ArtifactBuilderOutput:
         return ArtifactBuilderOutput(
             sql=output.sql,
             chart_spec=_coerce_chart_spec(output.chart_spec),
-            report_markdown=output.report_markdown,
         )
     if isinstance(output, dict):
         payload = dict(output)

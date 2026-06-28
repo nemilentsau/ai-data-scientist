@@ -85,12 +85,6 @@ def _build_adapter(name: str):
                                 },
                             },
                         },
-                        report_markdown=(
-                            "# Multimodal Rent EDA\n\n"
-                            "The first artifact inspects the target distribution directly. "
-                            "The rendered distribution is mixture-like, so regression framing "
-                            "should come after segmentation-oriented EDA."
-                        ),
                     )
                 ],
                 "visual_reviewer": [
@@ -98,6 +92,11 @@ def _build_adapter(name: str):
                         verdict="pass",
                         visual_findings=["The target distribution chart is multi-peaked."],
                         required_revision="",
+                        report_markdown=(
+                            "# Multimodal Rent EDA\n\n"
+                            "The rendered distribution is mixture-like, so regression framing "
+                            "should come after segmentation-oriented EDA."
+                        ),
                     )
                 ],
             }

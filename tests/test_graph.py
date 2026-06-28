@@ -18,7 +18,7 @@ def _framer_output():
     )
 
 
-def _builder_output(report_text="# Report\nThe target distribution is multimodal."):
+def _builder_output():
     return ArtifactBuilderOutput(
         sql="""
         SELECT
@@ -36,7 +36,21 @@ def _builder_output(report_text="# Report\nThe target distribution is multimodal
                 "y": {"field": "listing_count", "type": "quantitative"},
             },
         },
-        report_markdown=report_text,
+    )
+
+
+def _reviewer_output(
+    *,
+    verdict="pass",
+    visual_findings=None,
+    required_revision="",
+    report_markdown="# Report\nThe rendered chart shows a multi-peaked rent distribution.",
+):
+    return VisualReviewerOutput(
+        verdict=verdict,
+        visual_findings=visual_findings or ["The chart is visibly multi-peaked."],
+        required_revision=required_revision,
+        report_markdown=report_markdown,
     )
 
 
@@ -45,13 +59,7 @@ def test_pass_review_run_produces_artifacts_and_lineage(tmp_path):
         {
             "eda_framer": [_framer_output()],
             "artifact_builder": [_builder_output()],
-            "visual_reviewer": [
-                VisualReviewerOutput(
-                    verdict="pass",
-                    visual_findings=["The chart is visibly multi-peaked."],
-                    required_revision="",
-                )
-            ],
+            "visual_reviewer": [_reviewer_output()],
         }
     )
 
@@ -69,9 +77,7 @@ def test_pass_review_run_produces_artifacts_and_lineage(tmp_path):
     assert (run_dir / "02-artifact-builder" / "attempt-1" / "output.json").exists()
     assert (run_dir / "02-artifact-builder" / "attempt-1" / "query.sql").exists()
     assert (run_dir / "02-artifact-builder" / "attempt-1" / "chart.vegalite.json").exists()
-    assert (run_dir / "02-artifact-builder" / "attempt-1" / "report.md").read_text().startswith(
-        "# Report"
-    )
+    assert not (run_dir / "02-artifact-builder" / "attempt-1" / "report.md").exists()
     assert (run_dir / "03-execution" / "attempt-1" / "result.parquet").exists()
     assert (run_dir / "03-execution" / "attempt-1" / "result.summary.json").exists()
     assert (run_dir / "04-render" / "attempt-1" / "chart.png").exists()
@@ -79,6 +85,9 @@ def test_pass_review_run_produces_artifacts_and_lineage(tmp_path):
     assert (run_dir / "05-visual-reviewer" / "attempt-1" / "image-inputs.json").exists()
     assert (run_dir / "05-visual-reviewer" / "attempt-1" / "output.schema.json").exists()
     assert (run_dir / "05-visual-reviewer" / "attempt-1" / "output.json").exists()
+    assert (run_dir / "05-visual-reviewer" / "attempt-1" / "report.md").read_text().startswith(
+        "# Report"
+    )
     for old_name in [
         "dataset",
         "framing",
@@ -116,19 +125,21 @@ def test_revise_review_runs_one_builder_revision_and_second_review(tmp_path):
         {
             "eda_framer": [_framer_output()],
             "artifact_builder": [
-                _builder_output("# Report\nThis is just a regression setup."),
-                _builder_output("# Report\nThe target distribution is multimodal."),
+                _builder_output(),
+                _builder_output(),
             ],
             "visual_reviewer": [
-                VisualReviewerOutput(
+                _reviewer_output(
                     verdict="revise",
                     visual_findings=["The report ignores the multi-peaked target."],
                     required_revision="State that the rent target is multimodal.",
+                    report_markdown="# Report\nThe chart needs a clearer render before final claims.",
                 ),
-                VisualReviewerOutput(
+                _reviewer_output(
                     verdict="pass",
                     visual_findings=["The revised report matches the chart."],
                     required_revision="",
+                    report_markdown="# Report\nThe target distribution is multimodal.",
                 ),
             ],
         }
@@ -140,9 +151,9 @@ def test_revise_review_runs_one_builder_revision_and_second_review(tmp_path):
     assert state["status"] == "passed_visual_gate"
     assert state["revision_count"] == 1
     assert (
-        run_dir / "02-artifact-builder" / "attempt-2" / "report.md"
+        run_dir / "05-visual-reviewer" / "attempt-2" / "report.md"
     ).read_text().endswith("multimodal.")
-    assert (run_dir / "02-artifact-builder" / "attempt-1" / "report.md").exists()
+    assert not (run_dir / "02-artifact-builder" / "attempt-1" / "report.md").exists()
     assert (run_dir / "03-execution" / "attempt-1" / "result.parquet").exists()
     assert (run_dir / "03-execution" / "attempt-2" / "result.parquet").exists()
     assert (run_dir / "04-render" / "attempt-1" / "chart.png").exists()
@@ -165,16 +176,9 @@ def test_artifact_builder_chart_spec_json_string_is_written_as_chart_object(tmp_
                 {
                     "sql": _builder_output().sql,
                     "chart_spec": json.dumps(_builder_output().chart_spec),
-                    "report_markdown": "# Report\nThe target distribution is multimodal.",
                 }
             ],
-            "visual_reviewer": [
-                VisualReviewerOutput(
-                    verdict="pass",
-                    visual_findings=["The chart is visibly multi-peaked."],
-                    required_revision="",
-                )
-            ],
+            "visual_reviewer": [_reviewer_output()],
         }
     )
 
@@ -198,19 +202,21 @@ def test_second_revise_review_exhausts_revision_budget(tmp_path):
         {
             "eda_framer": [_framer_output()],
             "artifact_builder": [
-                _builder_output("# Report\nThis is just a regression setup."),
-                _builder_output("# Report\nStill not enough."),
+                _builder_output(),
+                _builder_output(),
             ],
             "visual_reviewer": [
-                VisualReviewerOutput(
+                _reviewer_output(
                     verdict="revise",
                     visual_findings=["Missing multimodal interpretation."],
                     required_revision="Discuss modes.",
+                    report_markdown="# Report\nThe chart requires revision.",
                 ),
-                VisualReviewerOutput(
+                _reviewer_output(
                     verdict="revise",
                     visual_findings=["Still missing multimodal interpretation."],
                     required_revision="Discuss modes.",
+                    report_markdown="# Report\nThe revised chart still requires revision.",
                 ),
             ],
         }

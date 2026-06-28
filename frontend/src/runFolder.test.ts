@@ -32,7 +32,7 @@ describe("loadRunFolder", () => {
   it("chooses the first role output before secondary artifacts", async () => {
     const run = await loadRunFolder([
       fileAt("run/lineage.json", "{\"dependencies\":{}}"),
-      fileAt("run/02-artifact-builder/attempt-1/report.md", "# Report"),
+      fileAt("run/05-visual-reviewer/attempt-1/report.md", "# Report"),
       fileAt("run/01-eda-framer/output.json", "{}"),
     ]);
 

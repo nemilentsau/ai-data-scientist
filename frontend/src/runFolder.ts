@@ -53,7 +53,7 @@ export const IMPORTANT_ORDER = [
   "02-artifact-builder/attempt-1/chart.vegalite.json",
   "04-render/attempt-1/chart.png",
   "05-visual-reviewer/attempt-1/output.json",
-  "02-artifact-builder/attempt-1/report.md",
+  "05-visual-reviewer/attempt-1/report.md",
   "lineage.json",
 ] as const;
 
@@ -101,7 +101,7 @@ export function labelForPath(path: string): string {
   if (path.endsWith("output.json")) return path.split("/").slice(0, -1).join("/");
   if (path.endsWith("chart.png")) return "rendered chart";
   if (path.endsWith("query.sql")) return "builder query";
-  if (path.endsWith("report.md")) return "builder report";
+  if (path.endsWith("report.md")) return "visual report";
   if (path.endsWith(LINEAGE_FILENAME)) return "lineage";
   return path;
 }

@@ -57,7 +57,6 @@ Expected artifacts:
 02-artifact-builder/attempt-1/output.json
 02-artifact-builder/attempt-1/query.sql
 02-artifact-builder/attempt-1/chart.vegalite.json
-02-artifact-builder/attempt-1/report.md
 03-execution/attempt-1/result.parquet
 03-execution/attempt-1/result.summary.json
 04-render/attempt-1/chart.png
@@ -65,6 +64,7 @@ Expected artifacts:
 05-visual-reviewer/attempt-1/image-inputs.json
 05-visual-reviewer/attempt-1/output.schema.json
 05-visual-reviewer/attempt-1/output.json
+05-visual-reviewer/attempt-1/report.md
 lineage.json
 ```
 

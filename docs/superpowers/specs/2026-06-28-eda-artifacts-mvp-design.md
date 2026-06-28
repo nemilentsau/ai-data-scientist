@@ -147,13 +147,11 @@ Purpose:
 - Write SQL query artifacts.
 - Produce result artifact metadata.
 - Write Vega-Lite chart specs.
-- Draft the report from the generated artifacts.
 
 Outputs:
 
 - SQL query files
 - chart spec files
-- report draft
 - artifact metadata updates
 
 The builder does not directly execute arbitrary Python in the MVP.
@@ -163,7 +161,7 @@ The builder does not directly execute arbitrary Python in the MVP.
 Purpose:
 
 - Inspect rendered chart images generated from the durable chart specs.
-- Check whether the report interpretation matches the plotted evidence.
+- Write the report from plotted evidence after seeing the rendered chart.
 - Decide whether one focused revision is required.
 
 Inputs:
@@ -171,7 +169,6 @@ Inputs:
 - rendered chart image
 - chart spec
 - compact result sample or summary
-- draft report
 
 Outputs:
 
@@ -297,7 +294,7 @@ Planned graph nodes:
 
 4. `build_artifacts`
    - Invoke Codex with query/result context.
-   - Create or revise chart specs and report draft.
+   - Create or revise query and chart spec artifacts.
 
 5. `validate_and_render`
    - Validate Vega-Lite JSON shape.

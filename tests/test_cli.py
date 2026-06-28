@@ -23,7 +23,8 @@ def test_fake_cli_run_creates_multimodal_artifact_tree(tmp_path):
     assert (run_dir / "03-execution" / "attempt-1" / "result.parquet").exists()
     assert (run_dir / "02-artifact-builder" / "attempt-1" / "chart.vegalite.json").exists()
     assert (run_dir / "04-render" / "attempt-1" / "chart.png").exists()
-    assert (run_dir / "02-artifact-builder" / "attempt-1" / "report.md").exists()
+    assert (run_dir / "05-visual-reviewer" / "attempt-1" / "report.md").exists()
+    assert not (run_dir / "02-artifact-builder" / "attempt-1" / "report.md").exists()
     assert json.loads((run_dir / "lineage.json").read_text())["status"] == "passed_visual_gate"
 
 

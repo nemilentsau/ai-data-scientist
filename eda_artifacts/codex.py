@@ -17,7 +17,6 @@ class EdaFramerOutput:
 class ArtifactBuilderOutput:
     sql: str
     chart_spec: dict[str, Any]
-    report_markdown: str
 
 
 @dataclass(frozen=True)
@@ -25,6 +24,7 @@ class VisualReviewerOutput:
     verdict: str
     visual_findings: list[str]
     required_revision: str
+    report_markdown: str
 
 
 RoleOutput = EdaFramerOutput | ArtifactBuilderOutput | VisualReviewerOutput
@@ -152,22 +152,22 @@ ROLE_OUTPUT_SCHEMAS: dict[str, dict[str, Any]] = {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "additionalProperties": False,
-        "required": ["sql", "chart_spec", "report_markdown"],
+        "required": ["sql", "chart_spec"],
         "properties": {
             "sql": {"type": "string"},
             "chart_spec": {"type": "string"},
-            "report_markdown": {"type": "string"},
         },
     },
     "visual_reviewer": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "additionalProperties": False,
-        "required": ["verdict", "visual_findings", "required_revision"],
+        "required": ["verdict", "visual_findings", "required_revision", "report_markdown"],
         "properties": {
             "verdict": {"type": "string", "enum": ["pass", "revise"]},
             "visual_findings": {"type": "array", "items": {"type": "string"}},
             "required_revision": {"type": "string"},
+            "report_markdown": {"type": "string"},
         },
     },
 }

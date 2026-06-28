@@ -33,6 +33,7 @@ def test_fake_codex_adapter_returns_queued_outputs_and_records_images(tmp_path):
                     verdict="pass",
                     visual_findings=["The rendered chart is visibly multi-peaked."],
                     required_revision="",
+                    report_markdown="# Report\nThe rendered chart is visibly multi-peaked.",
                 )
             ],
         }
@@ -99,6 +100,14 @@ def test_artifact_builder_schema_is_strict_structured_output_compatible():
     for schema in object_schemas:
         assert schema["additionalProperties"] is False
     assert ROLE_OUTPUT_SCHEMAS["artifact_builder"]["properties"]["chart_spec"]["type"] == "string"
+    assert ROLE_OUTPUT_SCHEMAS["artifact_builder"]["required"] == ["sql", "chart_spec"]
+
+
+def test_visual_reviewer_schema_requires_chart_grounded_report():
+    schema = ROLE_OUTPUT_SCHEMAS["visual_reviewer"]
+
+    assert "report_markdown" in schema["required"]
+    assert schema["properties"]["report_markdown"]["type"] == "string"
 
 
 def test_codex_exec_command_uses_current_cli_flags_and_absolute_paths(tmp_path, monkeypatch):
@@ -188,11 +197,10 @@ def test_codex_exec_invoke_surfaces_stderr_on_failed_command(tmp_path, monkeypat
         adapter.invoke(request)
 
 
-def test_artifact_builder_output_accepts_chart_spec_and_report_text():
+def test_artifact_builder_output_accepts_chart_spec_without_report_text():
     output = ArtifactBuilderOutput(
         sql="SELECT 1 AS rent_bin, 2 AS listing_count",
         chart_spec={"mark": "bar", "encoding": {"x": {"field": "rent_bin"}}},
-        report_markdown="# Report\nThe target is mixture-like.",
     )
 
     assert output.sql.startswith("SELECT")
