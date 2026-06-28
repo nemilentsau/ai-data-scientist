@@ -26,6 +26,11 @@ def test_read_only_sql_rejects_mutation_statements():
         validate_read_only_sql("SELECT * FROM dataset; DELETE FROM dataset")
 
 
+def test_read_only_sql_rejects_file_reader_functions():
+    with pytest.raises(ValueError, match="blocked token: read_csv_auto"):
+        validate_read_only_sql("SELECT * FROM read_csv_auto('dataset/dataset.csv')")
+
+
 def test_query_execution_writes_parquet_and_summary_artifacts(tmp_path):
     dataset_path = tmp_path / "dataset.csv"
     result_path = tmp_path / "results" / "target_distribution.parquet"

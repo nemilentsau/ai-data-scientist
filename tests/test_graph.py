@@ -115,6 +115,36 @@ def test_revise_review_runs_one_builder_revision_and_second_review(tmp_path):
     assert len(review_requests) == 2
 
 
+def test_artifact_builder_chart_spec_json_string_is_written_as_chart_object(tmp_path):
+    adapter = FakeCodexAdapter(
+        {
+            "eda_framer": [_framer_output()],
+            "artifact_builder": [
+                {
+                    "sql": _builder_output().sql,
+                    "chart_spec": json.dumps(_builder_output().chart_spec),
+                    "report_markdown": "# Report\nThe target distribution is multimodal.",
+                }
+            ],
+            "visual_reviewer": [
+                VisualReviewerOutput(
+                    verdict="pass",
+                    visual_findings=["The chart is visibly multi-peaked."],
+                    required_revision="",
+                )
+            ],
+        }
+    )
+
+    run_multimodal_trial(run_root=tmp_path, run_id="string-chart-run", adapter=adapter)
+
+    chart_spec = json.loads(
+        (tmp_path / "multimodal" / "string-chart-run" / "charts"
+         / "target_distribution.vegalite.json").read_text()
+    )
+    assert chart_spec["mark"] == "bar"
+
+
 def test_second_revise_review_exhausts_revision_budget(tmp_path):
     adapter = FakeCodexAdapter(
         {

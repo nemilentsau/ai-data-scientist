@@ -62,23 +62,41 @@ class FakeCodexAdapter:
 
 
 class CodexExecAdapter:
-    def __init__(self, model: str = "gpt-5.5") -> None:
+    def __init__(self, model: str = "gpt-5.5", timeout_seconds: int = 180) -> None:
         self.model = model
+        self.timeout_seconds = timeout_seconds
 
     def invoke(self, request: CodexRoleRequest) -> dict[str, Any]:
         if request.output_path is None:
             raise ValueError("CodexExecAdapter requires request.output_path.")
-        subprocess.run(
-            self.build_command(request),
-            input=request.prompt,
-            text=True,
-            cwd=request.work_dir,
-            check=True,
-            capture_output=True,
-        )
-        if not request.output_path.exists():
-            raise FileNotFoundError(request.output_path)
-        return json.loads(request.output_path.read_text())
+        output_path = request.output_path.resolve()
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        command = self.build_command(request)
+        try:
+            subprocess.run(
+                command,
+                input=request.prompt,
+                text=True,
+                cwd=request.work_dir.resolve(),
+                check=True,
+                capture_output=True,
+                timeout=self.timeout_seconds,
+            )
+        except subprocess.CalledProcessError as error:
+            raise RuntimeError(
+                "codex exec failed for role "
+                f"{request.role!r} with exit code {error.returncode}.\n"
+                f"stderr:\n{error.stderr or ''}\n"
+                f"stdout:\n{error.stdout or error.output or ''}"
+            ) from error
+        except subprocess.TimeoutExpired as error:
+            raise TimeoutError(
+                f"codex exec timed out for role {request.role!r} "
+                f"after {self.timeout_seconds} seconds."
+            ) from error
+        if not output_path.exists():
+            raise FileNotFoundError(output_path)
+        return json.loads(output_path.read_text())
 
     def build_command(self, request: CodexRoleRequest) -> list[str]:
         command = [
@@ -89,18 +107,16 @@ class CodexExecAdapter:
             "--json",
             "--ephemeral",
             "--cd",
-            str(request.work_dir),
+            str(request.work_dir.resolve()),
             "--sandbox",
             "workspace-write",
-            "--ask-for-approval",
-            "never",
         ]
         if request.output_schema_path is not None:
-            command.extend(["--output-schema", str(request.output_schema_path)])
+            command.extend(["--output-schema", str(request.output_schema_path.resolve())])
         if request.output_path is not None:
-            command.extend(["-o", str(request.output_path)])
+            command.extend(["-o", str(request.output_path.resolve())])
         for image_path in request.images or []:
-            command.extend(["--image", str(image_path)])
+            command.extend(["--image", str(image_path.resolve())])
         command.append("-")
         return command
 
@@ -139,7 +155,7 @@ ROLE_OUTPUT_SCHEMAS: dict[str, dict[str, Any]] = {
         "required": ["sql", "chart_spec", "report_markdown"],
         "properties": {
             "sql": {"type": "string"},
-            "chart_spec": {"type": "object"},
+            "chart_spec": {"type": "string"},
             "report_markdown": {"type": "string"},
         },
     },

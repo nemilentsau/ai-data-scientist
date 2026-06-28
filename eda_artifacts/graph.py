@@ -255,9 +255,15 @@ def _coerce_framer(output: Any) -> EdaFramerOutput:
 
 def _coerce_builder(output: Any) -> ArtifactBuilderOutput:
     if isinstance(output, ArtifactBuilderOutput):
-        return output
+        return ArtifactBuilderOutput(
+            sql=output.sql,
+            chart_spec=_coerce_chart_spec(output.chart_spec),
+            report_markdown=output.report_markdown,
+        )
     if isinstance(output, dict):
-        return ArtifactBuilderOutput(**output)
+        payload = dict(output)
+        payload["chart_spec"] = _coerce_chart_spec(payload["chart_spec"])
+        return ArtifactBuilderOutput(**payload)
     raise TypeError(f"Unexpected artifact_builder output: {type(output)!r}")
 
 
@@ -267,3 +273,13 @@ def _coerce_reviewer(output: Any) -> VisualReviewerOutput:
     if isinstance(output, dict):
         return VisualReviewerOutput(**output)
     raise TypeError(f"Unexpected visual_reviewer output: {type(output)!r}")
+
+
+def _coerce_chart_spec(value: Any) -> dict[str, Any]:
+    if isinstance(value, dict):
+        return value
+    if isinstance(value, str):
+        parsed = json.loads(value)
+        if isinstance(parsed, dict):
+            return parsed
+    raise TypeError("artifact_builder chart_spec must be a JSON object or JSON object string.")

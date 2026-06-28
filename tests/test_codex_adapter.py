@@ -1,6 +1,9 @@
+import subprocess
+from pathlib import Path
 
 import pytest
 from eda_artifacts.codex import (
+    ROLE_OUTPUT_SCHEMAS,
     ArtifactBuilderOutput,
     CodexExecAdapter,
     CodexRoleRequest,
@@ -89,6 +92,102 @@ def test_codex_exec_command_includes_model_schema_json_and_images(tmp_path):
     assert str(tmp_path) in command
 
 
+def test_artifact_builder_schema_is_strict_structured_output_compatible():
+    object_schemas = _collect_object_schemas(ROLE_OUTPUT_SCHEMAS["artifact_builder"])
+
+    assert object_schemas
+    for schema in object_schemas:
+        assert schema["additionalProperties"] is False
+    assert ROLE_OUTPUT_SCHEMAS["artifact_builder"]["properties"]["chart_spec"]["type"] == "string"
+
+
+def test_codex_exec_command_uses_current_cli_flags_and_absolute_paths(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    run_dir = Path("runs") / "trial"
+    schema_path = run_dir / "schema.json"
+    output_path = run_dir / "output.json"
+    image_path = run_dir / "render.png"
+    adapter = CodexExecAdapter(model="gpt-5.5")
+    request = CodexRoleRequest(
+        role="visual_reviewer",
+        prompt="Review the chart.",
+        work_dir=run_dir,
+        images=[image_path],
+        output_schema_path=schema_path,
+        output_path=output_path,
+    )
+
+    command = adapter.build_command(request)
+
+    assert "--ask-for-approval" not in command
+    for flag in ["--cd", "--output-schema", "-o", "--image"]:
+        value = command[command.index(flag) + 1]
+        assert Path(value).is_absolute()
+
+
+def test_codex_exec_invoke_creates_output_parent_before_running(tmp_path, monkeypatch):
+    output_path = tmp_path / "missing" / "output.json"
+    adapter = CodexExecAdapter(model="gpt-5.5")
+    request = CodexRoleRequest(
+        role="eda_framer",
+        prompt="Frame the dataset.",
+        work_dir=tmp_path,
+        output_path=output_path,
+    )
+
+    def fake_run(*args, **kwargs):
+        assert output_path.parent.exists()
+        output_path.write_text('{"primary_question": "q"}')
+
+    monkeypatch.setattr("eda_artifacts.codex.subprocess.run", fake_run)
+
+    output = adapter.invoke(request)
+
+    assert output == {"primary_question": "q"}
+
+
+def test_codex_exec_invoke_applies_timeout(tmp_path, monkeypatch):
+    output_path = tmp_path / "output.json"
+    adapter = CodexExecAdapter(model="gpt-5.5", timeout_seconds=12)
+    request = CodexRoleRequest(
+        role="eda_framer",
+        prompt="Frame the dataset.",
+        work_dir=tmp_path,
+        output_path=output_path,
+    )
+
+    def fake_run(*args, **kwargs):
+        assert kwargs["timeout"] == 12
+        output_path.write_text('{"primary_question": "q"}')
+
+    monkeypatch.setattr("eda_artifacts.codex.subprocess.run", fake_run)
+
+    adapter.invoke(request)
+
+
+def test_codex_exec_invoke_surfaces_stderr_on_failed_command(tmp_path, monkeypatch):
+    adapter = CodexExecAdapter(model="gpt-5.5")
+    request = CodexRoleRequest(
+        role="eda_framer",
+        prompt="Frame the dataset.",
+        work_dir=tmp_path,
+        output_path=tmp_path / "output.json",
+    )
+
+    def fake_run(*args, **kwargs):
+        raise subprocess.CalledProcessError(
+            returncode=1,
+            cmd=args[0],
+            output='{"event": "failed"}',
+            stderr="schema rejected",
+        )
+
+    monkeypatch.setattr("eda_artifacts.codex.subprocess.run", fake_run)
+
+    with pytest.raises(RuntimeError, match="schema rejected"):
+        adapter.invoke(request)
+
+
 def test_artifact_builder_output_accepts_chart_spec_and_report_text():
     output = ArtifactBuilderOutput(
         sql="SELECT 1 AS rent_bin, 2 AS listing_count",
@@ -98,3 +197,12 @@ def test_artifact_builder_output_accepts_chart_spec_and_report_text():
 
     assert output.sql.startswith("SELECT")
     assert output.chart_spec["mark"] == "bar"
+
+
+def _collect_object_schemas(schema):
+    found = []
+    if schema.get("type") == "object":
+        found.append(schema)
+    for child in schema.get("properties", {}).values():
+        found.extend(_collect_object_schemas(child))
+    return found
