@@ -93,6 +93,12 @@ npm install
 npm run dev
 ```
 
+The app runs at:
+
+```text
+http://localhost:5180/
+```
+
 Open a run folder that contains `lineage.json`, for example:
 
 ```text
