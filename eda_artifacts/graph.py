@@ -169,10 +169,7 @@ def _validate_and_render(state: TrialState) -> TrialState:
 def _run_visual_reviewer(state: TrialState, adapter: CodexAdapter) -> TrialState:
     attempt = _current_attempt(state)
     role_dir = _reviewer_dir(state, attempt)
-    prompt = build_visual_reviewer_prompt(
-        chart_spec=json.loads(state["chart_spec_path"].read_text()),
-        result_summary=json.loads(state["result_summary_path"].read_text()),
-    )
+    prompt = build_visual_reviewer_prompt()
     _write_text(role_dir / "prompt.md", prompt)
     _write_json(
         role_dir / "image-inputs.json",

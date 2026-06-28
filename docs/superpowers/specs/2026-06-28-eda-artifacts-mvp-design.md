@@ -167,8 +167,7 @@ Purpose:
 Inputs:
 
 - rendered chart image
-- chart spec
-- compact result sample or summary
+- review prompt and output schema
 
 Outputs:
 
@@ -189,8 +188,9 @@ Minimum fields:
 No final report can be accepted until a separate Codex visual-review invocation
 has inspected at least one rendered chart image.
 
-The agent may inspect chart specs and data snapshots, but that is not sufficient.
-The visual reviewer must receive an actual rendered view of the plotted chart.
+Chart specs and result tables are upstream durable artifacts, but they are not
+visual-review evidence. The visual reviewer must judge the attached rendered
+chart image.
 
 ## Artifact Model
 

@@ -57,13 +57,10 @@ def _dependencies_for_attempts(run_dir: Path, attempt_count: int) -> dict[str, l
             f"{reviewer}/image-inputs.json",
             f"{reviewer}/output.schema.json",
             f"{render}/chart.png",
-            f"{builder}/chart.vegalite.json",
-            f"{execution}/result.summary.json",
         ]
         dependencies[f"{reviewer}/report.md"] = [
             f"{reviewer}/output.json",
             f"{render}/chart.png",
-            f"{execution}/result.summary.json",
         ]
 
     return {

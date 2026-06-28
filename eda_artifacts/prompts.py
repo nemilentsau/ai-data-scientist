@@ -1,6 +1,4 @@
-import json
 from pathlib import Path
-from typing import Any
 
 
 def build_framer_prompt(*, dataset_path: Path | str, profile_path: Path | str) -> str:
@@ -84,33 +82,11 @@ Return JSON with:
 """
 
 
-def build_visual_reviewer_prompt(
-    *,
-    chart_spec: dict[str, Any],
-    result_summary: dict[str, Any],
-) -> str:
-    chart_spec_json = json.dumps(chart_spec, indent=2, sort_keys=True)
-    result_summary_json = json.dumps(
-        _result_summary_for_prompt(result_summary),
-        indent=2,
-        sort_keys=True,
-    )
+def build_visual_reviewer_prompt() -> str:
     return f"""You are the visual reviewer for eda-artifacts.
 
 You have been given a rendered chart image as an attachment. Use the image as
-the primary evidence.
-
-The harness generated that image from this Vega-Lite chart spec:
-
-```json
-{chart_spec_json}
-```
-
-The harness executed the chart SQL and produced this result summary:
-
-```json
-{result_summary_json}
-```
+the evidence.
 
 Inspect the rendered image first. Decide whether the chart is adequate for the
 EDA task: it should be readable, show the monthly_rent_usd distribution, and make
@@ -119,18 +95,10 @@ the visible distribution shape interpretable.
 Return JSON with:
 - verdict: pass if the rendered chart is adequate, otherwise revise
 - visual_findings: visible facts supported by the chart image
-- required_revision: concrete SQL or chart-spec changes needed if verdict is revise;
+- required_revision: concrete changes needed if verdict is revise;
   use an empty string if verdict is pass
 - report_markdown: a concise chart-grounded report based only on what you can see
-  in the rendered chart and the provided result summary
+  in the rendered chart image
 
 Do not make prediction, regression, causality, or price-driver claims.
 """
-
-
-def _result_summary_for_prompt(result_summary: dict[str, Any]) -> dict[str, Any]:
-    return {
-        key: result_summary[key]
-        for key in ["row_count", "column_count", "columns", "preview_rows"]
-        if key in result_summary
-    }

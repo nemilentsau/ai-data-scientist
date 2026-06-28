@@ -108,6 +108,16 @@ def test_pass_review_run_produces_artifacts_and_lineage(tmp_path):
         "02-artifact-builder/attempt-1/chart.vegalite.json",
         "03-execution/attempt-1/result.parquet",
     ]
+    assert lineage["dependencies"]["05-visual-reviewer/attempt-1/output.json"] == [
+        "05-visual-reviewer/attempt-1/prompt.md",
+        "05-visual-reviewer/attempt-1/image-inputs.json",
+        "05-visual-reviewer/attempt-1/output.schema.json",
+        "04-render/attempt-1/chart.png",
+    ]
+    assert lineage["dependencies"]["05-visual-reviewer/attempt-1/report.md"] == [
+        "05-visual-reviewer/attempt-1/output.json",
+        "04-render/attempt-1/chart.png",
+    ]
     assert "renders/target_distribution.png" not in lineage["dependencies"]
     assert adapter.requests[-1].images == [run_dir / "04-render" / "attempt-1" / "chart.png"]
     image_inputs = json.loads(
