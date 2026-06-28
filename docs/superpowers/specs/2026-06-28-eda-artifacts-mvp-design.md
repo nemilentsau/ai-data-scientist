@@ -2,14 +2,23 @@
 
 ## Purpose
 
-Build a narrow Codex-only trial that tests whether artifact-first EDA can solve the
-`multimodal` failure case better than the previous notebook-like benchmark harness.
+Build a narrow Codex-only trial that tests whether artifact-first EDA can produce
+durable, inspectable analysis artifacts for the `multimodal` dataset.
 
 The MVP is not a general AI data scientist benchmark. It is a single-dataset,
-single-harness experiment for this claim:
+single-harness experiment for this constrained claim:
 
 > EDA should produce durable query, result, chart, report, and lineage artifacts,
 > while rendered chart images are generated only as review views.
+
+This trial is not testing whether Codex can independently discover the right
+analysis question. The current prompts intentionally tell Codex to inspect the
+`monthly_rent_usd` target distribution first. The trial tests whether Codex can
+turn that known analysis target into valid SQL, chart, render, review, report,
+and lineage artifacts.
+
+See `docs/goals.md` for the current trial goal, success criteria, and how these
+findings should drive the next run.
 
 ## Status
 
@@ -353,8 +362,8 @@ No tests should assert exact Codex wording.
 
 ## Success Criteria
 
-The MVP is successful if one local command can run the `multimodal` trial and
-produce:
+The MVP is successful if one local command can run the constrained `multimodal`
+artifact-generation trial and produce:
 
 - a SQL query artifact for target distribution
 - a materialized result artifact
@@ -367,6 +376,10 @@ produce:
 
 The MVP is unsuccessful if it produces a polished report but skips visual target
 distribution inspection.
+
+This success does not mean the prompts are useful for practical open-ended EDA.
+The prompts currently leak the target-analysis direction. A passing run only
+proves that Codex can operationalize a known EDA target into durable artifacts.
 
 ## Deferred Decisions
 

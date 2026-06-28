@@ -19,6 +19,11 @@ Parquet result, Vega-Lite chart spec, report, visual review, and lineage. PNGs
 are generated from those artifacts for visual inspection; they are not the
 canonical chart representation.
 
+The current trial is not an open-ended data-analysis benchmark. The prompts tell
+Codex to inspect the `monthly_rent_usd` target distribution, so the run tests the
+artifact loop rather than autonomous analyst discovery. See
+[`docs/goals.md`](docs/goals.md) for the exact goal and success criteria.
+
 ## Setup
 
 ```bash
