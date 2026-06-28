@@ -94,10 +94,6 @@ the primary evidence. Supporting artifacts:
 - chart spec: {chart_spec_path}
 - result summary: {result_summary_path}
 
-The previous agent did not see the rendered chart and did not write a chart
-interpretation. You are the first agent allowed to make visual claims about what
-the plotted distribution shows.
-
 Inspect the rendered image first. Decide whether the chart is adequate for the
 EDA task: it should be readable, show the monthly_rent_usd distribution, and make
 the visible distribution shape interpretable.
