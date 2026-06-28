@@ -83,7 +83,7 @@ Return JSON with:
 
 
 def build_visual_reviewer_prompt() -> str:
-    return f"""You are the visual reviewer for eda-artifacts.
+    return """You are the visual reviewer for eda-artifacts.
 
 You have been given a rendered chart image as an attachment. Use the image as
 the evidence.

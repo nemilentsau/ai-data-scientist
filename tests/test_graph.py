@@ -141,13 +141,15 @@ def test_revise_review_runs_one_builder_revision_and_second_review(tmp_path):
             "visual_reviewer": [
                 _reviewer_output(
                     verdict="revise",
-                    visual_findings=["The report ignores the multi-peaked target."],
-                    required_revision="State that the rent target is multimodal.",
-                    report_markdown="# Report\nThe chart needs a clearer render before final claims.",
+                    visual_findings=["The chart does not make the modes readable."],
+                    required_revision="Make the rent distribution shape easier to see.",
+                    report_markdown=(
+                        "# Report\nThe chart needs a clearer render before final claims."
+                    ),
                 ),
                 _reviewer_output(
                     verdict="pass",
-                    visual_findings=["The revised report matches the chart."],
+                    visual_findings=["The revised chart makes the modes readable."],
                     required_revision="",
                     report_markdown="# Report\nThe target distribution is multimodal.",
                 ),

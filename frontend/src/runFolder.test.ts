@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { loadRunFolder, pickInitialPath } from "./runFolder";
+import { IMPORTANT_ORDER, labelForPath, loadRunFolder, pickInitialPath } from "./runFolder";
 
 describe("loadRunFolder", () => {
   it("loads a run folder and normalizes artifact paths under its lineage root", async () => {
@@ -37,6 +37,20 @@ describe("loadRunFolder", () => {
     ]);
 
     expect(pickInitialPath(run)).toBe("01-eda-framer/output.json");
+  });
+
+  it("surfaces current visual-review contract artifacts as inspectable jumps", () => {
+    expect(IMPORTANT_ORDER).toContain("05-visual-reviewer/attempt-1/image-inputs.json");
+    expect(IMPORTANT_ORDER).toContain("05-visual-reviewer/attempt-1/output.schema.json");
+    expect(labelForPath("05-visual-reviewer/attempt-1/image-inputs.json")).toBe(
+      "visual reviewer image inputs",
+    );
+    expect(labelForPath("05-visual-reviewer/attempt-1/output.schema.json")).toBe(
+      "visual reviewer schema",
+    );
+    expect(labelForPath("05-visual-reviewer/attempt-2/output.schema.json")).toBe(
+      "visual reviewer schema",
+    );
   });
 
   it("rejects folders without lineage", async () => {

@@ -52,6 +52,9 @@ export const IMPORTANT_ORDER = [
   "02-artifact-builder/attempt-1/query.sql",
   "02-artifact-builder/attempt-1/chart.vegalite.json",
   "04-render/attempt-1/chart.png",
+  "05-visual-reviewer/attempt-1/prompt.md",
+  "05-visual-reviewer/attempt-1/image-inputs.json",
+  "05-visual-reviewer/attempt-1/output.schema.json",
   "05-visual-reviewer/attempt-1/output.json",
   "05-visual-reviewer/attempt-1/report.md",
   "lineage.json",
@@ -98,6 +101,15 @@ export function stageSort(left: string, right: string): number {
 }
 
 export function labelForPath(path: string): string {
+  if (path.startsWith("05-visual-reviewer/") && path.endsWith("/prompt.md")) {
+    return "visual reviewer prompt";
+  }
+  if (path.startsWith("05-visual-reviewer/") && path.endsWith("/image-inputs.json")) {
+    return "visual reviewer image inputs";
+  }
+  if (path.startsWith("05-visual-reviewer/") && path.endsWith("/output.schema.json")) {
+    return "visual reviewer schema";
+  }
   if (path.endsWith("output.json")) return path.split("/").slice(0, -1).join("/");
   if (path.endsWith("chart.png")) return "rendered chart";
   if (path.endsWith("query.sql")) return "builder query";
