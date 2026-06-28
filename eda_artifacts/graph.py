@@ -51,20 +51,14 @@ def run_multimodal_trial(
     run_dir = Path(run_root) / "multimodal" / run_id
     state: TrialState = {
         "run_dir": run_dir,
-        "dataset_path": run_dir / "dataset" / "dataset.csv",
-        "profile_path": run_dir / "dataset" / "profile.json",
-        "framing_path": run_dir / "framing" / "framing.json",
-        "query_path": run_dir / "queries" / "target_distribution.sql",
-        "result_path": run_dir / "results" / "target_distribution.parquet",
-        "result_summary_path": run_dir / "results" / "target_distribution.summary.json",
-        "chart_spec_path": run_dir / "charts" / "target_distribution.vegalite.json",
-        "render_path": run_dir / "renders" / "target_distribution.png",
-        "report_path": run_dir / "reports" / "report.md",
-        "review_path": run_dir / "reviews" / "visual_review.json",
+        "dataset_path": run_dir / "00-dataset" / "dataset.csv",
+        "profile_path": run_dir / "00-dataset" / "profile.json",
+        "framing_path": run_dir / "01-eda-framer" / "output.json",
         "latest_revision_request": "",
         "revision_count": 0,
         "status": "running",
     }
+    _set_attempt_paths(state, 1)
     return _build_graph(adapter).invoke(state)
 
 
@@ -107,6 +101,8 @@ def _run_eda_framer(state: TrialState, adapter: CodexAdapter) -> TrialState:
         dataset_path=state["dataset_path"],
         profile_path=state["profile_path"],
     )
+    role_dir = state["run_dir"] / "01-eda-framer"
+    _write_text(role_dir / "prompt.md", prompt)
     output = _coerce_framer(
         adapter.invoke(
             _build_role_request(
@@ -114,6 +110,7 @@ def _run_eda_framer(state: TrialState, adapter: CodexAdapter) -> TrialState:
                 role="eda_framer",
                 prompt=prompt,
                 output_path=state["framing_path"],
+                schema_path=role_dir / "output.schema.json",
             )
         )
     )
@@ -122,21 +119,27 @@ def _run_eda_framer(state: TrialState, adapter: CodexAdapter) -> TrialState:
 
 
 def _build_artifacts(state: TrialState, adapter: CodexAdapter) -> TrialState:
+    attempt = _current_attempt(state)
+    _set_attempt_paths(state, attempt)
+    role_dir = _builder_dir(state, attempt)
     prompt = build_artifact_builder_prompt(
         framing_path=state["framing_path"],
         result_summary_path=state["profile_path"],
         revision_request=state.get("latest_revision_request", ""),
     )
+    _write_text(role_dir / "prompt.md", prompt)
     output = _coerce_builder(
         adapter.invoke(
             _build_role_request(
                 state,
                 role="artifact_builder",
                 prompt=prompt,
-                output_path=state["run_dir"] / "role_outputs" / "artifact_builder.json",
+                output_path=role_dir / "output.json",
+                schema_path=role_dir / "output.schema.json",
             )
         )
     )
+    write_output_json(role_dir / "output.json", output)
     _write_text(state["query_path"], output.sql.strip() + "\n")
     _write_json(state["chart_spec_path"], output.chart_spec)
     _write_text(state["report_path"], output.report_markdown)
@@ -165,10 +168,17 @@ def _validate_and_render(state: TrialState) -> TrialState:
 
 
 def _run_visual_reviewer(state: TrialState, adapter: CodexAdapter) -> TrialState:
+    attempt = _current_attempt(state)
+    role_dir = _reviewer_dir(state, attempt)
     prompt = build_visual_reviewer_prompt(
         chart_spec_path=state["chart_spec_path"],
         result_summary_path=state["result_summary_path"],
         report_path=state["report_path"],
+    )
+    _write_text(role_dir / "prompt.md", prompt)
+    _write_json(
+        role_dir / "image-inputs.json",
+        {"images": [str(state["render_path"].relative_to(state["run_dir"]))]},
     )
     output = _coerce_reviewer(
         adapter.invoke(
@@ -177,7 +187,9 @@ def _run_visual_reviewer(state: TrialState, adapter: CodexAdapter) -> TrialState
                 prompt=prompt,
                 work_dir=state["run_dir"],
                 images=[state["render_path"]],
-                output_schema_path=_write_role_schema(state, "visual_reviewer"),
+                output_schema_path=_write_role_schema(
+                    role_dir / "output.schema.json", "visual_reviewer"
+                ),
                 output_path=state["review_path"],
             )
         )
@@ -217,6 +229,7 @@ def _build_role_request(
     role: str,
     prompt: str,
     output_path: Path,
+    schema_path: Path,
     images: list[Path] | None = None,
 ) -> CodexRoleRequest:
     return CodexRoleRequest(
@@ -224,15 +237,44 @@ def _build_role_request(
         prompt=prompt,
         work_dir=state["run_dir"],
         images=images,
-        output_schema_path=_write_role_schema(state, role),
+        output_schema_path=_write_role_schema(schema_path, role),
         output_path=output_path,
     )
 
 
-def _write_role_schema(state: TrialState, role: str) -> Path:
-    schema_path = state["run_dir"] / "schemas" / f"{role}.schema.json"
+def _write_role_schema(schema_path: Path, role: str) -> Path:
     write_role_output_schema(schema_path, role)
     return schema_path
+
+
+def _current_attempt(state: TrialState) -> int:
+    return state["revision_count"] + 1
+
+
+def _set_attempt_paths(state: TrialState, attempt: int) -> None:
+    state["query_path"] = _builder_dir(state, attempt) / "query.sql"
+    state["chart_spec_path"] = _builder_dir(state, attempt) / "chart.vegalite.json"
+    state["report_path"] = _builder_dir(state, attempt) / "report.md"
+    state["result_path"] = _execution_dir(state, attempt) / "result.parquet"
+    state["result_summary_path"] = _execution_dir(state, attempt) / "result.summary.json"
+    state["render_path"] = _render_dir(state, attempt) / "chart.png"
+    state["review_path"] = _reviewer_dir(state, attempt) / "output.json"
+
+
+def _builder_dir(state: TrialState, attempt: int) -> Path:
+    return state["run_dir"] / "02-artifact-builder" / f"attempt-{attempt}"
+
+
+def _execution_dir(state: TrialState, attempt: int) -> Path:
+    return state["run_dir"] / "03-execution" / f"attempt-{attempt}"
+
+
+def _render_dir(state: TrialState, attempt: int) -> Path:
+    return state["run_dir"] / "04-render" / f"attempt-{attempt}"
+
+
+def _reviewer_dir(state: TrialState, attempt: int) -> Path:
+    return state["run_dir"] / "05-visual-reviewer" / f"attempt-{attempt}"
 
 
 def _write_text(path: Path, value: str) -> None:

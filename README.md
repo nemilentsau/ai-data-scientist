@@ -47,18 +47,30 @@ runs/eda-artifacts/multimodal/smoke/
 Expected artifacts:
 
 ```text
-dataset/dataset.csv
-dataset/profile.json
-framing/framing.json
-queries/target_distribution.sql
-results/target_distribution.parquet
-results/target_distribution.summary.json
-charts/target_distribution.vegalite.json
-renders/target_distribution.png
-reviews/visual_review.json
-reports/report.md
+00-dataset/dataset.csv
+00-dataset/profile.json
+01-eda-framer/prompt.md
+01-eda-framer/output.schema.json
+01-eda-framer/output.json
+02-artifact-builder/attempt-1/prompt.md
+02-artifact-builder/attempt-1/output.schema.json
+02-artifact-builder/attempt-1/output.json
+02-artifact-builder/attempt-1/query.sql
+02-artifact-builder/attempt-1/chart.vegalite.json
+02-artifact-builder/attempt-1/report.md
+03-execution/attempt-1/result.parquet
+03-execution/attempt-1/result.summary.json
+04-render/attempt-1/chart.png
+05-visual-reviewer/attempt-1/prompt.md
+05-visual-reviewer/attempt-1/image-inputs.json
+05-visual-reviewer/attempt-1/output.schema.json
+05-visual-reviewer/attempt-1/output.json
 lineage.json
 ```
+
+The numbered directories are the execution order. Agent roles are named in their
+folder names. Revision loops create `attempt-2`, `attempt-3`, and so on under
+the affected stages.
 
 ## Codex Run
 

@@ -201,33 +201,44 @@ Durable source-of-truth artifacts:
 
 ```text
 runs/eda-artifacts/multimodal/<run_id>/
-  dataset/
+  00-dataset/
     dataset.csv
     profile.json
-  queries/
-    target_distribution.sql
-  results/
-    target_distribution.parquet
-    target_distribution.summary.json
-  charts/
-    target_distribution.vegalite.json
-  reports/
-    report.md
-  reviews/
-    visual_review.json
+  01-eda-framer/
+    prompt.md
+    output.schema.json
+    output.json
+  02-artifact-builder/
+    attempt-1/
+      prompt.md
+      output.schema.json
+      output.json
+      query.sql
+      chart.vegalite.json
+      report.md
+  03-execution/
+    attempt-1/
+      result.parquet
+      result.summary.json
+  04-render/
+    attempt-1/
+      chart.png
+  05-visual-reviewer/
+    attempt-1/
+      prompt.md
+      image-inputs.json
+      output.schema.json
+      output.json
   lineage.json
 ```
 
-Generated review artifacts:
+The numbered directories are the execution order. Agent roles are named in their
+folder names, and revision loops create `attempt-2`, `attempt-3`, and so on
+under the affected stages.
 
-```text
-runs/eda-artifacts/multimodal/<run_id>/
-  renders/
-    target_distribution.png
-```
-
-`renders/` is not the durable chart source of truth. It is a reproducible build
-output created from `charts/*.vegalite.json` and `results/*`.
+`04-render/attempt-*/chart.png` is not the durable chart source of truth. It is a
+reproducible review output created from `02-artifact-builder/attempt-*/chart.vegalite.json`
+and `03-execution/attempt-*/result.parquet`.
 
 ## Chart Strategy
 
@@ -290,7 +301,7 @@ Planned graph nodes:
 
 5. `validate_and_render`
    - Validate Vega-Lite JSON shape.
-   - Render chart image into `renders/`.
+   - Render chart image into `04-render/attempt-*`.
    - Validate required artifacts exist.
 
 6. `run_visual_reviewer`
@@ -373,6 +384,8 @@ artifact-generation trial and produce:
 - a report that identifies the target as multimodal or mixture-like before
   making any regression-style claim
 - a lineage file that connects all produced artifacts
+- an inspectable run directory where numbered folders show execution order and
+  role folders contain their own prompt, schema, output, and derived artifacts
 
 The MVP is unsuccessful if it produces a polished report but skips visual target
 distribution inspection.

@@ -72,7 +72,7 @@
 
 - [ ] Write failing tests that a minimal Vega-Lite bar chart spec validates.
 - [ ] Write failing tests that malformed specs are rejected.
-- [ ] Write failing tests that a chart spec plus result Parquet renders a non-empty PNG under `renders/`.
+- [ ] Write failing tests that a chart spec plus result Parquet renders a non-empty PNG under `04-render/attempt-1/`.
 - [ ] Run `uv run pytest tests/test_charts.py -v` and confirm fail.
 - [ ] Implement chart validation and rendering with `vl-convert-python`.
 - [ ] Run `uv run pytest tests/test_charts.py -v` and confirm pass.

@@ -59,19 +59,52 @@ def test_pass_review_run_produces_artifacts_and_lineage(tmp_path):
 
     run_dir = tmp_path / "multimodal" / "pass-run"
     assert state["status"] == "passed_visual_gate"
-    assert (run_dir / "dataset" / "dataset.csv").exists()
-    assert (run_dir / "dataset" / "profile.json").exists()
-    assert (run_dir / "framing" / "framing.json").exists()
-    assert (run_dir / "queries" / "target_distribution.sql").exists()
-    assert (run_dir / "results" / "target_distribution.parquet").exists()
-    assert (run_dir / "charts" / "target_distribution.vegalite.json").exists()
-    assert (run_dir / "renders" / "target_distribution.png").exists()
-    assert (run_dir / "reviews" / "visual_review.json").exists()
-    assert (run_dir / "reports" / "report.md").read_text().startswith("# Report")
+    assert (run_dir / "00-dataset" / "dataset.csv").exists()
+    assert (run_dir / "00-dataset" / "profile.json").exists()
+    assert (run_dir / "01-eda-framer" / "prompt.md").exists()
+    assert (run_dir / "01-eda-framer" / "output.schema.json").exists()
+    assert (run_dir / "01-eda-framer" / "output.json").exists()
+    assert (run_dir / "02-artifact-builder" / "attempt-1" / "prompt.md").exists()
+    assert (run_dir / "02-artifact-builder" / "attempt-1" / "output.schema.json").exists()
+    assert (run_dir / "02-artifact-builder" / "attempt-1" / "output.json").exists()
+    assert (run_dir / "02-artifact-builder" / "attempt-1" / "query.sql").exists()
+    assert (run_dir / "02-artifact-builder" / "attempt-1" / "chart.vegalite.json").exists()
+    assert (run_dir / "02-artifact-builder" / "attempt-1" / "report.md").read_text().startswith(
+        "# Report"
+    )
+    assert (run_dir / "03-execution" / "attempt-1" / "result.parquet").exists()
+    assert (run_dir / "03-execution" / "attempt-1" / "result.summary.json").exists()
+    assert (run_dir / "04-render" / "attempt-1" / "chart.png").exists()
+    assert (run_dir / "05-visual-reviewer" / "attempt-1" / "prompt.md").exists()
+    assert (run_dir / "05-visual-reviewer" / "attempt-1" / "image-inputs.json").exists()
+    assert (run_dir / "05-visual-reviewer" / "attempt-1" / "output.schema.json").exists()
+    assert (run_dir / "05-visual-reviewer" / "attempt-1" / "output.json").exists()
+    for old_name in [
+        "dataset",
+        "framing",
+        "queries",
+        "results",
+        "charts",
+        "renders",
+        "reviews",
+        "reports",
+        "role_outputs",
+        "schemas",
+    ]:
+        assert not (run_dir / old_name).exists()
     lineage = json.loads((run_dir / "lineage.json").read_text())
     assert lineage["status"] == "passed_visual_gate"
-    assert "renders/target_distribution.png" in lineage["artifacts"]
-    assert adapter.requests[-1].images == [run_dir / "renders" / "target_distribution.png"]
+    assert "04-render/attempt-1/chart.png" in lineage["artifacts"]
+    assert lineage["dependencies"]["04-render/attempt-1/chart.png"] == [
+        "02-artifact-builder/attempt-1/chart.vegalite.json",
+        "03-execution/attempt-1/result.parquet",
+    ]
+    assert "renders/target_distribution.png" not in lineage["dependencies"]
+    assert adapter.requests[-1].images == [run_dir / "04-render" / "attempt-1" / "chart.png"]
+    image_inputs = json.loads(
+        (run_dir / "05-visual-reviewer" / "attempt-1" / "image-inputs.json").read_text()
+    )
+    assert image_inputs == {"images": ["04-render/attempt-1/chart.png"]}
     for request in adapter.requests:
         assert request.output_path is not None
         assert request.output_schema_path is not None
@@ -106,7 +139,16 @@ def test_revise_review_runs_one_builder_revision_and_second_review(tmp_path):
     run_dir = tmp_path / "multimodal" / "revise-run"
     assert state["status"] == "passed_visual_gate"
     assert state["revision_count"] == 1
-    assert (run_dir / "reports" / "report.md").read_text().endswith("multimodal.")
+    assert (
+        run_dir / "02-artifact-builder" / "attempt-2" / "report.md"
+    ).read_text().endswith("multimodal.")
+    assert (run_dir / "02-artifact-builder" / "attempt-1" / "report.md").exists()
+    assert (run_dir / "03-execution" / "attempt-1" / "result.parquet").exists()
+    assert (run_dir / "03-execution" / "attempt-2" / "result.parquet").exists()
+    assert (run_dir / "04-render" / "attempt-1" / "chart.png").exists()
+    assert (run_dir / "04-render" / "attempt-2" / "chart.png").exists()
+    assert (run_dir / "05-visual-reviewer" / "attempt-1" / "output.json").exists()
+    assert (run_dir / "05-visual-reviewer" / "attempt-2" / "output.json").exists()
     builder_requests = [
         request for request in adapter.requests if request.role == "artifact_builder"
     ]
@@ -139,8 +181,14 @@ def test_artifact_builder_chart_spec_json_string_is_written_as_chart_object(tmp_
     run_multimodal_trial(run_root=tmp_path, run_id="string-chart-run", adapter=adapter)
 
     chart_spec = json.loads(
-        (tmp_path / "multimodal" / "string-chart-run" / "charts"
-         / "target_distribution.vegalite.json").read_text()
+        (
+            tmp_path
+            / "multimodal"
+            / "string-chart-run"
+            / "02-artifact-builder"
+            / "attempt-1"
+            / "chart.vegalite.json"
+        ).read_text()
     )
     assert chart_spec["mark"] == "bar"
 

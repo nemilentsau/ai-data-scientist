@@ -18,11 +18,12 @@ def test_fake_cli_run_creates_multimodal_artifact_tree(tmp_path):
 
     run_dir = tmp_path / "multimodal" / "cli-smoke"
     assert exit_code == 0
-    assert (run_dir / "queries" / "target_distribution.sql").exists()
-    assert (run_dir / "results" / "target_distribution.parquet").exists()
-    assert (run_dir / "charts" / "target_distribution.vegalite.json").exists()
-    assert (run_dir / "renders" / "target_distribution.png").exists()
-    assert (run_dir / "reports" / "report.md").exists()
+    assert (run_dir / "01-eda-framer" / "output.json").exists()
+    assert (run_dir / "02-artifact-builder" / "attempt-1" / "query.sql").exists()
+    assert (run_dir / "03-execution" / "attempt-1" / "result.parquet").exists()
+    assert (run_dir / "02-artifact-builder" / "attempt-1" / "chart.vegalite.json").exists()
+    assert (run_dir / "04-render" / "attempt-1" / "chart.png").exists()
+    assert (run_dir / "02-artifact-builder" / "attempt-1" / "report.md").exists()
     assert json.loads((run_dir / "lineage.json").read_text())["status"] == "passed_visual_gate"
 
 

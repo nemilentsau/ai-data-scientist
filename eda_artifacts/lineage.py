@@ -14,32 +14,59 @@ def write_lineage(run_dir: Path, *, status: str, revision_count: int) -> dict[st
         "status": status,
         "revision_count": revision_count,
         "artifacts": artifacts,
-        "dependencies": {
-            "dataset/profile.json": ["dataset/dataset.csv"],
-            "results/target_distribution.parquet": [
-                "dataset/dataset.csv",
-                "queries/target_distribution.sql",
-            ],
-            "charts/target_distribution.vegalite.json": [
-                "framing/framing.json",
-                "results/target_distribution.summary.json",
-            ],
-            "renders/target_distribution.png": [
-                "charts/target_distribution.vegalite.json",
-                "results/target_distribution.parquet",
-            ],
-            "reviews/visual_review.json": [
-                "renders/target_distribution.png",
-                "reports/report.md",
-            ],
-            "reports/report.md": [
-                "framing/framing.json",
-                "queries/target_distribution.sql",
-                "charts/target_distribution.vegalite.json",
-            ],
-        },
+        "dependencies": _dependencies_for_attempts(run_dir, revision_count + 1),
     }
     destination = run_dir / "lineage.json"
     destination.write_text(json.dumps(lineage, indent=2, sort_keys=True))
     return lineage
 
+
+def _dependencies_for_attempts(run_dir: Path, attempt_count: int) -> dict[str, list[str]]:
+    dependencies = {
+        "00-dataset/profile.json": ["00-dataset/dataset.csv"],
+        "01-eda-framer/output.json": [
+            "01-eda-framer/prompt.md",
+            "01-eda-framer/output.schema.json",
+            "00-dataset/profile.json",
+        ],
+    }
+    for attempt in range(1, attempt_count + 1):
+        builder = f"02-artifact-builder/attempt-{attempt}"
+        execution = f"03-execution/attempt-{attempt}"
+        render = f"04-render/attempt-{attempt}"
+        reviewer = f"05-visual-reviewer/attempt-{attempt}"
+
+        dependencies[f"{builder}/output.json"] = [
+            f"{builder}/prompt.md",
+            f"{builder}/output.schema.json",
+            "01-eda-framer/output.json",
+        ]
+        dependencies[f"{builder}/query.sql"] = [f"{builder}/output.json"]
+        dependencies[f"{builder}/chart.vegalite.json"] = [f"{builder}/output.json"]
+        dependencies[f"{builder}/report.md"] = [
+            f"{builder}/output.json",
+            f"{builder}/query.sql",
+            f"{builder}/chart.vegalite.json",
+        ]
+        dependencies[f"{execution}/result.parquet"] = [
+            "00-dataset/dataset.csv",
+            f"{builder}/query.sql",
+        ]
+        dependencies[f"{execution}/result.summary.json"] = [f"{execution}/result.parquet"]
+        dependencies[f"{render}/chart.png"] = [
+            f"{builder}/chart.vegalite.json",
+            f"{execution}/result.parquet",
+        ]
+        dependencies[f"{reviewer}/output.json"] = [
+            f"{reviewer}/prompt.md",
+            f"{reviewer}/image-inputs.json",
+            f"{reviewer}/output.schema.json",
+            f"{render}/chart.png",
+            f"{builder}/report.md",
+        ]
+
+    return {
+        artifact: inputs
+        for artifact, inputs in dependencies.items()
+        if (run_dir / artifact).exists()
+    }
