@@ -99,14 +99,17 @@ The app runs at:
 http://localhost:5180/
 ```
 
-Open a run folder that contains `lineage.json`, for example:
+The inspector lists repo-local runs automatically from:
 
 ```text
-runs/eda-artifacts/multimodal/smoke/
+runs/eda-artifacts/
 ```
 
-The inspector reads local files in the browser and shows the run as execution
-stages, selected artifact content, rendered chart image, and lineage links.
+Select a run in the UI. The browser folder picker is only a fallback for
+external runs.
+
+The inspector shows the run as execution stages, selected artifact content,
+rendered chart image, and lineage links.
 
 The frontend is intentionally scoped to `frontend/` and uses Vite, React,
 Tailwind CSS, and strict TypeScript. Repo-owned frontend source and config are

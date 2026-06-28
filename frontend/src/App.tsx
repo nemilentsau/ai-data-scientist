@@ -9,11 +9,13 @@ import {
   GitBranch,
   Image,
   ListTree,
+  RefreshCw,
   Table,
   type LucideIcon,
 } from "lucide-react";
-import { type ChangeEvent, useMemo, useRef, useState } from "react";
+import { type ChangeEvent, useEffect, useMemo, useRef, useState } from "react";
 
+import { listLocalRuns, loadLocalRun, type RunSummary } from "./runApi";
 import {
   IMPORTANT_ORDER,
   STAGES,
@@ -44,6 +46,9 @@ export function App() {
   const [run, setRun] = useState<LoadedRun | null>(null);
   const [selectedPath, setSelectedPath] = useState<string | null>(null);
   const [loadError, setLoadError] = useState("");
+  const [runs, setRuns] = useState<RunSummary[]>([]);
+  const [activeRunId, setActiveRunId] = useState("");
+  const [isLoadingRun, setIsLoadingRun] = useState(false);
 
   const selected = selectedPath && run ? run.files.get(selectedPath) : undefined;
 
@@ -55,6 +60,67 @@ export function App() {
     }));
   }, [run]);
 
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadInitialRun(): Promise<void> {
+      setIsLoadingRun(true);
+      try {
+        const summaries = await listLocalRuns();
+        if (cancelled) return;
+
+        setRuns(summaries);
+        const firstRun = summaries[0];
+        if (!firstRun) {
+          setRun(null);
+          setSelectedPath(null);
+          setActiveRunId("");
+          setLoadError("");
+          return;
+        }
+
+        const parsed = await loadLocalRun(firstRun.id);
+        if (cancelled) return;
+
+        setRun(parsed);
+        setSelectedPath(pickInitialPath(parsed));
+        setActiveRunId(firstRun.id);
+        setLoadError("");
+      } catch (error) {
+        if (cancelled) return;
+        setLoadError(error instanceof Error ? error.message : String(error));
+        setRun(null);
+        setSelectedPath(null);
+        setActiveRunId("");
+      } finally {
+        if (!cancelled) setIsLoadingRun(false);
+      }
+    }
+
+    void loadInitialRun();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  async function selectLocalRun(runId: string): Promise<void> {
+    if (!runId) return;
+
+    setIsLoadingRun(true);
+    try {
+      const parsed = await loadLocalRun(runId);
+      setRun(parsed);
+      setSelectedPath(pickInitialPath(parsed));
+      setActiveRunId(runId);
+      setLoadError("");
+    } catch (error) {
+      setLoadError(error instanceof Error ? error.message : String(error));
+    } finally {
+      setIsLoadingRun(false);
+    }
+  }
+
   async function handleFiles(event: ChangeEvent<HTMLInputElement>): Promise<void> {
     const files = Array.from(event.target.files ?? []);
     if (files.length === 0) return;
@@ -63,6 +129,7 @@ export function App() {
       const parsed = await loadRunFolder(files);
       setRun(parsed);
       setSelectedPath(pickInitialPath(parsed));
+      setActiveRunId("");
       setLoadError("");
     } catch (error) {
       setLoadError(error instanceof Error ? error.message : String(error));
@@ -88,14 +155,24 @@ export function App() {
             <h1 className="text-3xl font-semibold tracking-tight">Run Inspector</h1>
           </div>
           <div className="flex flex-wrap items-center gap-3">
+            {runs.length > 0 ? (
+              <RunSelector
+                runs={runs}
+                activeRunId={activeRunId}
+                disabled={isLoadingRun}
+                onSelect={(runId) => {
+                  void selectLocalRun(runId);
+                }}
+              />
+            ) : null}
             {run ? <RunStatus lineage={run.lineage} rootName={run.rootName} /> : null}
             <button
               type="button"
               onClick={openPicker}
-              className="inline-flex h-11 items-center gap-2 border-2 border-zinc-950 bg-zinc-950 px-4 text-sm font-semibold text-white transition hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2"
+              className="inline-flex h-11 items-center gap-2 border-2 border-zinc-950 px-4 text-sm font-semibold transition hover:bg-zinc-950 hover:text-white focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2"
             >
               <FolderOpen size={18} />
-              Open run folder
+              Import external run
             </button>
             <input
               ref={pickerRef}
@@ -120,7 +197,7 @@ export function App() {
       ) : null}
 
       {!run ? (
-        <EmptyState onOpen={openPicker} />
+        <EmptyState isLoadingRun={isLoadingRun} runs={runs} onOpen={openPicker} />
       ) : (
         <section className="grid min-h-[calc(100vh-82px)] grid-cols-1 lg:grid-cols-[300px_minmax(0,1fr)_360px]">
           <StageRail rows={stageRows} selectedPath={selectedPath} onSelect={setSelectedPath} />
@@ -138,31 +215,80 @@ export function App() {
   );
 }
 
-function EmptyState({ onOpen }: { onOpen: () => void }) {
+function RunSelector({
+  runs,
+  activeRunId,
+  disabled,
+  onSelect,
+}: {
+  runs: RunSummary[];
+  activeRunId: string;
+  disabled: boolean;
+  onSelect: (runId: string) => void;
+}) {
+  return (
+    <label className="flex h-11 items-center gap-2 border-2 border-zinc-950 bg-white px-3 text-sm">
+      <span className="font-mono text-xs uppercase tracking-[0.16em] text-zinc-500">Run</span>
+      <select
+        value={activeRunId}
+        disabled={disabled}
+        onChange={(event) => onSelect(event.target.value)}
+        className="max-w-72 bg-transparent font-mono text-sm outline-none disabled:text-zinc-500"
+      >
+        {activeRunId === "" ? <option value="">Select run</option> : null}
+        {runs.map((summary) => (
+          <option key={summary.id} value={summary.id}>
+            {summary.id}
+          </option>
+        ))}
+      </select>
+    </label>
+  );
+}
+
+function EmptyState({
+  isLoadingRun,
+  runs,
+  onOpen,
+}: {
+  isLoadingRun: boolean;
+  runs: RunSummary[];
+  onOpen: () => void;
+}) {
   return (
     <section className="grid min-h-[calc(100vh-82px)] place-items-center px-6">
       <div className="max-w-3xl border-l-4 border-zinc-950 pl-6">
         <p className="mb-3 font-mono text-xs uppercase tracking-[0.22em] text-teal-700">
-          Select one run directory
+          Repo-local run inspector
         </p>
         <h2 className="mb-4 text-4xl font-semibold tracking-tight">
-          Inspect what each role saw and produced.
+          {isLoadingRun ? "Loading local runs." : "No local run is selected."}
         </h2>
         <p className="mb-6 max-w-2xl text-lg leading-7 text-zinc-700">
-          Open a folder like{" "}
-          <code className="font-mono text-sm text-zinc-950">
-            runs/eda-artifacts/multimodal/inspectable-smoke
-          </code>
-          . The app reads the files locally and maps them into execution order,
-          role outputs, deterministic harness artifacts, rendered chart, and lineage.
+          {runs.length > 0
+            ? "Choose a run from the selector in the header."
+            : "No runs were found under "}
+          {runs.length === 0 ? (
+            <>
+              <code className="font-mono text-sm text-zinc-950">runs/eda-artifacts</code>.
+            </>
+          ) : null}
+        </p>
+        <p className="mb-6 max-w-2xl text-sm leading-6 text-zinc-600">
+          The folder picker is only for a run outside this repository. The normal
+          path is generated runs served by Vite from the repo.
         </p>
         <button
           type="button"
           onClick={onOpen}
           className="inline-flex h-11 items-center gap-2 border-2 border-zinc-950 px-4 text-sm font-semibold transition hover:bg-zinc-950 hover:text-white focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2"
         >
-          <FolderOpen size={18} />
-          Choose folder
+          {isLoadingRun ? (
+            <RefreshCw size={18} className="animate-spin" />
+          ) : (
+            <FolderOpen size={18} />
+          )}
+          Import external run
         </button>
       </div>
     </section>

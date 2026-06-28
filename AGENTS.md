@@ -30,6 +30,7 @@
 - The frontend lives only in `frontend/`.
 - Use Vite, React, Tailwind CSS, and strict TypeScript.
 - The dev server must run at `http://localhost:5180/`; do not bind this project to `127.0.0.1` or Vite's default `5173` port.
+- The inspector's primary flow must load repo-local runs from `runs/eda-artifacts` through the Vite dev server; do not require the user to start from an OS folder picker.
 - Repo-owned frontend source and config must be TypeScript or declarative assets: `.ts`, `.tsx`, `.d.ts`, `.css`, `.html`, `.json`, or Markdown. Do not add `.js`, `.jsx`, `.mjs`, or `.cjs` files.
 - `frontend/tsconfig.json` must keep `strict: true` and `allowJs: false`.
 - Run `cd frontend && npm run check` before claiming frontend work is ready.
