@@ -1,5 +1,4 @@
 import json
-from dataclasses import asdict, is_dataclass
 from pathlib import Path
 from typing import Any, TypedDict
 
@@ -13,6 +12,7 @@ from eda_artifacts.codex import (
     EdaFramerOutput,
     VisualReviewerOutput,
     write_output_json,
+    write_role_output_schema,
 )
 from eda_artifacts.datasets import generate_multimodal_dataset
 from eda_artifacts.lineage import write_lineage
@@ -109,7 +109,12 @@ def _run_eda_framer(state: TrialState, adapter: CodexAdapter) -> TrialState:
     )
     output = _coerce_framer(
         adapter.invoke(
-            CodexRoleRequest(role="eda_framer", prompt=prompt, work_dir=state["run_dir"])
+            _build_role_request(
+                state,
+                role="eda_framer",
+                prompt=prompt,
+                output_path=state["framing_path"],
+            )
         )
     )
     write_output_json(state["framing_path"], output)
@@ -124,7 +129,12 @@ def _build_artifacts(state: TrialState, adapter: CodexAdapter) -> TrialState:
     )
     output = _coerce_builder(
         adapter.invoke(
-            CodexRoleRequest(role="artifact_builder", prompt=prompt, work_dir=state["run_dir"])
+            _build_role_request(
+                state,
+                role="artifact_builder",
+                prompt=prompt,
+                output_path=state["run_dir"] / "role_outputs" / "artifact_builder.json",
+            )
         )
     )
     _write_text(state["query_path"], output.sql.strip() + "\n")
@@ -167,6 +177,8 @@ def _run_visual_reviewer(state: TrialState, adapter: CodexAdapter) -> TrialState
                 prompt=prompt,
                 work_dir=state["run_dir"],
                 images=[state["render_path"]],
+                output_schema_path=_write_role_schema(state, "visual_reviewer"),
+                output_path=state["review_path"],
             )
         )
     )
@@ -197,6 +209,30 @@ def _finalize_run(state: TrialState) -> TrialState:
         revision_count=state["revision_count"],
     )
     return state
+
+
+def _build_role_request(
+    state: TrialState,
+    *,
+    role: str,
+    prompt: str,
+    output_path: Path,
+    images: list[Path] | None = None,
+) -> CodexRoleRequest:
+    return CodexRoleRequest(
+        role=role,
+        prompt=prompt,
+        work_dir=state["run_dir"],
+        images=images,
+        output_schema_path=_write_role_schema(state, role),
+        output_path=output_path,
+    )
+
+
+def _write_role_schema(state: TrialState, role: str) -> Path:
+    schema_path = state["run_dir"] / "schemas" / f"{role}.schema.json"
+    write_role_output_schema(schema_path, role)
+    return schema_path
 
 
 def _write_text(path: Path, value: str) -> None:

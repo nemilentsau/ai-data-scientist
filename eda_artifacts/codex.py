@@ -68,7 +68,7 @@ class CodexExecAdapter:
     def invoke(self, request: CodexRoleRequest) -> dict[str, Any]:
         if request.output_path is None:
             raise ValueError("CodexExecAdapter requires request.output_path.")
-        completed = subprocess.run(
+        subprocess.run(
             self.build_command(request),
             input=request.prompt,
             text=True,
@@ -113,3 +113,53 @@ def write_output_json(path: Path, output: RoleOutput | dict[str, Any]) -> None:
         payload = output
     path.write_text(json.dumps(payload, indent=2, sort_keys=True))
 
+
+ROLE_OUTPUT_SCHEMAS: dict[str, dict[str, Any]] = {
+    "eda_framer": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "additionalProperties": False,
+        "required": [
+            "primary_question",
+            "required_checks",
+            "chart_requests",
+            "stop_conditions",
+        ],
+        "properties": {
+            "primary_question": {"type": "string"},
+            "required_checks": {"type": "array", "items": {"type": "string"}},
+            "chart_requests": {"type": "array", "items": {"type": "string"}},
+            "stop_conditions": {"type": "array", "items": {"type": "string"}},
+        },
+    },
+    "artifact_builder": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "additionalProperties": False,
+        "required": ["sql", "chart_spec", "report_markdown"],
+        "properties": {
+            "sql": {"type": "string"},
+            "chart_spec": {"type": "object"},
+            "report_markdown": {"type": "string"},
+        },
+    },
+    "visual_reviewer": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "additionalProperties": False,
+        "required": ["verdict", "visual_findings", "required_revision"],
+        "properties": {
+            "verdict": {"type": "string", "enum": ["pass", "revise"]},
+            "visual_findings": {"type": "array", "items": {"type": "string"}},
+            "required_revision": {"type": "string"},
+        },
+    },
+}
+
+
+def write_role_output_schema(path: Path, role: str) -> None:
+    schema = ROLE_OUTPUT_SCHEMAS.get(role)
+    if schema is None:
+        raise KeyError(f"No output schema registered for role '{role}'.")
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(schema, indent=2, sort_keys=True))

@@ -3,8 +3,8 @@
 ## Tooling & Commands
 - **Python**: `uv` only (never bare `pip`). Single venv at `.venv`, Python 3.14.
 - **Install deps**: `uv sync`
-- **Run benchmark**: `uv run python run_benchmark.py`
-- **Generate datasets**: `uv run python -m datasets.generator`
+- **Run fake MVP smoke**: `uv run python -m eda_artifacts.cli run --adapter fake --run-id smoke`
+- **Run Codex MVP**: `uv run python -m eda_artifacts.cli run --adapter codex-exec --run-id codex-smoke`
 - **Tests**: `uv run pytest tests/ -v`
 - **Single test file**: `uv run pytest tests/test_foo.py -v`
 - **Lint**: `uv run ruff check` (if ruff is added)

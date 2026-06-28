@@ -1,6 +1,5 @@
 import pandas as pd
 import pytest
-
 from eda_artifacts.charts import render_chart_png, validate_vegalite_spec
 
 

@@ -72,6 +72,10 @@ def test_pass_review_run_produces_artifacts_and_lineage(tmp_path):
     assert lineage["status"] == "passed_visual_gate"
     assert "renders/target_distribution.png" in lineage["artifacts"]
     assert adapter.requests[-1].images == [run_dir / "renders" / "target_distribution.png"]
+    for request in adapter.requests:
+        assert request.output_path is not None
+        assert request.output_schema_path is not None
+        assert request.output_schema_path.exists()
 
 
 def test_revise_review_runs_one_builder_revision_and_second_review(tmp_path):
@@ -103,7 +107,9 @@ def test_revise_review_runs_one_builder_revision_and_second_review(tmp_path):
     assert state["status"] == "passed_visual_gate"
     assert state["revision_count"] == 1
     assert (run_dir / "reports" / "report.md").read_text().endswith("multimodal.")
-    builder_requests = [request for request in adapter.requests if request.role == "artifact_builder"]
+    builder_requests = [
+        request for request in adapter.requests if request.role == "artifact_builder"
+    ]
     review_requests = [request for request in adapter.requests if request.role == "visual_reviewer"]
     assert len(builder_requests) == 2
     assert len(review_requests) == 2

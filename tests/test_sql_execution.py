@@ -2,7 +2,6 @@ import json
 
 import pandas as pd
 import pytest
-
 from eda_artifacts.datasets import generate_multimodal_dataset
 from eda_artifacts.sql import execute_query_artifact, validate_read_only_sql
 
