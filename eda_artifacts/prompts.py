@@ -1,7 +1,9 @@
+import json
 from pathlib import Path
+from typing import Any
 
 
-def build_framer_prompt(*, dataset_path: Path, profile_path: Path) -> str:
+def build_framer_prompt(*, dataset_path: Path | str, profile_path: Path | str) -> str:
     return f"""You are the EDA framer for the eda-artifacts MVP.
 
 Dataset: {dataset_path}
@@ -48,15 +50,15 @@ guessing what SQL result, chart, or report boundary is expected.
 
 def build_artifact_builder_prompt(
     *,
-    framing_path: Path,
-    result_summary_path: Path,
+    framing_path: Path | str,
+    profile_path: Path | str,
     revision_request: str = "",
 ) -> str:
     revision_section = f"\nRevision request:\n{revision_request}\n" if revision_request else ""
     return f"""You are the artifact builder for eda-artifacts.
 
 Framing artifact: {framing_path}
-Result summary artifact: {result_summary_path}
+Dataset profile artifact: {profile_path}
 {revision_section}
 Write a read-only SQL query and a Vega-Lite chart spec.
 The chart must visualize the target distribution of monthly_rent_usd before any
@@ -84,15 +86,31 @@ Return JSON with:
 
 def build_visual_reviewer_prompt(
     *,
-    chart_spec_path: Path,
-    result_summary_path: Path,
+    chart_spec: dict[str, Any],
+    result_summary: dict[str, Any],
 ) -> str:
+    chart_spec_json = json.dumps(chart_spec, indent=2, sort_keys=True)
+    result_summary_json = json.dumps(
+        _result_summary_for_prompt(result_summary),
+        indent=2,
+        sort_keys=True,
+    )
     return f"""You are the visual reviewer for eda-artifacts.
 
 You have been given a rendered chart image as an attachment. Use the image as
-the primary evidence. Supporting artifacts:
-- chart spec: {chart_spec_path}
-- result summary: {result_summary_path}
+the primary evidence.
+
+The harness generated that image from this Vega-Lite chart spec:
+
+```json
+{chart_spec_json}
+```
+
+The harness executed the chart SQL and produced this result summary:
+
+```json
+{result_summary_json}
+```
 
 Inspect the rendered image first. Decide whether the chart is adequate for the
 EDA task: it should be readable, show the monthly_rent_usd distribution, and make
@@ -108,3 +126,11 @@ Return JSON with:
 
 Do not make prediction, regression, causality, or price-driver claims.
 """
+
+
+def _result_summary_for_prompt(result_summary: dict[str, Any]) -> dict[str, Any]:
+    return {
+        key: result_summary[key]
+        for key in ["row_count", "column_count", "columns", "preview_rows"]
+        if key in result_summary
+    }

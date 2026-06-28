@@ -98,8 +98,8 @@ def _prepare_dataset(state: TrialState) -> TrialState:
 
 def _run_eda_framer(state: TrialState, adapter: CodexAdapter) -> TrialState:
     prompt = build_framer_prompt(
-        dataset_path=state["dataset_path"],
-        profile_path=state["profile_path"],
+        dataset_path=_artifact_ref(state, state["dataset_path"]),
+        profile_path=_artifact_ref(state, state["profile_path"]),
     )
     role_dir = state["run_dir"] / "01-eda-framer"
     _write_text(role_dir / "prompt.md", prompt)
@@ -123,8 +123,8 @@ def _build_artifacts(state: TrialState, adapter: CodexAdapter) -> TrialState:
     _set_attempt_paths(state, attempt)
     role_dir = _builder_dir(state, attempt)
     prompt = build_artifact_builder_prompt(
-        framing_path=state["framing_path"],
-        result_summary_path=state["profile_path"],
+        framing_path=_artifact_ref(state, state["framing_path"]),
+        profile_path=_artifact_ref(state, state["profile_path"]),
         revision_request=state.get("latest_revision_request", ""),
     )
     _write_text(role_dir / "prompt.md", prompt)
@@ -170,8 +170,8 @@ def _run_visual_reviewer(state: TrialState, adapter: CodexAdapter) -> TrialState
     attempt = _current_attempt(state)
     role_dir = _reviewer_dir(state, attempt)
     prompt = build_visual_reviewer_prompt(
-        chart_spec_path=state["chart_spec_path"],
-        result_summary_path=state["result_summary_path"],
+        chart_spec=json.loads(state["chart_spec_path"].read_text()),
+        result_summary=json.loads(state["result_summary_path"].read_text()),
     )
     _write_text(role_dir / "prompt.md", prompt)
     _write_json(
@@ -244,6 +244,10 @@ def _build_role_request(
 def _write_role_schema(schema_path: Path, role: str) -> Path:
     write_role_output_schema(schema_path, role)
     return schema_path
+
+
+def _artifact_ref(state: TrialState, path: Path) -> Path:
+    return path.relative_to(state["run_dir"])
 
 
 def _current_attempt(state: TrialState) -> int:
