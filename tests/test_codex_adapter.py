@@ -51,6 +51,8 @@ def test_fake_codex_adapter_returns_queued_outputs_and_records_images(tmp_path):
         )
     )
 
+    assert isinstance(framer_output, EdaFramerOutput)
+    assert isinstance(review_output, VisualReviewerOutput)
     assert framer_output.primary_question.startswith("What does")
     assert review_output.verdict == "pass"
     assert adapter.requests[1].images == [render_path]

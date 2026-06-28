@@ -28,6 +28,7 @@ class VisualReviewerOutput:
 
 
 RoleOutput = EdaFramerOutput | ArtifactBuilderOutput | VisualReviewerOutput
+RawRoleOutput = RoleOutput | dict[str, Any]
 
 
 @dataclass(frozen=True)
@@ -41,19 +42,19 @@ class CodexRoleRequest:
 
 
 class CodexAdapter(Protocol):
-    def invoke(self, request: CodexRoleRequest) -> RoleOutput:
-        """Invoke a Codex role and return a structured result."""
+    def invoke(self, request: CodexRoleRequest) -> RawRoleOutput:
+        ...
 
 
 class FakeCodexAdapter:
-    def __init__(self, queued_outputs: dict[str, list[RoleOutput]]) -> None:
+    def __init__(self, queued_outputs: dict[str, list[RawRoleOutput]]) -> None:
         self._queued_outputs = {
             role: list(outputs)
             for role, outputs in queued_outputs.items()
         }
         self.requests: list[CodexRoleRequest] = []
 
-    def invoke(self, request: CodexRoleRequest) -> RoleOutput:
+    def invoke(self, request: CodexRoleRequest) -> RawRoleOutput:
         self.requests.append(request)
         outputs = self._queued_outputs.get(request.role, [])
         if not outputs:

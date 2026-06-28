@@ -12,9 +12,11 @@
 - **Frontend URL**: `http://localhost:5180/`
 - **Tests**: `uv run pytest tests/ -v`
 - **Single test file**: `uv run pytest tests/test_foo.py -v`
-- **Lint**: `uv run ruff check` (if ruff is added)
+- **Lint**: `uv run ruff check`
+- **Python type check**: `uv run pyright`
 - **Validation scope rules**:
-  - **Python files changed**: run tests. Iterate until all pass — 0 errors, no exceptions.
+  - **Python files changed**: run `uv run ruff check`, `uv run pyright`, and
+    `uv run pytest tests/ -v`. Iterate until all pass — 0 errors, no exceptions.
 
 ## Testing
 - Read `.codex/testing/SKILL.md` before writing any test.

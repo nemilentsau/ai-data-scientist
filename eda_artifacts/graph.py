@@ -1,6 +1,6 @@
 import json
 from pathlib import Path
-from typing import Any, TypedDict
+from typing import Any, TypedDict, cast
 
 from langgraph.graph import END, StateGraph
 
@@ -25,7 +25,7 @@ from eda_artifacts.prompts import (
 from eda_artifacts.sql import execute_query_artifact
 
 
-class TrialState(TypedDict, total=False):
+class TrialState(TypedDict):
     run_dir: Path
     dataset_path: Path
     profile_path: Path
@@ -49,27 +49,27 @@ def run_multimodal_trial(
     adapter: CodexAdapter,
 ) -> TrialState:
     run_dir = Path(run_root) / "multimodal" / run_id
-    state: TrialState = {
-        "run_dir": run_dir,
-        "dataset_path": run_dir / "00-dataset" / "dataset.csv",
-        "profile_path": run_dir / "00-dataset" / "profile.json",
-        "framing_path": run_dir / "01-eda-framer" / "output.json",
-        "latest_revision_request": "",
-        "revision_count": 0,
-        "status": "running",
-    }
-    _set_attempt_paths(state, 1)
-    return _build_graph(adapter).invoke(state)
+    state = _initial_state(run_dir)
+    return cast(TrialState, _build_graph(adapter).invoke(state))
 
 
 def _build_graph(adapter: CodexAdapter):
     graph = StateGraph(TrialState)
     graph.add_node("prepare_dataset", _prepare_dataset)
-    graph.add_node("run_eda_framer", lambda state: _run_eda_framer(state, adapter))
-    graph.add_node("build_artifacts", lambda state: _build_artifacts(state, adapter))
+    graph.add_node(
+        "run_eda_framer",
+        lambda state: _run_eda_framer(cast(TrialState, state), adapter),
+    )
+    graph.add_node(
+        "build_artifacts",
+        lambda state: _build_artifacts(cast(TrialState, state), adapter),
+    )
     graph.add_node("execute_queries", _execute_queries)
     graph.add_node("validate_and_render", _validate_and_render)
-    graph.add_node("run_visual_reviewer", lambda state: _run_visual_reviewer(state, adapter))
+    graph.add_node(
+        "run_visual_reviewer",
+        lambda state: _run_visual_reviewer(cast(TrialState, state), adapter),
+    )
     graph.add_node("finalize_run", _finalize_run)
 
     graph.set_entry_point("prepare_dataset")
@@ -88,6 +88,30 @@ def _build_graph(adapter: CodexAdapter):
     )
     graph.add_edge("finalize_run", END)
     return graph.compile()
+
+
+def _initial_state(run_dir: Path) -> TrialState:
+    attempt = 1
+    return {
+        "run_dir": run_dir,
+        "dataset_path": run_dir / "00-dataset" / "dataset.csv",
+        "profile_path": run_dir / "00-dataset" / "profile.json",
+        "framing_path": run_dir / "01-eda-framer" / "output.json",
+        "query_path": run_dir / "02-artifact-builder" / f"attempt-{attempt}" / "query.sql",
+        "chart_spec_path": (
+            run_dir / "02-artifact-builder" / f"attempt-{attempt}" / "chart.vegalite.json"
+        ),
+        "result_path": run_dir / "03-execution" / f"attempt-{attempt}" / "result.parquet",
+        "result_summary_path": (
+            run_dir / "03-execution" / f"attempt-{attempt}" / "result.summary.json"
+        ),
+        "render_path": run_dir / "04-render" / f"attempt-{attempt}" / "chart.png",
+        "report_path": run_dir / "05-visual-reviewer" / f"attempt-{attempt}" / "report.md",
+        "review_path": run_dir / "05-visual-reviewer" / f"attempt-{attempt}" / "output.json",
+        "latest_revision_request": "",
+        "revision_count": 0,
+        "status": "running",
+    }
 
 
 def _prepare_dataset(state: TrialState) -> TrialState:
