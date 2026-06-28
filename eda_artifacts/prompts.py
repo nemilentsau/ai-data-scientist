@@ -7,15 +7,41 @@ def build_framer_prompt(*, dataset_path: Path, profile_path: Path) -> str:
 Dataset: {dataset_path}
 Profile: {profile_path}
 
-The dataset is the known multimodal rental-pricing case. Your job is to force the
-first EDA question to inspect the target distribution before any predictive or
-regression framing.
+Your job is to define the first EDA task for the next agent. The next agent will
+write SQL, a Vega-Lite chart spec, and a short report. You do not write SQL,
+chart specs, or report text here. You only make the analytical task precise.
 
-Return JSON with:
-- primary_question
-- required_checks
-- chart_requests
-- stop_conditions
+This is a constrained smoke trial, not open-ended dataset discovery. The target
+variable is already known: monthly_rent_usd. The first EDA task must inspect the
+target distribution before any modeling, regression, causality, or feature-driver
+claim.
+
+Return only JSON with exactly these fields:
+
+- primary_question:
+  One plain-English question the next agent must answer with the first rendered
+  chart. It should be specific to monthly_rent_usd and answerable from a
+  distribution chart.
+
+- required_checks:
+  Concrete requirements the next agent's SQL/result/report must satisfy. Each
+  item should be verifiable by inspecting the saved artifacts. Include the need
+  to count listings by monthly_rent_usd bins and to keep the result compact
+  enough for a chart.
+
+- chart_requests:
+  Concrete chart requirements for the next agent. State what the chart should
+  show, what fields should appear on each axis, and why the chart is needed.
+  For this trial, require rent_bin on the x axis and listing_count on the y axis.
+
+- stop_conditions:
+  Claims or actions that would make the next agent's output invalid. Include:
+  no prediction claims, no regression claims, no causal claims, no price-driver
+  claims, and no conclusion about modeling readiness before the rendered chart
+  is visually reviewed.
+
+Good output is operational: the next agent should be able to implement it without
+guessing what SQL result, chart, or report boundary is expected.
 """
 
 
