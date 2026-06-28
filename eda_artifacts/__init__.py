@@ -1,0 +1,2 @@
+"""Artifact-first EDA harness."""
+
