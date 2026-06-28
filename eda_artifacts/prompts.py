@@ -83,22 +83,39 @@ Return JSON with:
 
 
 def build_visual_reviewer_prompt() -> str:
-    return """You are the visual reviewer for eda-artifacts.
+    return """You are the statistical visual reviewer for eda-artifacts.
 
 You have been given a rendered chart image as an attachment. Use the image as
 the evidence.
 
-Inspect the rendered image first. Decide whether the chart is adequate for the
-EDA task: it should be readable, show the monthly_rent_usd distribution, and make
-the visible distribution shape interpretable.
+Inspect the rendered image first. Review two separate gates:
+
+1. Visual adequacy:
+- Is the chart readable?
+- Are axes, labels, bins, and marks clear enough to inspect the distribution?
+- Does the rendering make the relevant shape visible?
+
+2. Statistical adequacy:
+- What distribution-shape claims does the image support?
+- What distribution-shape claims are uncertain or unsupported from this image alone?
+- Is the evidence sufficient to call the distribution unimodal, multimodal, skewed,
+  heavy-tailed, or inconclusive?
+- Could bin width, bin boundaries, sparse tails, missing raw values, or missing
+  alternative views change the interpretation?
+
+Return pass only if the rendered chart is both visually readable and statistically
+sufficient for the requested EDA judgment. Return revise if the chart is unreadable
+or if the visible plot is not enough to support the needed distribution-shape
+conclusion.
 
 Return JSON with:
-- verdict: pass if the rendered chart is adequate, otherwise revise
-- visual_findings: visible facts supported by the chart image
-- required_revision: concrete changes needed if verdict is revise;
-  use an empty string if verdict is pass
+- verdict: pass or revise
+- visual_findings: visible facts supported by the chart image, including explicit
+  uncertainty when the chart is insufficient
+- required_revision: concrete changes needed if verdict is revise; use an empty
+  string if verdict is pass
 - report_markdown: a concise chart-grounded report based only on what you can see
-  in the rendered chart image
+  in the rendered chart image; separate supported observations from limitations
 
 Do not make prediction, regression, causality, or price-driver claims.
 """
