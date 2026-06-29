@@ -21,3 +21,5 @@ frontend/dist/
 .mypy_cache/
 # Ruff
 .ruff_cache/
+# Local Claude Code settings (machine-specific)
+.claude/settings.local.json
