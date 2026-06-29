@@ -1,3 +1,4 @@
+import { importantPathsForRun } from "./artifactLoop";
 import type {
   JsonParseResult,
   LoadedRun,
@@ -43,20 +44,19 @@ export const STAGES = [
     owner: "Codex role",
     prefix: "05-visual-reviewer/",
   },
+  {
+    id: "06-synthesis",
+    label: "Synthesis",
+    owner: "Harness",
+    prefix: "06-synthesis/",
+  },
 ] as const satisfies readonly StageDefinition[];
 
 export type StageId = (typeof STAGES)[number]["id"];
 
 export const IMPORTANT_ORDER = [
   "01-eda-framer/output.json",
-  "02-artifact-builder/attempt-1/query.sql",
-  "02-artifact-builder/attempt-1/chart.vegalite.json",
-  "04-render/attempt-1/chart.png",
-  "05-visual-reviewer/attempt-1/prompt.md",
-  "05-visual-reviewer/attempt-1/image-inputs.json",
-  "05-visual-reviewer/attempt-1/output.schema.json",
-  "05-visual-reviewer/attempt-1/output.json",
-  "05-visual-reviewer/attempt-1/report.md",
+  "06-synthesis/report.md",
   "lineage.json",
 ] as const;
 
@@ -86,7 +86,7 @@ export async function loadRunFolder(files: readonly File[]): Promise<LoadedRun> 
 
 export function pickInitialPath(run: LoadedRun): string | null {
   return (
-    IMPORTANT_ORDER.find((path) => run.files.has(path)) ??
+    importantPathsForRun(run)[0] ??
     run.paths.find((path) => path.endsWith(".png")) ??
     run.paths[0] ??
     null
@@ -101,14 +101,23 @@ export function stageSort(left: string, right: string): number {
 }
 
 export function labelForPath(path: string): string {
+  if (path.startsWith("02-artifact-builder/") && path.endsWith("/build-context.json")) {
+    return "builder context";
+  }
   if (path.startsWith("05-visual-reviewer/") && path.endsWith("/prompt.md")) {
     return "visual reviewer prompt";
+  }
+  if (path.startsWith("05-visual-reviewer/") && path.endsWith("/review-context.json")) {
+    return "review context";
   }
   if (path.startsWith("05-visual-reviewer/") && path.endsWith("/image-inputs.json")) {
     return "visual reviewer image inputs";
   }
   if (path.startsWith("05-visual-reviewer/") && path.endsWith("/output.schema.json")) {
     return "visual reviewer schema";
+  }
+  if (path.startsWith("06-synthesis/") && path.endsWith("/report.md")) {
+    return "synthesis report";
   }
   if (path.endsWith("output.json")) return path.split("/").slice(0, -1).join("/");
   if (path.endsWith("chart.png")) return "rendered chart";

@@ -25,6 +25,7 @@ export type RunArtifact = TextArtifact | ImageArtifact | BinaryArtifact;
 export type RunLineage = {
   status?: string;
   revision_count?: number;
+  artifact_statuses?: Record<string, string>;
   dependencies?: Record<string, string[]>;
 } & Record<string, unknown>;
 

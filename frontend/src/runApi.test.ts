@@ -8,11 +8,20 @@ describe("loadedRunFromApiResponse", () => {
       rootName: "inspectable-smoke",
       lineage: {
         status: "passed_visual_gate",
+        artifact_statuses: {
+          distribution_histogram: "passed",
+        },
         dependencies: {
-          "05-visual-reviewer/attempt-1/output.json": ["04-render/attempt-1/chart.png"],
+          "05-visual-reviewer/distribution_histogram/attempt-1/output.json": [
+            "04-render/distribution_histogram/attempt-1/chart.png",
+          ],
         },
       },
-      paths: ["lineage.json", "04-render/attempt-1/chart.png", "01-eda-framer/output.json"],
+      paths: [
+        "lineage.json",
+        "04-render/distribution_histogram/attempt-1/chart.png",
+        "01-eda-framer/output.json",
+      ],
       files: [
         {
           kind: "text",
@@ -22,9 +31,9 @@ describe("loadedRunFromApiResponse", () => {
         },
         {
           kind: "image",
-          path: "04-render/attempt-1/chart.png",
+          path: "04-render/distribution_histogram/attempt-1/chart.png",
           size: 10,
-          url: "/api/run-file?run=multimodal%2Finspectable-smoke&path=04-render%2Fattempt-1%2Fchart.png",
+          url: "/api/run-file?run=multimodal%2Finspectable-smoke&path=04-render%2Fdistribution_histogram%2Fattempt-1%2Fchart.png",
         },
       ],
     });
@@ -32,10 +41,12 @@ describe("loadedRunFromApiResponse", () => {
     expect(run.rootName).toBe("inspectable-smoke");
     expect(run.paths).toEqual([
       "01-eda-framer/output.json",
-      "04-render/attempt-1/chart.png",
+      "04-render/distribution_histogram/attempt-1/chart.png",
       "lineage.json",
     ]);
-    expect(run.files.get("04-render/attempt-1/chart.png")?.kind).toBe("image");
+    expect(run.files.get("04-render/distribution_histogram/attempt-1/chart.png")?.kind).toBe(
+      "image",
+    );
   });
 
   it("rejects malformed API responses", () => {

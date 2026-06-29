@@ -20,13 +20,28 @@
 
 ## Testing
 - Read `.codex/testing/SKILL.md` before writing any test.
+- Read `.codex/backend-frontend-contract/SKILL.md` before changing backend run
+  output contracts, role schemas, artifact filenames/layout, lineage fields, or
+  frontend run rendering.
 - Tests live in `tests/`.
 - Name tests after behaviour, not function names.
 - One test per branch + two tests per boundary. No redundant parametrize cases.
 - Do NOT test LLM outputs or prompt content — test outcomes given certain inputs.
+- Backend contract/layout changes must run
+  `uv run pytest tests/test_frontend_contract.py -v`. This is the mechanical
+  backend-to-frontend guard; do not rely on opening the browser to discover
+  rendering breakage. The guard must cover both path/schema compatibility and
+  explicit agent-invocation visibility.
 
 ## Frontend UX
 - Do not use cards unless the content explicitly justifies a card-like unit. Before choosing a UI element, analyze what best presents the data; when multiple presentations are viable, choose the one that does not use cards.
+- The run inspector must not use fallback rendering for unknown backend
+  artifacts. Unknown paths, missing required fields, or backend schema drift must
+  fail in `frontend/src/selectedView.ts` and tests.
+- The run inspector must expose the graph as ordered agent runs, not only stage
+  folders. `eda_framer`, each `artifact_builder` attempt, and each
+  `visual_reviewer` attempt must be derived in
+  `frontend/src/agentInvocations.ts` and visible in the UI.
 
 ## Frontend Stack
 - The frontend lives only in `frontend/`.
