@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { importantPathsForRun } from "./artifactLoop";
-import { labelForPath, loadRunFolder, pickInitialPath } from "./runFolder";
+import { fileChipLabel, labelForPath, loadRunFolder, pickInitialPath } from "./runFolder";
 import type { LoadedRun, RunArtifact } from "./types";
 
 describe("loadRunFolder", () => {
@@ -152,6 +152,15 @@ function fileAt(path: string, contents: BlobPart): File {
   });
   return file;
 }
+
+describe("fileChipLabel", () => {
+  it("keeps friendly labels but falls back to the filename for path-shaped labels", () => {
+    expect(fileChipLabel("05-visual-reviewer/hist/attempt-1/review-context.json")).toBe(
+      "review context",
+    );
+    expect(fileChipLabel("05-visual-reviewer/hist/attempt-1/output.json")).toBe("output.json");
+  });
+});
 
 function fullFramerOutput(artifactIds: string[]): string {
   return JSON.stringify({

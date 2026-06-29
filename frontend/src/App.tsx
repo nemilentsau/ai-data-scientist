@@ -215,6 +215,16 @@ function ActiveView({
     );
   }
 
+  if (view.kind === "pipeline") {
+    return (
+      <PipelineView
+        run={run}
+        onSelectPath={(path) => onNavigate(filesView(path))}
+        onSelectArtifact={(artifactId) => onNavigate({ kind: "artifact", artifactId })}
+      />
+    );
+  }
+
   return (
     <div key={viewKey(view)} className="min-h-0 flex-1 overflow-auto">
       {view.kind === "overview" ? (
@@ -240,13 +250,6 @@ function ActiveView({
         />
       ) : null}
 
-      {view.kind === "pipeline" ? (
-        <PipelineView
-          invocations={derived.invocations}
-          selectedPath={null}
-          onSelectPath={(path) => onNavigate(filesView(path))}
-        />
-      ) : null}
     </div>
   );
 }

@@ -127,6 +127,13 @@ export function labelForPath(path: string): string {
   return path;
 }
 
+// Compact label for a file "chip": prefer the friendly label, but fall back to
+// the bare filename when labelForPath would otherwise return a full path.
+export function fileChipLabel(path: string): string {
+  const label = labelForPath(path);
+  return label.includes("/") ? (path.split("/").at(-1) ?? label) : label;
+}
+
 export function safeParseJson(text: string): JsonParseResult {
   try {
     return { ok: true, value: JSON.parse(text) as unknown };

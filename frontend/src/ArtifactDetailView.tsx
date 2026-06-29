@@ -8,7 +8,7 @@ import {
 } from "./artifactLoop";
 import { FileContent } from "./FileContent";
 import { humanizeId } from "./format";
-import { labelForPath, formatBytes } from "./runFolder";
+import { fileChipLabel, formatBytes } from "./runFolder";
 import type { LoadedRun, RunArtifact } from "./types";
 import {
   CodeBlock,
@@ -168,7 +168,7 @@ export function ArtifactDetailView({
                   className="rounded border border-zinc-200 px-2.5 py-1 font-mono text-xs text-zinc-600 transition hover:border-teal-300 hover:text-teal-800"
                   title={path}
                 >
-                  {labelForPath(path)}
+                  {fileChipLabel(path)}
                 </button>
               </li>
             ))}
