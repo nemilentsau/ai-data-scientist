@@ -21,23 +21,18 @@ def test_fake_codex_adapter_returns_queued_outputs_and_records_images(tmp_path):
             "eda_framer": [
                 EdaFramerOutput(
                     user_question="Assess whether the rent target is simple.",
-                    analysis_plan="Check distribution shape before modeling.",
-                    hypotheses=[
+                    analysis_goal="Check distribution shape before modeling.",
+                    artifact_plan=[
                         {
-                            "id": "h1",
-                            "statement": "The target may not be unimodal.",
-                            "rationale": "The profile shows a wide numeric range.",
-                            "variables": ["monthly_rent_usd"],
-                        }
-                    ],
-                    artifact_requests=[
-                        {
-                            "id": "a1",
-                            "hypothesis_id": "h1",
+                            "id": "distribution_histogram",
+                            "purpose": "Create a target distribution chart.",
+                            "statistical_check": "Inspect modality.",
                             "artifact_type": "chart",
-                            "description": "Create a target distribution chart.",
-                            "statistical_purpose": "Inspect modality.",
-                            "expected_fields": ["monthly_rent_usd", "listing_count"],
+                            "expected_chart_family": "histogram",
+                            "required_fields": ["monthly_rent_usd", "listing_count"],
+                            "interpretation_limits": [
+                                "A single bin width may not establish modality."
+                            ],
                         }
                     ],
                     stop_conditions=[
@@ -47,8 +42,14 @@ def test_fake_codex_adapter_returns_queued_outputs_and_records_images(tmp_path):
             ],
             "visual_reviewer": [
                 VisualReviewerOutput(
+                    artifact_id="distribution_histogram",
                     verdict="pass",
-                    visual_findings=["The rendered chart is visibly multi-peaked."],
+                    visual_adequacy=["The chart is readable."],
+                    statistical_findings=[
+                        "The rendered chart is visibly multi-peaked."
+                    ],
+                    limitations=["This is one view of the distribution."],
+                    carry_forward_notes=[],
                     required_revision="",
                     report_markdown="# Report\nThe rendered chart is visibly multi-peaked.",
                 )
@@ -70,7 +71,7 @@ def test_fake_codex_adapter_returns_queued_outputs_and_records_images(tmp_path):
 
     assert isinstance(framer_output, EdaFramerOutput)
     assert isinstance(review_output, VisualReviewerOutput)
-    assert framer_output.hypotheses[0]["id"] == "h1"
+    assert framer_output.artifact_plan[0]["id"] == "distribution_histogram"
     assert review_output.verdict == "pass"
     assert adapter.requests[1].images == [render_path]
 
@@ -119,29 +120,63 @@ def test_artifact_builder_schema_is_strict_structured_output_compatible():
     for schema in object_schemas:
         assert schema["additionalProperties"] is False
     assert ROLE_OUTPUT_SCHEMAS["artifact_builder"]["properties"]["chart_spec"]["type"] == "string"
-    assert ROLE_OUTPUT_SCHEMAS["artifact_builder"]["required"] == ["sql", "chart_spec"]
+    assert ROLE_OUTPUT_SCHEMAS["artifact_builder"]["required"] == [
+        "artifact_id",
+        "sql",
+        "chart_spec",
+    ]
 
 
-def test_eda_framer_schema_requires_question_hypotheses_and_artifact_requests():
+def test_eda_framer_schema_requires_ordered_artifact_plan():
     schema = ROLE_OUTPUT_SCHEMAS["eda_framer"]
     object_schemas = _collect_object_schemas(schema)
+    artifact_item = schema["properties"]["artifact_plan"]["items"]
 
     assert schema["required"] == [
         "user_question",
-        "analysis_plan",
-        "hypotheses",
-        "artifact_requests",
+        "analysis_goal",
+        "artifact_plan",
         "stop_conditions",
     ]
+    assert schema["properties"]["artifact_plan"]["minItems"] == 1
+    assert artifact_item["required"] == [
+        "id",
+        "purpose",
+        "statistical_check",
+        "artifact_type",
+        "expected_chart_family",
+        "required_fields",
+        "interpretation_limits",
+    ]
+    assert artifact_item["properties"]["artifact_type"]["enum"] == ["chart"]
     for object_schema in object_schemas:
         assert object_schema["additionalProperties"] is False
 
 
-def test_visual_reviewer_schema_requires_chart_grounded_report():
+def test_visual_reviewer_schema_requires_contextual_chart_review_fields():
     schema = ROLE_OUTPUT_SCHEMAS["visual_reviewer"]
+    object_schemas = _collect_object_schemas(schema)
 
-    assert "report_markdown" in schema["required"]
-    assert schema["properties"]["report_markdown"]["type"] == "string"
+    assert schema["required"] == [
+        "artifact_id",
+        "verdict",
+        "visual_adequacy",
+        "statistical_findings",
+        "limitations",
+        "carry_forward_notes",
+        "required_revision",
+        "report_markdown",
+    ]
+    assert schema["properties"]["verdict"]["enum"] == ["pass", "revise"]
+    for field in [
+        "visual_adequacy",
+        "statistical_findings",
+        "limitations",
+        "carry_forward_notes",
+    ]:
+        assert schema["properties"][field]["type"] == "array"
+    for object_schema in object_schemas:
+        assert object_schema["additionalProperties"] is False
 
 
 def test_codex_exec_command_uses_current_cli_flags_and_absolute_paths(tmp_path, monkeypatch):
@@ -233,10 +268,12 @@ def test_codex_exec_invoke_surfaces_stderr_on_failed_command(tmp_path, monkeypat
 
 def test_artifact_builder_output_accepts_chart_spec_without_report_text():
     output = ArtifactBuilderOutput(
+        artifact_id="distribution_histogram",
         sql="SELECT 1 AS rent_bin, 2 AS listing_count",
         chart_spec={"mark": "bar", "encoding": {"x": {"field": "rent_bin"}}},
     )
 
+    assert output.artifact_id == "distribution_histogram"
     assert output.sql.startswith("SELECT")
     assert output.chart_spec["mark"] == "bar"
 

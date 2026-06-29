@@ -8,22 +8,26 @@ from typing import Any, Protocol
 @dataclass(frozen=True)
 class EdaFramerOutput:
     user_question: str
-    analysis_plan: str
-    hypotheses: list[dict[str, Any]]
-    artifact_requests: list[dict[str, Any]]
+    analysis_goal: str
+    artifact_plan: list[dict[str, Any]]
     stop_conditions: list[str]
 
 
 @dataclass(frozen=True)
 class ArtifactBuilderOutput:
+    artifact_id: str
     sql: str
     chart_spec: dict[str, Any]
 
 
 @dataclass(frozen=True)
 class VisualReviewerOutput:
+    artifact_id: str
     verdict: str
-    visual_findings: list[str]
+    visual_adequacy: list[str]
+    statistical_findings: list[str]
+    limitations: list[str]
+    carry_forward_notes: list[str]
     required_revision: str
     report_markdown: str
 
@@ -139,48 +143,39 @@ ROLE_OUTPUT_SCHEMAS: dict[str, dict[str, Any]] = {
         "additionalProperties": False,
         "required": [
             "user_question",
-            "analysis_plan",
-            "hypotheses",
-            "artifact_requests",
+            "analysis_goal",
+            "artifact_plan",
             "stop_conditions",
         ],
         "properties": {
             "user_question": {"type": "string"},
-            "analysis_plan": {"type": "string"},
-            "hypotheses": {
+            "analysis_goal": {"type": "string"},
+            "artifact_plan": {
                 "type": "array",
-                "items": {
-                    "type": "object",
-                    "additionalProperties": False,
-                    "required": ["id", "statement", "rationale", "variables"],
-                    "properties": {
-                        "id": {"type": "string"},
-                        "statement": {"type": "string"},
-                        "rationale": {"type": "string"},
-                        "variables": {"type": "array", "items": {"type": "string"}},
-                    },
-                },
-            },
-            "artifact_requests": {
-                "type": "array",
+                "minItems": 1,
                 "items": {
                     "type": "object",
                     "additionalProperties": False,
                     "required": [
                         "id",
-                        "hypothesis_id",
+                        "purpose",
+                        "statistical_check",
                         "artifact_type",
-                        "description",
-                        "statistical_purpose",
-                        "expected_fields",
+                        "expected_chart_family",
+                        "required_fields",
+                        "interpretation_limits",
                     ],
                     "properties": {
                         "id": {"type": "string"},
-                        "hypothesis_id": {"type": "string"},
-                        "artifact_type": {"type": "string", "enum": ["chart", "table"]},
-                        "description": {"type": "string"},
-                        "statistical_purpose": {"type": "string"},
-                        "expected_fields": {
+                        "purpose": {"type": "string"},
+                        "statistical_check": {"type": "string"},
+                        "artifact_type": {"type": "string", "enum": ["chart"]},
+                        "expected_chart_family": {"type": "string"},
+                        "required_fields": {
+                            "type": "array",
+                            "items": {"type": "string"},
+                        },
+                        "interpretation_limits": {
                             "type": "array",
                             "items": {"type": "string"},
                         },
@@ -194,8 +189,9 @@ ROLE_OUTPUT_SCHEMAS: dict[str, dict[str, Any]] = {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "additionalProperties": False,
-        "required": ["sql", "chart_spec"],
+        "required": ["artifact_id", "sql", "chart_spec"],
         "properties": {
+            "artifact_id": {"type": "string"},
             "sql": {"type": "string"},
             "chart_spec": {"type": "string"},
         },
@@ -204,10 +200,29 @@ ROLE_OUTPUT_SCHEMAS: dict[str, dict[str, Any]] = {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "additionalProperties": False,
-        "required": ["verdict", "visual_findings", "required_revision", "report_markdown"],
+        "required": [
+            "artifact_id",
+            "verdict",
+            "visual_adequacy",
+            "statistical_findings",
+            "limitations",
+            "carry_forward_notes",
+            "required_revision",
+            "report_markdown",
+        ],
         "properties": {
+            "artifact_id": {"type": "string"},
             "verdict": {"type": "string", "enum": ["pass", "revise"]},
-            "visual_findings": {"type": "array", "items": {"type": "string"}},
+            "visual_adequacy": {"type": "array", "items": {"type": "string"}},
+            "statistical_findings": {
+                "type": "array",
+                "items": {"type": "string"},
+            },
+            "limitations": {"type": "array", "items": {"type": "string"}},
+            "carry_forward_notes": {
+                "type": "array",
+                "items": {"type": "string"},
+            },
             "required_revision": {"type": "string"},
             "report_markdown": {"type": "string"},
         },

@@ -21,8 +21,9 @@ canonical chart representation.
 
 The current trial is not an open-ended data-analysis benchmark. The user supplies
 the analysis question, and the EDA framer turns that question plus the dataset
-profile into statistical hypotheses and artifact requests. The run tests whether
-Codex can turn that framed plan into executable artifacts. See
+profile into an ordered chart artifact plan. The run tests whether Codex can turn
+each planned artifact into executable SQL, rendered charts, contextual visual
+reviews, and final lineage. See
 [`docs/goals.md`](docs/goals.md) for the exact goal and success criteria.
 
 ## Setup
@@ -57,25 +58,36 @@ Expected artifacts:
 01-eda-framer/prompt.md
 01-eda-framer/output.schema.json
 01-eda-framer/output.json
-02-artifact-builder/attempt-1/prompt.md
-02-artifact-builder/attempt-1/output.schema.json
-02-artifact-builder/attempt-1/output.json
-02-artifact-builder/attempt-1/query.sql
-02-artifact-builder/attempt-1/chart.vegalite.json
-03-execution/attempt-1/result.parquet
-03-execution/attempt-1/result.summary.json
-04-render/attempt-1/chart.png
-05-visual-reviewer/attempt-1/prompt.md
-05-visual-reviewer/attempt-1/image-inputs.json
-05-visual-reviewer/attempt-1/output.schema.json
-05-visual-reviewer/attempt-1/output.json
-05-visual-reviewer/attempt-1/report.md
+02-artifact-builder/<artifact_id>/attempt-1/build-context.json
+02-artifact-builder/<artifact_id>/attempt-1/prompt.md
+02-artifact-builder/<artifact_id>/attempt-1/output.schema.json
+02-artifact-builder/<artifact_id>/attempt-1/output.json
+02-artifact-builder/<artifact_id>/attempt-1/query.sql
+02-artifact-builder/<artifact_id>/attempt-1/chart.vegalite.json
+03-execution/<artifact_id>/attempt-1/result.parquet
+03-execution/<artifact_id>/attempt-1/result.summary.json
+04-render/<artifact_id>/attempt-1/chart.png
+05-visual-reviewer/<artifact_id>/attempt-1/review-context.json
+05-visual-reviewer/<artifact_id>/attempt-1/prompt.md
+05-visual-reviewer/<artifact_id>/attempt-1/image-inputs.json
+05-visual-reviewer/<artifact_id>/attempt-1/output.schema.json
+05-visual-reviewer/<artifact_id>/attempt-1/output.json
+05-visual-reviewer/<artifact_id>/attempt-1/report.md
+06-synthesis/report.md
 lineage.json
 ```
 
 The numbered directories are the execution order. Agent roles are named in their
-folder names. Revision loops create `attempt-2`, `attempt-3`, and so on under
-the affected stages.
+folder names. Artifact IDs are subdirectories under the builder, execution,
+render, and reviewer stages. Revision loops create `attempt-2` under the same
+artifact ID, so a failed chart is revised without consuming the review budget for
+later planned artifacts.
+
+The visual reviewer reviews one rendered image at a time. Its
+`review-context.json` includes the current artifact request, the full artifact
+plan, previous review decisions, remaining planned artifacts, and the current
+revision request. This prevents the reviewer from asking for a chart that is
+already planned as a later artifact.
 
 ## Codex Run
 

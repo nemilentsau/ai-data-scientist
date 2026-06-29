@@ -21,12 +21,30 @@ def test_fake_cli_run_creates_multimodal_artifact_tree(tmp_path):
     run_dir = tmp_path / "multimodal" / "cli-smoke"
     assert exit_code == 0
     assert (run_dir / "01-eda-framer" / "output.json").exists()
-    assert (run_dir / "02-artifact-builder" / "attempt-1" / "query.sql").exists()
-    assert (run_dir / "03-execution" / "attempt-1" / "result.parquet").exists()
-    assert (run_dir / "02-artifact-builder" / "attempt-1" / "chart.vegalite.json").exists()
-    assert (run_dir / "04-render" / "attempt-1" / "chart.png").exists()
-    assert (run_dir / "05-visual-reviewer" / "attempt-1" / "report.md").exists()
-    assert not (run_dir / "02-artifact-builder" / "attempt-1" / "report.md").exists()
+    for artifact_id in ["distribution_histogram", "bin_sensitivity"]:
+        assert (
+            run_dir / "02-artifact-builder" / artifact_id / "attempt-1" / "query.sql"
+        ).exists()
+        assert (
+            run_dir
+            / "02-artifact-builder"
+            / artifact_id
+            / "attempt-1"
+            / "chart.vegalite.json"
+        ).exists()
+        assert (
+            run_dir / "03-execution" / artifact_id / "attempt-1" / "result.parquet"
+        ).exists()
+        assert (
+            run_dir / "04-render" / artifact_id / "attempt-1" / "chart.png"
+        ).exists()
+        assert (
+            run_dir / "05-visual-reviewer" / artifact_id / "attempt-1" / "report.md"
+        ).exists()
+        assert not (
+            run_dir / "02-artifact-builder" / artifact_id / "attempt-1" / "report.md"
+        ).exists()
+    assert (run_dir / "06-synthesis" / "report.md").exists()
     assert json.loads((run_dir / "lineage.json").read_text())["status"] == "passed_visual_gate"
 
 
