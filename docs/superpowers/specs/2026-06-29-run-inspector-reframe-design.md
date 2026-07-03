@@ -1,7 +1,13 @@
 # Run Inspector Reframe — Design
 
 Date: 2026-06-29
-Status: Approved (direction), implementing
+Status: Implemented
+
+> **Update (2026-07-03):** the **Pipeline** view described below as an ordered
+> "agent runs" timeline was subsequently redesigned into a React Flow
+> control-flow graph — see
+> [`2026-07-03-pipeline-control-flow-graph.md`](2026-07-03-pipeline-control-flow-graph.md).
+> The Pipeline items below reflect the original plan.
 
 ## Problem
 
@@ -38,8 +44,10 @@ reading column. The content column is a small router with four views:
    readable prose/lists; plan/request as a description list; collapsible
    **Evidence** (SQL, `result.summary` preview as a real table, raw file links);
    contextual lineage (inputs / used-by); attempt history when > 1.
-3. **Pipeline**: ordered agent runs (`eda_framer → builder×N → reviewer×N`) as a
-   vertical timeline with expandable inputs/outputs. The seam for Opik/Langfuse.
+3. **Pipeline**: a control-flow graph of the harness with the revise /
+   next-artifact loops and per-run overlay; clicking a stage drills into its
+   artifact×attempt outputs. The seam for Opik/Langfuse. (Originally an ordered
+   agent-runs timeline — redesigned; see the pipeline-graph spec.)
 4. **Files**: by-stage browser + the **strict** per-file viewer
    (`selectedView.ts`), preserving the "fail on unknown artifact, no fallback
    rendering" guarantee (the contract-failure panel stays).
@@ -57,7 +65,7 @@ Pipeline · Files.
 | Plan / request, lineage | key/value, link lists | `<dl>`, link lists |
 | Evidence | disclosure + code + table | `<details>` + code block + `<table>` |
 | Result preview | tabular rows | `<table>` |
-| Pipeline | sequence of steps | `<ol>` timeline |
+| Pipeline | control flow with loops | React Flow node-link graph |
 | Sidebar / files | navigable items | `<ul>` link lists |
 | Reports (md) | prose | rendered Markdown |
 
@@ -78,7 +86,10 @@ green): `runApi.ts`, `runFolder.ts`, `agentInvocations.ts`, `artifactLoop.ts`,
 - `RunHeader.tsx`, `RunSidebar.tsx`.
 - `OverviewView.tsx`, `ChartGallery.tsx`.
 - `ArtifactDetailView.tsx`.
-- `PipelineView.tsx` (folds in old `AgentInvocationList`).
+- `PipelineView.tsx` — composes the pipeline control-flow graph
+  (`PipelineCanvas.tsx` + `StagePanel.tsx` + `pipelineGraph.ts` /
+  `pipelineLayout.ts` / `stageInstances.ts`); folds in the old
+  `AgentInvocationList`.
 - `FilesView.tsx` + `FileContent.tsx` (strict renderer extracted from today's
   `ArtifactWorkspace`; renders `result.summary` preview rows as a table).
 
@@ -87,11 +98,13 @@ folded into the above; their tests are replaced.
 
 ## Constraints honored
 
-- No new runtime deps (markdown hand-rolled; keep `lucide-react`).
+- No new runtime deps for the reframe (markdown hand-rolled; keep
+  `lucide-react`). The later pipeline-graph work added `@xyflow/react`.
 - TS-only, strict, no `.js`/`.jsx`. Port stays `localhost:5180`.
 - `npm run check` (typecheck + vitest + build) must pass.
 - Data derivation + contract guards unchanged; `selectedView` strictness kept;
-  ordered agent runs remain visible (Pipeline view).
+  agent invocations remain derivable (`agentInvocations.ts`) and reachable via
+  the Pipeline view.
 
 ## Testing (TDD, `renderToStaticMarkup` style)
 

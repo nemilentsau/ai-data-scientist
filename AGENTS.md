@@ -38,14 +38,17 @@
 - The run inspector must not use fallback rendering for unknown backend
   artifacts. Unknown paths, missing required fields, or backend schema drift must
   fail in `frontend/src/selectedView.ts` and tests.
-- The run inspector must expose the graph as ordered agent runs, not only stage
-  folders. `eda_framer`, each `artifact_builder` attempt, and each
-  `visual_reviewer` attempt must be derived in
-  `frontend/src/agentInvocations.ts` and visible in the UI.
+- The run inspector must expose the run's control flow as a graph, not only as
+  stage folders. The harness stages and their revise / next-artifact loops are
+  rendered as a node-link graph, and every agent invocation — `eda_framer`, each
+  `artifact_builder` attempt, and each `visual_reviewer` attempt — must be
+  derivable from `frontend/src/agentInvocations.ts` and reachable in the UI (via
+  the pipeline graph's per-stage drill-in).
 
 ## Frontend Stack
 - The frontend lives only in `frontend/`.
-- Use Vite, React, Tailwind CSS, and strict TypeScript.
+- Use Vite, React, Tailwind CSS, and strict TypeScript. The pipeline
+  control-flow graph uses React Flow (`@xyflow/react`).
 - The dev server must run at `http://localhost:5180/`; do not bind this project to `127.0.0.1` or Vite's default `5173` port.
 - The inspector's primary flow must load repo-local runs from `runs/eda-artifacts` through the Vite dev server; do not require the user to start from an OS folder picker.
 - Repo-owned frontend source and config must be TypeScript or declarative assets: `.ts`, `.tsx`, `.d.ts`, `.css`, `.html`, `.json`, or Markdown. Do not add `.js`, `.jsx`, `.mjs`, or `.cjs` files.

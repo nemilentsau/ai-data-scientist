@@ -128,13 +128,25 @@ runs/eda-artifacts/
 Select a run in the UI. The browser folder picker is only a fallback for
 external runs.
 
-The inspector shows the run as execution stages, selected artifact content,
-rendered chart image, and lineage links.
+The inspector is organized around reading and judging the run:
+
+- **Overview** — the user question and analysis goal, a gallery of the rendered
+  charts with their reviewer verdicts, and the synthesis report as prose.
+- **Artifact detail** — the rendered chart, the reviewer's verdict and findings,
+  the artifact request, and collapsible evidence (SQL, the query-result preview
+  as a table, and links to the raw files).
+- **Pipeline** — a control-flow graph of the LangGraph harness (`dataset →
+  framer → select → build → execute → render → review → synthesis`) with the
+  revise and next-artifact loop-backs drawn, overlaid with this run's per-stage
+  run counts and reviewer verdicts (taken edges solid, untaken edges dashed).
+  Clicking a stage lists its artifact/attempt outputs.
+- **Files** — a strict per-file viewer that fails on unknown artifacts rather
+  than falling back to a generic render.
 
 The frontend is intentionally scoped to `frontend/` and uses Vite, React,
-Tailwind CSS, and strict TypeScript. Repo-owned frontend source and config are
-TypeScript or declarative assets only; JavaScript and JSX files are not part of
-the frontend codebase.
+Tailwind CSS, React Flow (`@xyflow/react`, for the pipeline graph), and strict
+TypeScript. Repo-owned frontend source and config are TypeScript or declarative
+assets only; JavaScript and JSX files are not part of the frontend codebase.
 
 Validate it with:
 
