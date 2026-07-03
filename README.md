@@ -1,270 +1,174 @@
-# AI Data Scientist Benchmark
+# eda-artifacts
 
-Benchmark harness that compares Claude Code and OpenAI Codex CLI as autonomous data scientists. Each agent runs headless against 20 curated datasets, each hiding a specific statistical pattern. An LLM reviewer scores each agent's analysis against a ground-truth rubric. Legacy run outputs can then be imported into an experiment catalog for frontend browsing and cross-run comparison.
+Notebookless, LLM-assisted EDA with versioned query, chart, and report artifacts.
 
-## What it measures
+Exploratory data analysis usually lives in notebooks, where code, plots, prose,
+and hidden state collapse into one mutable document. `eda-artifacts` experiments
+with a different unit of work: durable analytical artifacts.
 
-Each dataset is designed to test whether an agent can:
-- Explore data without hints from filenames or column names (files are named `dataset_001.csv` through `dataset_020.csv`)
-- Identify the core statistical pattern (Simpson's paradox, heteroscedasticity, concept drift, etc.)
-- Choose appropriate methods and check assumptions
-- Avoid common traps (reporting only accuracy on imbalanced data, ignoring censoring, fitting linear models to quadratic data)
+This branch is intentionally narrow:
 
-Datasets span regression, classification, clustering, time series, survival analysis, causal inference, and data quality challenges across realistic domains (hospital records, ad campaigns, gene expression, manufacturing QC, etc.).
+- one dataset: `multimodal`
+- one agent surface: Codex headless execution
+- one harness: a small LangGraph loop
+- one visual review path: Vega-Lite specs rendered to temporary PNG review
+  artifacts so Codex can inspect the plotted chart
+
+The durable source of truth is the artifact set: dataset profile, SQL query,
+Parquet result, Vega-Lite chart spec, report, visual review, and lineage. PNGs
+are generated from those artifacts for visual inspection; they are not the
+canonical chart representation.
+
+The current trial is not an open-ended data-analysis benchmark. The user supplies
+the analysis question, and the EDA framer turns that question plus the dataset
+profile into an ordered chart artifact plan. The run tests whether Codex can turn
+each planned artifact into executable SQL, rendered charts, contextual visual
+reviews, and final lineage. See
+[`docs/goals.md`](docs/goals.md) for the exact goal and success criteria.
 
 ## Setup
 
 ```bash
-uv venv --python 3.14
 uv sync
 ```
 
-Authenticate the CLIs you plan to benchmark:
+## Smoke Run
+
+Use the deterministic fake Codex adapter for local verification:
 
 ```bash
-claude login
-codex login
+uv run python -m eda_artifacts.cli run \
+  --adapter fake \
+  --run-id smoke \
+  --question "Assess whether monthly_rent_usd has a simple distribution."
 ```
 
-For unattended Codex runs, OpenAI also documents `CODEX_API_KEY` support for `codex exec`.
+This writes a run under:
 
-## Quick start
+```text
+runs/eda-artifacts/multimodal/smoke/
+```
 
-### Generate datasets
+Expected artifacts:
+
+```text
+00-dataset/dataset.csv
+00-dataset/profile.json
+01-eda-framer/user-question.txt
+01-eda-framer/prompt.md
+01-eda-framer/output.schema.json
+01-eda-framer/output.json
+02-artifact-builder/<artifact_id>/attempt-1/build-context.json
+02-artifact-builder/<artifact_id>/attempt-1/prompt.md
+02-artifact-builder/<artifact_id>/attempt-1/output.schema.json
+02-artifact-builder/<artifact_id>/attempt-1/output.json
+02-artifact-builder/<artifact_id>/attempt-1/query.sql
+02-artifact-builder/<artifact_id>/attempt-1/chart.vegalite.json
+03-execution/<artifact_id>/attempt-1/result.parquet
+03-execution/<artifact_id>/attempt-1/result.summary.json
+04-render/<artifact_id>/attempt-1/chart.png
+05-visual-reviewer/<artifact_id>/attempt-1/review-context.json
+05-visual-reviewer/<artifact_id>/attempt-1/prompt.md
+05-visual-reviewer/<artifact_id>/attempt-1/image-inputs.json
+05-visual-reviewer/<artifact_id>/attempt-1/output.schema.json
+05-visual-reviewer/<artifact_id>/attempt-1/output.json
+05-visual-reviewer/<artifact_id>/attempt-1/report.md
+06-synthesis/report.md
+lineage.json
+```
+
+The numbered directories are the execution order. Agent roles are named in their
+folder names. Artifact IDs are subdirectories under the builder, execution,
+render, and reviewer stages. Revision loops create `attempt-2` under the same
+artifact ID, so a failed chart is revised without consuming the review budget for
+later planned artifacts.
+
+The visual reviewer reviews one rendered image at a time. Its
+`review-context.json` includes the current artifact request, the full artifact
+plan, previous review decisions, remaining planned artifacts, and the current
+revision request. This prevents the reviewer from asking for a chart that is
+already planned as a later artifact.
+
+## Codex Run
+
+After authenticating the Codex CLI, run the same harness with headless Codex:
 
 ```bash
-uv run python -m datasets.generator
+uv run python -m eda_artifacts.cli run \
+  --adapter codex-exec \
+  --run-id codex-smoke \
+  --question "Assess whether monthly_rent_usd has a simple distribution."
 ```
 
-Produces 20 CSVs in `datasets/generated/` with opaque filenames.
+The real adapter uses `codex exec` with `gpt-5.5`, JSON output, structured
+schemas, and image input for the visual reviewer role.
 
-### Run the full benchmark
+## Run Inspector
+
+Start the browser UI:
 
 ```bash
-uv run python run_benchmark.py --config solo-baseline
-uv run python run_benchmark.py --config solo-codex
-uv run python run_benchmark.py --config codex-v3
+cd frontend
+npm install
+npm run dev
 ```
 
-This will:
-1. Generate all 20 datasets
-2. Run the selected agent config in an isolated temp directory per dataset
-3. Score each agent's output using the LLM reviewer
-4. Produce a per-config report at `results/runs/<config>/benchmark_report.md`
-5. Refresh an experiment manifest in `results/experiments/...`
+The app runs at:
 
-The runner refreshes experiment metadata automatically unless you pass `--skip-import`.
-By default it creates a new experiment per invocation. To compare multiple configs inside the same experiment, reuse `--experiment-id` across runs and set `--experiment-title` on the first one.
+```text
+http://localhost:5180/
+```
+
+The inspector lists repo-local runs automatically from:
+
+```text
+runs/eda-artifacts/
+```
+
+Select a run in the UI. The browser folder picker is only a fallback for
+external runs.
+
+The inspector is organized around reading and judging the run:
+
+- **Overview** — the user question and analysis goal, a gallery of the rendered
+  charts with their reviewer verdicts, and the synthesis report as prose.
+- **Artifact detail** — the rendered chart, the reviewer's verdict and findings,
+  the artifact request, and collapsible evidence (SQL, the query-result preview
+  as a table, and links to the raw files).
+- **Pipeline** — a control-flow graph of the LangGraph harness (`dataset →
+  framer → select → build → execute → render → review → synthesis`) with the
+  revise and next-artifact loop-backs drawn, overlaid with this run's per-stage
+  run counts and reviewer verdicts (taken edges solid, untaken edges dashed).
+  Clicking a stage lists its artifact/attempt outputs.
+- **Files** — a strict per-file viewer that fails on unknown artifacts rather
+  than falling back to a generic render.
+
+The frontend is intentionally scoped to `frontend/` and uses Vite, React,
+Tailwind CSS, React Flow (`@xyflow/react`, for the pipeline graph), and strict
+TypeScript. Repo-owned frontend source and config are TypeScript or declarative
+assets only; JavaScript and JSX files are not part of the frontend codebase.
+
+Validate it with:
 
 ```bash
-uv run python run_benchmark.py --config solo-baseline --experiment-id exp_solo_compare --experiment-title "Solo compare"
-uv run python run_benchmark.py --config solo-codex --experiment-id exp_solo_compare
+cd frontend
+npm run check
 ```
 
-### Workflow configs
-
-The runner now supports both legacy single-agent configs and ordered multi-step workflows.
-
-Legacy configs still work unchanged:
-
-```yaml
-name: solo-codex
-team:
-  - role: codex
-    prompt: prompts/analyst-generic.md
-    max_turns: 30
-harness: harness/run_codex.sh
-```
-
-New workflow configs use a backend plus ordered steps:
-
-```yaml
-name: codex-v3
-backend: codex_cli
-workflow:
-  steps:
-    - id: analyst
-      role: analyst
-      prompt: prompts/analyst-v2.md
-      max_turns: 30
-    - id: visual_review
-      role: visual_reviewer
-      prompt: prompts/visual-review.md
-      image_inputs:
-        - plots/*.png
-      required: true
-```
-
-The current built-in backends are:
-
-- `codex_cli`
-- `claude_cli`
-
-### Import legacy runs into the experiment catalog
-
-Use the import CLI for existing run folders that were created before automatic experiment refresh existed, or when you want to rebuild metadata from `results/runs/...`.
-
-```bash
-uv run python experiment_import.py --title "Legacy Solo Benchmark Import"
-```
-
-This creates:
-
-- `results/experiments/catalog.sqlite` — SQLite metadata catalog
-- `results/experiments/index.json` — experiment list export for the frontend
-- `results/experiments/<experiment_id>/manifest.json` — per-experiment export used by the frontend
-
-The import is metadata-only. Reports, traces, plots, session logs, and generated Python files remain in `results/runs/...` and are referenced from the catalog.
-
-Experiment-scoped markdown notes can also be surfaced in the dashboard by
-placing them under `docs/artifacts/` with YAML front matter that includes
-matching `experiment_ids`.
-
-Optional `datasets` and `config_names` front-matter fields let one note attach
-to the matching case details inside that experiment.
-
-### Run a single agent on a single dataset
-
-```bash
-# Run Claude on simpsons_paradox only (skip dataset generation if CSVs exist)
-uv run python run_benchmark.py --config solo-baseline --datasets simpsons_paradox --skip-generate
-
-# Run Codex on two specific datasets
-uv run python run_benchmark.py --config solo-codex --datasets pure_noise quadratic --skip-generate
-
-# Run agent only, skip scoring
-uv run python run_benchmark.py --config solo-baseline --datasets mnar --skip-generate --skip-score
-```
-
-### Other subset options
-
-```bash
-# All datasets, single agent
-uv run python run_benchmark.py --config solo-baseline
-
-# Re-score existing results without re-running agents
-uv run python run_benchmark.py --config solo-codex --skip-generate --skip-run
-```
-
-## Tracing
-
-Every agent run produces a top-level `trace.jsonl` in its results directory. For multi-step workflows, it is an append-only concatenation of the per-step traces in execution order.
-
-**Claude Code** — Uses [hooks](https://docs.anthropic.com/en/docs/claude-code/hooks) (`.claude/hooks/trace.sh`) registered in `.claude/settings.json`. The `PostToolUse` and `PostToolUseFailure` hooks fire after every tool call and append JSON lines to a per-step trace, which the orchestrator then appends into the top-level `trace.jsonl`. Each line contains:
-
-```json
-{"timestamp":"2026-03-15T12:00:00Z","event":"PostToolUse","tool":"Bash","tool_input":{"command":"python analysis.py"},"tool_response":"...","cwd":"/tmp/work"}
-```
-
-**Codex CLI** — Uses `codex exec` and `codex exec resume` in a shared workspace. Each step streams JSONL events to a step trace, and the orchestrator appends those events into the top-level `trace.jsonl`. Codex stderr is saved per step and aggregated into the top-level `session.log`.
-
-The reviewer reads `trace.jsonl` (when available) instead of the raw session log, giving it full visibility into the agent's step-by-step reasoning.
-
-## Project structure
-
-```
-ai-data-scientist/
-├── .claude/
-│   ├── settings.json         # Hook config (PostToolUse → trace.sh)
-│   └── hooks/
-│       └── trace.sh          # Logs every tool call to trace.jsonl
-├── .codex/
-│   └── testing/
-│       └── SKILL.md          # Test-writing guidance for Codex agents
-├── datasets/
-│   ├── generator.py          # 20 dataset generators + filename mapping
-│   ├── registry.py           # Ground-truth metadata per dataset
-│   └── generated/            # Output CSVs (git-ignored)
-├── harness/
-│   ├── prompt_template.txt   # Legacy fallback prompt
-│   ├── run_claude.sh         # Legacy shim / reference runner
-│   └── run_codex.sh          # Legacy shim / reference runner
-├── prompts/
-│   ├── analyst-generic.md
-│   ├── analyst-v2.md
-│   └── visual-review.md
-├── ai_data_scientist/
-│   ├── cli/                  # Benchmark + import CLIs
-│   ├── orchestration/        # Workflow runner, workspace prep, backend adapters
-│   └── experiments/          # SQLite catalog, import pipeline, dashboard export
-├── reviewer/
-│   ├── rubric.py             # 7-dimension scoring rubric (0-5 each)
-│   ├── scorer.py             # LLM-based reviewer (reads trace.jsonl)
-│   └── report.py             # Markdown comparison report generator
-├── experiment_import.py      # Thin wrapper for the import CLI
-├── tests/                    # pytest suite
-├── frontend/
-│   ├── src/                  # Svelte 5 experiment dashboard
-│   │   ├── App.svelte
-│   │   ├── main.js
-│   │   ├── global.css
-│   │   └── lib/              # Components + experiment/trace view-model logic
-│   ├── serve.py              # Production server (serves built dashboard)
-│   ├── package.json
-│   └── vite.config.js
-├── results/
-│   ├── runs/                 # Raw harness outputs
-│   └── experiments/          # SQLite catalog + JSON exports for the frontend
-└── run_benchmark.py          # Thin wrapper for the benchmark CLI
-```
-
-## Scoring
-
-Each analysis is scored on 7 dimensions (0-5 each, max 35):
-
-| Dimension | What it measures |
-|-----------|-----------------|
-| Data Loading & Inspection | Did the agent check dtypes, nulls, distributions? |
-| EDA Quality | Visualizations + stats + narrative, not just `.describe()` |
-| Pattern Identification | Did it find the core pattern the dataset was designed to test? |
-| Method Selection | Appropriate model/technique with justification |
-| Assumption Checking | Tested assumptions, adapted when violated |
-| Code Quality | Clean, reproducible, runs without errors |
-| Conclusions | Correct, nuanced, acknowledges limitations |
-
-Bonus/penalty modifiers (up to +/-3) for proactive exploration, catching secondary patterns, hallucinating nonexistent patterns, or crashing.
-
-## Experiment dashboard
-
-Built with Svelte 5 + Vite.
-
-```bash
-# Production (serves built assets and exported experiment API files)
-cd frontend && npm install && npm run build
-uv run python frontend/serve.py
-
-# Development (hot reload)
-cd frontend && npm run dev
-```
-
-Opens `http://localhost:8080` (production) or `http://localhost:5173` (dev).
-
-The dashboard expects imported experiments in `results/experiments/...`. In dev and build mode, Vite serves:
-
-- `/api/experiments.json`
-- `/api/experiments/<experiment_id>.json`
-- `/api/artifacts/<experiment_id>/<artifact_id>/content.<ext>`
-
-Features:
-- Experiment selector and case comparison matrix
-- Artifact browser with search and filters by category, dataset, config, and scope
-- Lazy-loaded case detail from imported artifact metadata
-- Generic artifact detail for markdown, images, JSON, traces, logs, and generated code
-- Timeline of tool calls with timestamps and deltas between steps
-- Rendered analysis report and plot gallery
-- Summary bar with verdict, coverage, cost, duration, and turns
-- Artifact-backed trace and session hydration from imported experiments
-
-## Tests
+## Development
 
 ```bash
 uv run pytest tests/ -v
-npm --prefix frontend test
+uv run ruff check
+uv run pyright
 ```
 
-## Requirements
+Core modules:
 
-- Python 3.14+
-- `uv` for package management
-- `claude` CLI (for Claude Code agent runs + LLM reviewer scoring)
-- `codex` CLI (for Codex agent runs)
+- `eda_artifacts/datasets.py` generates the deterministic `multimodal` dataset.
+- `eda_artifacts/profile.py` writes the dataset profile artifact.
+- `eda_artifacts/sql.py` validates read-only SQL and writes query results.
+- `eda_artifacts/charts.py` validates Vega-Lite specs and renders PNG reviews.
+- `eda_artifacts/codex.py` contains the Codex adapter boundary.
+- `eda_artifacts/graph.py` runs the LangGraph harness.
+- `eda_artifacts/lineage.py` writes the final artifact dependency index.
